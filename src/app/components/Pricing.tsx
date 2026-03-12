@@ -14,6 +14,12 @@ export function Pricing() {
     { icon: <Check className="w-5 h-5" />, text: "Personalização Completa" },
   ];
 
+  // Função para lidar com o clique no botão de pagamento
+  const handleCheckout = () => {
+    // Substitua o link abaixo pelo seu Link de Pagamento gerado no painel da Stripe
+    window.location.href = "COLE_AQUI_O_SEU_LINK_DE_PAGAMENTO_DA_STRIPE";
+  };
+
   return (
     <section
       id="precos"
@@ -151,6 +157,7 @@ export function Pricing() {
 
                 {/* CTA Button */}
                 <motion.button
+                  onClick={handleCheckout}
                   initial={{ opacity: 0, y: 20 }}
                   animate={isInView ? { opacity: 1, y: 0 } : {}}
                   transition={{ delay: 1.3 }}
