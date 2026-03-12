@@ -2,7 +2,8 @@ import { motion, AnimatePresence } from "motion/react";
 import { Menu, X, ChevronDown, Lock, LogOut, LayoutDashboard } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router";
-import logoImage from "figma:asset/0e298460e1904a1daf1e697302ba9a68218a1090.png";
+import logoImage from "../assets/0e298460e1904a1daf1e697302ba9a68218a1090.png"; 
+
 import { useAuth } from "../context/AuthContext";
 
 export function Header() {
