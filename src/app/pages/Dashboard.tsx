@@ -25,8 +25,6 @@ import { Button } from "../components/ui/button";
 import { Switch } from "../components/ui/switch";
 import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
-import logoImage from "figma:asset/0e298460e1904a1daf1e697302ba9a68218a1090.png";
-import korvenLabLogo from "figma:asset/ce41527e34fdc17146c7dd7fedb2fa3f85208151.png";
 import { useAuth } from "../context/AuthContext";
 import { useNavigate } from "react-router";
 
@@ -110,7 +108,8 @@ export function Dashboard() {
       {/* Mobile Header */}
       <div className="lg:hidden fixed top-0 left-0 right-0 z-50 bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between shadow-sm">
         <div className="flex items-center gap-2">
-          <img src={logoImage} alt="WAG BOT" className="w-8 h-8" />
+          {/* Imagem atualizada para a logo principal */}
+          <img src="/logo.png" alt="WAG BOT" className="w-8 h-8" />
           <span className="font-bold text-lg bg-gradient-to-r from-[#007BFF] to-[#6F42C1] bg-clip-text text-transparent">
             WAG BOT
           </span>
@@ -137,7 +136,8 @@ export function Dashboard() {
             {/* Logo */}
             <div className="p-6 border-b border-gray-100">
               <div className="flex items-center gap-3">
-                <img src={logoImage} alt="WAG BOT" className="w-10 h-10" />
+                {/* Imagem atualizada para a logo principal */}
+                <img src="/logo.png" alt="WAG BOT" className="w-10 h-10" />
                 <div>
                   <h1 className="font-bold text-xl bg-gradient-to-r from-[#007BFF] to-[#6F42C1] bg-clip-text text-transparent">
                     WAG BOT
@@ -224,7 +224,7 @@ export function Dashboard() {
             {/* Visão Geral - Cards A e B */}
             {activeSection === "overview" && (
               <>
-                {/* Card A - WhatsApp Connection (Larger - 2 columns on desktop) */}
+                {/* Card A - WhatsApp Connection */}
                 <motion.div
                   initial={{ opacity: 0, y: 30 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -613,7 +613,8 @@ export function Dashboard() {
                 rel="noopener noreferrer"
                 className="transition-opacity hover:opacity-70"
               >
-                <img src={korvenLabLogo} alt="Korven Lab" className="h-4 translate-y-[1px]" />
+                {/* Imagem atualizada para a logokorven */}
+                <img src="/logokorven.png" alt="Korven Lab" className="h-4 translate-y-[1px]" />
               </a>
             </div>
           </motion.footer>
