@@ -1,28 +1,32 @@
 import { motion } from "motion/react";
 import { useNavigate } from "react-router";
-import { useAuth } from "../context/AuthContext";
+// IMPORTANTE: Precisamos de importar o cliente do Supabase que criámos anteriormente
+import { supabase } from "../lib/supabase"; 
 
 export function LoginPage() {
   const navigate = useNavigate();
-  const { login } = useAuth();
 
-  const handleGoogleLogin = () => {
-    // Aqui você integraria com a API do Google OAuth
-    console.log("Login com Google iniciado");
-    
-    // Simulando dados do usuário após login com Google
-    const mockUserEmail = "usuario@example.com";
-    const mockUserName = "Usuário";
-    
-    // Realiza o login no contexto
-    login(mockUserEmail, mockUserName);
-    
-    // Redireciona para a página inicial
-    setTimeout(() => {
-      navigate("/");
-    }, 1000);
-    
-    // Em produção: window.location.href = 'https://accounts.google.com/o/oauth2/v2/auth?...'
+  const handleGoogleLogin = async () => {
+    try {
+      console.log("Iniciando login seguro com Supabase + Google...");
+      
+      // A grande magia acontece aqui. Dizemos ao Supabase para abrir o pop-up do Google.
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          // Para onde o Supabase deve redirecionar o utilizador DEPOIS de logar com sucesso
+          redirectTo: `${window.location.origin}/dashboard`,
+        }
+      });
+
+      if (error) {
+        console.error("Erro durante o login com Google:", error.message);
+        alert("Ocorreu um erro ao tentar entrar com o Google. Tente novamente.");
+      }
+
+    } catch (err) {
+      console.error("Erro inesperado:", err);
+    }
   };
 
   return (
@@ -77,7 +81,6 @@ export function LoginPage() {
                 transition={{ duration: 0.6 }}
                 className="w-20 h-20 flex items-center justify-center"
               >
-                {/* ALERTA: A imagem agora é chamada diretamente da pasta public! */}
                 <img 
                   src="/logo.png"
                   alt="WAG BOT Logo"
