@@ -1,48 +1,90 @@
-import { createContext, useContext, useState, ReactNode } from "react";
+import { createContext, useContext, useEffect, useState, ReactNode } from "react";
+import { supabase } from "../lib/supabase";
+import { User } from "@supabase/supabase-js";
 
-interface User {
-  email: string;
-  name: string;
+// Juntamos os dados oficiais do Supabase com a nossa regra de negócio (hasPaid)
+export type AppUser = User & {
   hasPaid: boolean;
-}
+};
 
 interface AuthContextType {
-  user: User | null;
-  login: (email: string, name: string) => void;
-  logout: () => void;
-  updatePaymentStatus: (status: boolean) => void;
+  user: AppUser | null;
+  loading: boolean;
+  logout: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<AppUser | null>(null);
+  
+  // O loading começa como true para "segurar" a tela até o Supabase responder
+  const [loading, setLoading] = useState(true);
 
-  const login = (email: string, name: string) => {
-    setUser({
-      email,
-      name,
-      hasPaid: false, // Usuário começa sem ter pago
+  useEffect(() => {
+    // Função que vai ao banco de dados ler se o utilizador já pagou
+    const fetchProfile = async (authUser: User) => {
+      try {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('has_paid')
+          .eq('id', authUser.id)
+          .single();
+
+        if (error) {
+          console.error("Erro ao buscar perfil no Supabase:", error);
+          setUser({ ...authUser, hasPaid: false });
+          return;
+        }
+
+        // Atualiza o estado com os dados reais do banco
+        setUser({ ...authUser, hasPaid: data?.has_paid || false });
+      } catch (error) {
+        console.error("Erro inesperado ao buscar perfil:", error);
+        setUser({ ...authUser, hasPaid: false });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    // 1. Quando o site abre, pergunta ao Supabase se há alguém logado
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user) {
+        fetchProfile(session.user);
+      } else {
+        setUser(null);
+        setLoading(false);
+      }
     });
-  };
 
-  const logout = () => {
+    // 2. Fica à escuta de mudanças (ex: a pessoa acabou de voltar da tela do Google)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session?.user) {
+        fetchProfile(session.user);
+      } else {
+        setUser(null);
+        setLoading(false);
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  // A função de logout agora avisa o servidor para destruir a sessão
+  const logout = async () => {
+    await supabase.auth.signOut();
     setUser(null);
   };
 
-  const updatePaymentStatus = (status: boolean) => {
-    if (user) {
-      setUser({ ...user, hasPaid: status });
-    }
-  };
-
   return (
-    <AuthContext.Provider value={{ user, login, logout, updatePaymentStatus }}>
-      {children}
+    <AuthContext.Provider value={{ user, loading, logout }}>
+      {/* O site inteiro só é desenhado DEPOIS que a verificação inicial terminar */}
+      {!loading && children}
     </AuthContext.Provider>
   );
 }
 
+// Hook personalizado mantido exatamente como você criou (excelente prática!)
 export function useAuth() {
   const context = useContext(AuthContext);
   if (context === undefined) {
