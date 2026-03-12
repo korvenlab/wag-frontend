@@ -66,6 +66,24 @@ export function Dashboard() {
     { value: 90, label: "1:30h" },
   ];
 
+  // ==========================================
+  // 🚨 O SEGURANÇA DO DASHBOARD (NOVA FEATURE)
+  // ==========================================
+  useEffect(() => {
+    // 1. Verifica se temos a informação do utilizador carregada
+    if (user) {
+      // 2. Se a conta existir, mas a propriedade 'hasPaid' for falsa...
+      if (!user.hasPaid) {
+        console.log("Acesso negado: Utilizador não possui assinatura ativa. Redirecionando...");
+        // 3. Expulsa-o para a Home, diretamente para a secção de preços
+        navigate("/#precos"); 
+      }
+    } else {
+      // 4. (Opcional, mas recomendado) Se nem sequer estiver logado, manda para o login
+       navigate("/login");
+    }
+  }, [user, navigate]);
+
   useEffect(() => {
     const checkDesktop = () => {
       setIsDesktop(window.innerWidth >= 1024);
@@ -102,6 +120,13 @@ export function Dashboard() {
       prev.includes(day) ? prev.filter((d) => d !== day) : [...prev, day]
     );
   };
+
+  // Se o utilizador não estiver logado ou não tiver pago, 
+  // não renderizamos o Dashboard enquanto o useEffect faz o redirecionamento.
+  // Isto evita aquele "piscar" da tela do Dashboard antes de a pessoa ser expulsa.
+  if (!user || !user.hasPaid) {
+    return null; 
+  }
 
   return (
     <div className="min-h-screen bg-slate-50">
