@@ -19,6 +19,7 @@ import {
   Zap,
   Mail,
   Store,
+  Loader2
 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/card";
 import { Button } from "../components/ui/button";
@@ -32,7 +33,13 @@ export function Dashboard() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isDesktop, setIsDesktop] = useState(false);
   const [activeSection, setActiveSection] = useState("overview");
+  
+  // Estados para as novas funcionalidades
   const [isAIEnabled, setIsAIEnabled] = useState(true);
+  const [qrCode, setQrCode] = useState<string | null>(null);
+  const [isLoadingQR, setIsLoadingQR] = useState(false);
+  const [isSavingAI, setIsSavingAI] = useState(false);
+
   const [startTime, setStartTime] = useState("08:00");
   const [endTime, setEndTime] = useState("18:00");
   const [activeDays, setActiveDays] = useState<string[]>([
@@ -47,6 +54,9 @@ export function Dashboard() {
   
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+
+  // URL base do seu backend
+  const backendUrl = import.meta.env.VITE_API_URL || "http://localhost:3000";
 
   const daysOfWeek = [
     "Segunda-feira",
@@ -66,20 +76,13 @@ export function Dashboard() {
     { value: 90, label: "1:30h" },
   ];
 
-  // ==========================================
-  // 🚨 O SEGURANÇA DO DASHBOARD (NOVA FEATURE)
-  // ==========================================
   useEffect(() => {
-    // 1. Verifica se temos a informação do utilizador carregada
     if (user) {
-      // 2. Se a conta existir, mas a propriedade 'hasPaid' for falsa...
       if (!user.hasPaid) {
         console.log("Acesso negado: Utilizador não possui assinatura ativa. Redirecionando...");
-        // 3. Expulsa-o para a Home, diretamente para a secção de preços
         navigate("/#precos"); 
       }
     } else {
-      // 4. (Opcional, mas recomendado) Se nem sequer estiver logado, manda para o login
        navigate("/login");
     }
   }, [user, navigate]);
@@ -98,12 +101,62 @@ export function Dashboard() {
     navigate("/login");
   };
 
-  const handleGenerateQR = () => {
-    console.log("Gerando novo QR Code...");
+  // ==========================================
+  // FUNÇÃO: Gerar QR Code do WhatsApp
+  // ==========================================
+  const handleGenerateQR = async () => {
+    setIsLoadingQR(true);
+    setQrCode(null); // Limpa o QR anterior
+    
+    try {
+      console.log("Solicitando novo QR Code ao backend...");
+      const response = await fetch(`${backendUrl}/api/whatsapp/qr`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: user?.email }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        // Assume que o backend retorna uma imagem em base64 ou URL
+        setQrCode(data.qrCode); 
+      } else {
+        console.error("Falha ao gerar QR Code");
+      }
+    } catch (error) {
+      console.error("Erro na conexão com o backend:", error);
+    } finally {
+      setIsLoadingQR(false);
+    }
+  };
+
+  // ==========================================
+  // FUNÇÃO: Ligar/Desligar IA
+  // ==========================================
+  const handleToggleAI = async (checked: boolean) => {
+    setIsAIEnabled(checked); // Atualiza visualmente na hora
+    setIsSavingAI(true);
+
+    try {
+      console.log(`Salvando status da IA: ${checked ? "Ligado" : "Desligado"}`);
+      await fetch(`${backendUrl}/api/settings/ai`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: user?.email, aiEnabled: checked }),
+      });
+    } catch (error) {
+      console.error("Erro ao salvar configuração da IA:", error);
+      // Se der erro, desfazemos a alteração visual
+      setIsAIEnabled(!checked);
+    } finally {
+      setIsSavingAI(false);
+    }
   };
 
   const handleDisconnectWhatsApp = () => {
     console.log("Saindo do WhatsApp...");
+    // Futuramente, chamaremos o backend para desconectar a sessão aqui
+    setQrCode(null);
   };
 
   const handleSaveHours = () => {
@@ -112,7 +165,6 @@ export function Dashboard() {
 
   const handleSaveSettings = () => {
     console.log("Salvando configurações:", { storeName });
-    // Aqui você pode adicionar lógica para salvar no backend
   };
 
   const toggleDay = (day: string) => {
@@ -121,9 +173,6 @@ export function Dashboard() {
     );
   };
 
-  // Se o utilizador não estiver logado ou não tiver pago, 
-  // não renderizamos o Dashboard enquanto o useEffect faz o redirecionamento.
-  // Isto evita aquele "piscar" da tela do Dashboard antes de a pessoa ser expulsa.
   if (!user || !user.hasPaid) {
     return null; 
   }
@@ -133,7 +182,6 @@ export function Dashboard() {
       {/* Mobile Header */}
       <div className="lg:hidden fixed top-0 left-0 right-0 z-50 bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between shadow-sm">
         <div className="flex items-center gap-2">
-          {/* Imagem atualizada para a logo principal */}
           <img src="/logo.png" alt="WAG BOT" className="w-8 h-8" />
           <span className="font-bold text-lg bg-gradient-to-r from-[#007BFF] to-[#6F42C1] bg-clip-text text-transparent">
             WAG BOT
@@ -161,7 +209,6 @@ export function Dashboard() {
             {/* Logo */}
             <div className="p-6 border-b border-gray-100">
               <div className="flex items-center gap-3">
-                {/* Imagem atualizada para a logo principal */}
                 <img src="/logo.png" alt="WAG BOT" className="w-10 h-10" />
                 <div>
                   <h1 className="font-bold text-xl bg-gradient-to-r from-[#007BFF] to-[#6F42C1] bg-clip-text text-transparent">
@@ -265,7 +312,6 @@ export function Dashboard() {
                       <CardDescription>Conecte seu WhatsApp para começar a automatizar</CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-6">
-                      {/* Instructions */}
                       <div className="bg-blue-50 border border-blue-100 rounded-xl p-4">
                         <h4 className="font-semibold text-sm text-blue-900 mb-3">Como conectar:</h4>
                         <ol className="space-y-2 text-sm text-blue-800">
@@ -284,25 +330,31 @@ export function Dashboard() {
                         </ol>
                       </div>
 
-                      {/* QR Code Area */}
+                      {/* QR Code Area Atualizada */}
                       <div className="flex flex-col items-center py-6">
-                        <div className="w-60 h-60 border-2 border-dashed border-gray-300 rounded-2xl flex items-center justify-center bg-white shadow-inner">
-                          <QrCode className="w-24 h-24 text-gray-400" />
+                        <div className="w-60 h-60 border-2 border-dashed border-gray-300 rounded-2xl flex items-center justify-center bg-white shadow-inner overflow-hidden relative">
+                          {isLoadingQR ? (
+                            <Loader2 className="w-10 h-10 text-gray-400 animate-spin" />
+                          ) : qrCode ? (
+                            <img src={qrCode} alt="WhatsApp QR Code" className="w-full h-full object-cover p-2" />
+                          ) : (
+                            <QrCode className="w-24 h-24 text-gray-300" />
+                          )}
                         </div>
                         <div className="mt-4 flex items-center gap-2 text-sm text-gray-600">
-                          <div className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
-                          <span>A aguardar leitura do código...</span>
+                          <div className={`w-2 h-2 rounded-full ${qrCode ? "bg-green-500" : "bg-amber-500 animate-pulse"}`} />
+                          <span>{qrCode ? "Pronto para leitura!" : "A aguardar leitura do código..."}</span>
                         </div>
                       </div>
 
-                      {/* Action Buttons */}
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <Button
                           onClick={handleGenerateQR}
-                          className="bg-[#25D366] hover:bg-[#1fb855] text-white"
+                          disabled={isLoadingQR}
+                          className="bg-[#25D366] hover:bg-[#1fb855] text-white disabled:opacity-70"
                         >
-                          <RefreshCw className="w-4 h-4 mr-2" />
-                          Gerar Novo QR Code
+                          {isLoadingQR ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <RefreshCw className="w-4 h-4 mr-2" />}
+                          {isLoadingQR ? "Gerando..." : "Gerar Novo QR Code"}
                         </Button>
                         <Button
                           onClick={handleDisconnectWhatsApp}
@@ -317,7 +369,7 @@ export function Dashboard() {
                   </Card>
                 </motion.div>
 
-                {/* Card B - AI Toggle */}
+                {/* Card B - AI Toggle Atualizado */}
                 <motion.div
                   initial={{ opacity: 0, y: 30 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -335,13 +387,15 @@ export function Dashboard() {
                     </CardHeader>
                     <CardContent className="flex flex-col items-center justify-center py-8">
                       <div className="flex items-center gap-4">
-                        <Label htmlFor="ai-toggle" className="text-base font-semibold">
+                        <Label htmlFor="ai-toggle" className="text-base font-semibold flex items-center gap-2">
                           {isAIEnabled ? "Ligado" : "Desligado"}
+                          {isSavingAI && <Loader2 className="w-3 h-3 text-gray-400 animate-spin" />}
                         </Label>
                         <Switch
                           id="ai-toggle"
                           checked={isAIEnabled}
-                          onCheckedChange={setIsAIEnabled}
+                          onCheckedChange={handleToggleAI}
+                          disabled={isSavingAI}
                           className="scale-150"
                         />
                       </div>
@@ -380,7 +434,6 @@ export function Dashboard() {
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-6">
-                    {/* Dias da Semana */}
                     <div className="space-y-3">
                       <Label className="text-base">Dias de Funcionamento</Label>
                       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-2">
@@ -403,7 +456,6 @@ export function Dashboard() {
                       </p>
                     </div>
 
-                    {/* Duração do Atendimento */}
                     <div className="space-y-3 pt-4 border-t border-gray-100">
                       <Label className="text-base">Duração do Atendimento</Label>
                       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
@@ -426,7 +478,6 @@ export function Dashboard() {
                       </p>
                     </div>
 
-                    {/* Horários */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-end pt-4 border-t border-gray-100">
                       <div className="space-y-2">
                         <Label htmlFor="start-time">Das</Label>
@@ -478,7 +529,6 @@ export function Dashboard() {
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-6">
-                    {/* Gmail Conectado */}
                     <div className="space-y-3">
                       <Label className="flex items-center gap-2 text-base">
                         <Mail className="w-4 h-4 text-gray-500" />
@@ -497,7 +547,6 @@ export function Dashboard() {
                       </div>
                     </div>
 
-                    {/* Nome da Loja */}
                     <div className="space-y-3 pt-4 border-t border-gray-100">
                       <Label htmlFor="store-name" className="flex items-center gap-2 text-base">
                         <Store className="w-4 h-4 text-gray-500" />
@@ -516,7 +565,6 @@ export function Dashboard() {
                       </p>
                     </div>
 
-                    {/* Botão Salvar */}
                     <div className="pt-4">
                       <Button
                         onClick={handleSaveSettings}
@@ -533,7 +581,6 @@ export function Dashboard() {
             {/* Analytics */}
             {activeSection === "analytics" && (
               <>
-                {/* Card 1 - Mensagens Respondidas */}
                 <motion.div
                   initial={{ opacity: 0, y: 30 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -561,7 +608,6 @@ export function Dashboard() {
                   </Card>
                 </motion.div>
 
-                {/* Card 2 - Agendamentos Realizados */}
                 <motion.div
                   initial={{ opacity: 0, y: 30 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -589,7 +635,6 @@ export function Dashboard() {
                   </Card>
                 </motion.div>
 
-                {/* Card 3 - Horas Poupadas */}
                 <motion.div
                   initial={{ opacity: 0, y: 30 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -638,7 +683,6 @@ export function Dashboard() {
                 rel="noopener noreferrer"
                 className="transition-opacity hover:opacity-70"
               >
-                {/* Imagem atualizada para a logokorven */}
                 <img src="/logokorven.png" alt="Korven Lab" className="h-4 translate-y-[1px]" />
               </a>
             </div>
@@ -649,7 +693,6 @@ export function Dashboard() {
   );
 }
 
-// Navigation Item Component
 function NavItem({
   icon,
   label,
