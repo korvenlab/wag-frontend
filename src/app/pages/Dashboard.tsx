@@ -34,12 +34,13 @@ export function Dashboard() {
   const [isDesktop, setIsDesktop] = useState(false);
   const [activeSection, setActiveSection] = useState("overview");
   
-  // Estados para as novas funcionalidades
+  // Estados de controle das funcionalidades do Backend
   const [isAIEnabled, setIsAIEnabled] = useState(true);
   const [qrCode, setQrCode] = useState<string | null>(null);
   const [isLoadingQR, setIsLoadingQR] = useState(false);
   const [isSavingAI, setIsSavingAI] = useState(false);
 
+  // Estados de Configuração da Loja
   const [startTime, setStartTime] = useState("08:00");
   const [endTime, setEndTime] = useState("18:00");
   const [activeDays, setActiveDays] = useState<string[]>([
@@ -55,7 +56,7 @@ export function Dashboard() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
 
-  // URL base do seu backend
+  // URL do Backend conectada às variáveis de ambiente da Vercel
   const backendUrl = import.meta.env.VITE_API_URL || "http://localhost:3000";
 
   const daysOfWeek = [
@@ -76,10 +77,10 @@ export function Dashboard() {
     { value: 90, label: "1:30h" },
   ];
 
+  // 🚨 PROTEÇÃO DE ROTA: Verifica se o utilizador pagou
   useEffect(() => {
     if (user) {
       if (!user.hasPaid) {
-        console.log("Acesso negado: Utilizador não possui assinatura ativa. Redirecionando...");
         navigate("/#precos"); 
       }
     } else {
@@ -87,6 +88,7 @@ export function Dashboard() {
     }
   }, [user, navigate]);
 
+  // Controle de responsividade da Sidebar
   useEffect(() => {
     const checkDesktop = () => {
       setIsDesktop(window.innerWidth >= 1024);
@@ -101,15 +103,12 @@ export function Dashboard() {
     navigate("/login");
   };
 
-  // ==========================================
-  // FUNÇÃO: Gerar QR Code do WhatsApp
-  // ==========================================
+  // 📡 INTEGRAÇÃO: Solicitar Geração de QR Code
   const handleGenerateQR = async () => {
     setIsLoadingQR(true);
-    setQrCode(null); // Limpa o QR anterior
+    setQrCode(null); 
     
     try {
-      console.log("Solicitando novo QR Code ao backend...");
       const response = await fetch(`${backendUrl}/api/whatsapp/qr`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -118,10 +117,7 @@ export function Dashboard() {
 
       if (response.ok) {
         const data = await response.json();
-        // Assume que o backend retorna uma imagem em base64 ou URL
         setQrCode(data.qrCode); 
-      } else {
-        console.error("Falha ao gerar QR Code");
       }
     } catch (error) {
       console.error("Erro na conexão com o backend:", error);
@@ -130,15 +126,12 @@ export function Dashboard() {
     }
   };
 
-  // ==========================================
-  // FUNÇÃO: Ligar/Desligar IA
-  // ==========================================
+  // 📡 INTEGRAÇÃO: Ligar/Desligar a IA
   const handleToggleAI = async (checked: boolean) => {
-    setIsAIEnabled(checked); // Atualiza visualmente na hora
+    setIsAIEnabled(checked);
     setIsSavingAI(true);
 
     try {
-      console.log(`Salvando status da IA: ${checked ? "Ligado" : "Desligado"}`);
       await fetch(`${backendUrl}/api/settings/ai`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -146,17 +139,27 @@ export function Dashboard() {
       });
     } catch (error) {
       console.error("Erro ao salvar configuração da IA:", error);
-      // Se der erro, desfazemos a alteração visual
-      setIsAIEnabled(!checked);
+      setIsAIEnabled(!checked); // Reverte caso falhe
     } finally {
       setIsSavingAI(false);
     }
   };
 
-  const handleDisconnectWhatsApp = () => {
-    console.log("Saindo do WhatsApp...");
-    // Futuramente, chamaremos o backend para desconectar a sessão aqui
-    setQrCode(null);
+  // 📡 INTEGRAÇÃO: Desconectar WhatsApp
+  const handleDisconnectWhatsApp = async () => {
+    try {
+      const response = await fetch(`${backendUrl}/api/whatsapp/disconnect`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: user?.email }),
+      });
+
+      if (response.ok) {
+        setQrCode(null);
+      }
+    } catch (error) {
+      console.error("Erro ao tentar desconectar:", error);
+    }
   };
 
   const handleSaveHours = () => {
@@ -173,6 +176,7 @@ export function Dashboard() {
     );
   };
 
+  // Impede renderização se não estiver autorizado
   if (!user || !user.hasPaid) {
     return null; 
   }
@@ -330,7 +334,7 @@ export function Dashboard() {
                         </ol>
                       </div>
 
-                      {/* QR Code Area Atualizada */}
+                      {/* QR Code Area */}
                       <div className="flex flex-col items-center py-6">
                         <div className="w-60 h-60 border-2 border-dashed border-gray-300 rounded-2xl flex items-center justify-center bg-white shadow-inner overflow-hidden relative">
                           {isLoadingQR ? (
@@ -369,7 +373,7 @@ export function Dashboard() {
                   </Card>
                 </motion.div>
 
-                {/* Card B - AI Toggle Atualizado */}
+                {/* Card B - AI Toggle */}
                 <motion.div
                   initial={{ opacity: 0, y: 30 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -530,191 +534,4 @@ export function Dashboard() {
                   </CardHeader>
                   <CardContent className="space-y-6">
                     <div className="space-y-3">
-                      <Label className="flex items-center gap-2 text-base">
-                        <Mail className="w-4 h-4 text-gray-500" />
-                        Gmail Conectado
-                      </Label>
-                      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center border-2 border-blue-300">
-                            <Mail className="w-5 h-5 text-blue-600" />
-                          </div>
-                          <div className="flex-1">
-                            <p className="text-sm font-semibold text-gray-900">{user?.email}</p>
-                            <p className="text-xs text-gray-500">Conta autenticada com Google</p>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="space-y-3 pt-4 border-t border-gray-100">
-                      <Label htmlFor="store-name" className="flex items-center gap-2 text-base">
-                        <Store className="w-4 h-4 text-gray-500" />
-                        Nome da Loja
-                      </Label>
-                      <Input
-                        id="store-name"
-                        type="text"
-                        placeholder="Ex: Salão Beleza Natural"
-                        value={storeName}
-                        onChange={(e) => setStoreName(e.target.value)}
-                        className="text-base"
-                      />
-                      <p className="text-xs text-gray-500">
-                        Este nome será usado nas mensagens automáticas do bot
-                      </p>
-                    </div>
-
-                    <div className="pt-4">
-                      <Button
-                        onClick={handleSaveSettings}
-                        className="w-full bg-gradient-to-r from-[#007BFF] to-[#6F42C1] hover:from-[#0056b3] hover:to-[#553c9a] text-white shadow-md"
-                      >
-                        Salvar Configurações
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            )}
-
-            {/* Analytics */}
-            {activeSection === "analytics" && (
-              <>
-                <motion.div
-                  initial={{ opacity: 0, y: 30 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.5, delay: 0.1 }}
-                >
-                  <Card className="shadow-sm border-l-4 border-l-blue-500">
-                    <CardHeader>
-                      <CardTitle className="flex items-center gap-2 text-lg">
-                        <MessageSquare className="w-5 h-5 text-blue-500" />
-                        Mensagens Respondidas Hoje
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="flex items-baseline gap-2">
-                        <p className="text-5xl font-bold text-gray-900">47</p>
-                        <span className="text-sm text-green-600 font-medium flex items-center gap-1">
-                          <Zap className="w-3 h-3" />
-                          +12% vs ontem
-                        </span>
-                      </div>
-                      <p className="text-sm text-gray-500 mt-3">
-                        A IA respondeu automaticamente 47 conversas dos seus clientes
-                      </p>
-                    </CardContent>
-                  </Card>
-                </motion.div>
-
-                <motion.div
-                  initial={{ opacity: 0, y: 30 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.5, delay: 0.2 }}
-                >
-                  <Card className="shadow-sm border-l-4 border-l-purple-500">
-                    <CardHeader>
-                      <CardTitle className="flex items-center gap-2 text-lg">
-                        <CalendarCheck className="w-5 h-5 text-purple-500" />
-                        Agendamentos Esta Semana
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="flex items-baseline gap-2">
-                        <p className="text-5xl font-bold text-gray-900">23</p>
-                        <span className="text-sm text-green-600 font-medium flex items-center gap-1">
-                          <Zap className="w-3 h-3" />
-                          +8 novos
-                        </span>
-                      </div>
-                      <p className="text-sm text-gray-500 mt-3">
-                        23 horários confirmados automaticamente esta semana
-                      </p>
-                    </CardContent>
-                  </Card>
-                </motion.div>
-
-                <motion.div
-                  initial={{ opacity: 0, y: 30 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.5, delay: 0.3 }}
-                >
-                  <Card className="shadow-sm border-l-4 border-l-emerald-500">
-                    <CardHeader>
-                      <CardTitle className="flex items-center gap-2 text-lg">
-                        <Zap className="w-5 h-5 text-emerald-500" />
-                        Tempo Economizado
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="flex items-baseline gap-2">
-                        <p className="text-5xl font-bold text-gray-900">1h 55m</p>
-                      </div>
-                      <div className="mt-4 p-3 bg-emerald-50 rounded-lg border border-emerald-100">
-                        <p className="text-sm text-emerald-800 font-medium">
-                          💡 Cálculo: 23 agendamentos × 5 min/cada
-                        </p>
-                        <p className="text-xs text-emerald-600 mt-1">
-                          Tempo que você economizou não fazendo agendamentos manuais
-                        </p>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </motion.div>
-              </>
-            )}
-          </div>
-
-          {/* Footer */}
-          <motion.footer
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.6 }}
-            className="text-center py-8 border-t border-gray-200 mt-12"
-          >
-            <div className="flex items-center justify-center gap-2">
-              <p className="text-gray-400 uppercase tracking-wide text-[14px] leading-none">
-                Desenvolvido por
-              </p>
-              <a 
-                href="https://korvenlab.vercel.app/" 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="transition-opacity hover:opacity-70"
-              >
-                <img src="/logokorven.png" alt="Korven Lab" className="h-4 translate-y-[1px]" />
-              </a>
-            </div>
-          </motion.footer>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function NavItem({
-  icon,
-  label,
-  active,
-  onClick,
-}: {
-  icon: React.ReactNode;
-  label: string;
-  active: boolean;
-  onClick: () => void;
-}) {
-  return (
-    <button
-      onClick={onClick}
-      className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${
-        active
-          ? "bg-blue-50 text-[#007BFF] font-semibold"
-          : "text-gray-700 hover:bg-gray-50 hover:text-gray-900"
-      }`}
-    >
-      {icon}
-      <span>{label}</span>
-    </button>
-  );
-}
+                      <Label
