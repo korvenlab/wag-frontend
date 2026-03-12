@@ -2,8 +2,6 @@ import { motion, AnimatePresence } from "motion/react";
 import { Menu, X, ChevronDown, Lock, LogOut, LayoutDashboard } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router";
-
-import logoImage from "../assets/0e298460e1904a1daf1e697302ba9a68218a1090.png";
 import { useAuth } from "../context/AuthContext";
 
 export function Header() {
@@ -79,8 +77,9 @@ export function Header() {
             onMouseLeave={() => setIsLogoHovered(false)}
           >
             <div className="w-11 h-11 flex items-center justify-center flex-shrink-0">
+              {/* ALERTA: A imagem agora é chamada diretamente da pasta public! */}
               <img 
-                src={logoImage}
+                src="/logo.png"
                 alt="WAG BOT Logo"
                 className="w-full h-full object-contain"
               />
