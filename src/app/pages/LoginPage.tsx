@@ -1,6 +1,5 @@
 import { motion } from "motion/react";
 import { useNavigate } from "react-router";
-import logoImage from "figma:asset/0e298460e1904a1daf1e697302ba9a68218a1090.png";
 import { useAuth } from "../context/AuthContext";
 
 export function LoginPage() {
@@ -78,8 +77,9 @@ export function LoginPage() {
                 transition={{ duration: 0.6 }}
                 className="w-20 h-20 flex items-center justify-center"
               >
+                {/* ALERTA: A imagem agora é chamada diretamente da pasta public! */}
                 <img 
-                  src={logoImage}
+                  src="/logo.png"
                   alt="WAG BOT Logo"
                   className="w-full h-full object-contain"
                 />
