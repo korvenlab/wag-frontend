@@ -2,8 +2,8 @@ import { motion, AnimatePresence } from "motion/react";
 import { Menu, X, ChevronDown, Lock, LogOut, LayoutDashboard } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router";
-import logoImage from "../assets/0e298460e1904a1daf1e697302ba9a68218a1090.png"; 
 
+import logoImage from "../assets/0e298460e1904a1daf1e697302ba9a68218a1090.png";
 import { useAuth } from "../context/AuthContext";
 
 export function Header() {
@@ -43,7 +43,7 @@ export function Header() {
 
   const handleDashboardClick = () => {
     if (!user?.hasPaid) {
-      return; // Não faz nada se não tiver pago
+      return; 
     }
     navigate("/dashboard");
     setIsDropdownOpen(false);
@@ -62,7 +62,6 @@ export function Header() {
       transition={{ duration: 0.6, ease: "easeOut" }}
       className="fixed top-0 left-0 right-0 z-50 px-4 pt-5"
     >
-      {/* Floating Pill Container */}
       <div 
         className={`max-w-[1200px] mx-auto h-16 rounded-[50px] bg-white/80 backdrop-blur-[12px] transition-all duration-300 ${
           isScrolled
@@ -71,7 +70,6 @@ export function Header() {
         }`}
       >
         <div className="px-6 h-full flex items-center justify-between">
-          {/* Left: Logo & Brand Name */}
           <motion.div
             className="flex items-center gap-3 cursor-pointer overflow-hidden flex-shrink-0"
             whileHover={{ scale: 1.025 }}
@@ -100,7 +98,6 @@ export function Header() {
             </motion.span>
           </motion.div>
 
-          {/* Center: Navigation Links */}
           <nav className="hidden md:flex items-center gap-6 absolute left-1/2 -translate-x-1/2">
             <NavLink onClick={() => scrollToSection("como-funciona")}>
               Como Funciona
@@ -111,7 +108,6 @@ export function Header() {
             <NavLink onClick={() => scrollToSection("faq")}>FAQ</NavLink>
           </nav>
 
-          {/* Right: Login/User Button */}
           <div className="hidden md:flex items-center flex-shrink-0">
             {user ? (
               <div ref={dropdownRef} className="relative">
@@ -134,13 +130,11 @@ export function Header() {
                       transition={{ duration: 0.2 }}
                       className="absolute right-0 top-full mt-2 w-56 bg-white rounded-2xl border border-gray-200 shadow-2xl overflow-hidden"
                     >
-                      {/* User Info */}
                       <div className="px-4 py-3 border-b border-gray-100">
                         <p className="text-xs text-gray-500">Conectado como</p>
                         <p className="text-sm font-semibold text-gray-900 truncate">{user.email}</p>
                       </div>
 
-                      {/* Menu Items */}
                       <div className="py-2">
                         <button
                           onClick={handleDashboardClick}
@@ -190,7 +184,6 @@ export function Header() {
             )}
           </div>
 
-          {/* Mobile Menu Button */}
           <button
             className="md:hidden text-gray-900"
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
@@ -200,7 +193,6 @@ export function Header() {
         </div>
       </div>
 
-      {/* Mobile Menu */}
       <AnimatePresence>
         {isMobileMenuOpen && (
           <motion.nav
