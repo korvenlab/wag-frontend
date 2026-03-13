@@ -18,7 +18,7 @@ export function Footer() {
               <div className="w-10 h-10 flex items-center justify-center">
                 {/* ALERTA: A imagem agora é chamada diretamente da pasta public com o nome logokorven.png */}
                 <img 
-                  src="/logokorven.png"
+                  src="/logo.png"
                   alt="WAG BOT Logo"
                   className="w-full h-full object-contain"
                 />
