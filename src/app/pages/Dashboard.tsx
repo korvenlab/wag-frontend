@@ -39,24 +39,22 @@ export function Dashboard() {
   const [qrCode, setQrCode] = useState<string | null>(null);
   const [isLoadingQR, setIsLoadingQR] = useState(false);
   const [isSavingAI, setIsSavingAI] = useState(false);
+  const [isSavingSettings, setIsSavingSettings] = useState(false);
 
-  // Estados de Configuração da Loja
+  // Estados de Configuração da Loja (Reais)
   const [startTime, setStartTime] = useState("08:00");
   const [endTime, setEndTime] = useState("18:00");
-  const [activeDays, setActiveDays] = useState<string[]>([
-    "Segunda-feira",
-    "Terça-feira",
-    "Quarta-feira",
-    "Quinta-feira",
-    "Sexta-feira",
-  ]);
+  const [activeDays, setActiveDays] = useState<string[]>([]);
   const [serviceDuration, setServiceDuration] = useState<number>(30);
   const [storeName, setStoreName] = useState("");
+
+  // Estados das Métricas Analíticas
+  const [messagesAnswered, setMessagesAnswered] = useState(0);
+  const [appointmentsMade, setAppointmentsMade] = useState(0);
   
   const { user, logout } = useAuth();
   const navigate = useNavigate();
 
-  // URL do Backend conectada às variáveis de ambiente
   const backendUrl = import.meta.env.VITE_API_URL || "http://localhost:3000";
 
   const daysOfWeek = [
@@ -77,7 +75,49 @@ export function Dashboard() {
     { value: 90, label: "1:30h" },
   ];
 
-  // PROTEÇÃO DE ROTA: Verifica se o utilizador pagou
+  // ==========================================
+  // CARREGAR DADOS INICIAIS DO UTILIZADOR
+  // ==========================================
+  useEffect(() => {
+    const fetchUserData = async () => {
+      if (!user?.email) return;
+
+      try {
+        // Buscar dados do perfil na sua API (Nova rota que criaremos a seguir)
+        const response = await fetch(`${backendUrl}/api/user/profile?email=${user.email}`);
+        
+        if (response.ok) {
+          const data = await response.json();
+          
+          // Preenche a tela com os dados que vieram do banco
+          setStoreName(data.store_name || "");
+          setIsAIEnabled(data.is_ai_enabled ?? true);
+          setStartTime(data.start_time || "08:00");
+          setEndTime(data.end_time || "18:00");
+          
+          // Se o banco retornar dias como string JSON, nós convertemos. Se estiver vazio, poe padrão.
+          if (data.active_days) {
+            setActiveDays(JSON.parse(data.active_days));
+          } else {
+            setActiveDays(["Segunda-feira", "Terça-feira", "Quarta-feira", "Quinta-feira", "Sexta-feira"]);
+          }
+
+          setServiceDuration(data.service_duration || 30);
+          setMessagesAnswered(data.messages_answered || 0);
+          setAppointmentsMade(data.appointments_made || 0);
+        }
+      } catch (error) {
+        console.error("Erro ao buscar dados do perfil:", error);
+      }
+    };
+
+    if (user && user.hasPaid) {
+      fetchUserData();
+    }
+  }, [user, backendUrl]);
+
+
+  // PROTEÇÃO DE ROTA
   useEffect(() => {
     if (user) {
       if (!user.hasPaid) {
@@ -88,7 +128,6 @@ export function Dashboard() {
     }
   }, [user, navigate]);
 
-  // Controle de responsividade da Sidebar
   useEffect(() => {
     const checkDesktop = () => {
       setIsDesktop(window.innerWidth >= 1024);
@@ -103,7 +142,6 @@ export function Dashboard() {
     navigate("/login");
   };
 
-  // INTEGRAÇÃO: Solicitar Geração de QR Code
   const handleGenerateQR = async () => {
     setIsLoadingQR(true);
     setQrCode(null); 
@@ -126,7 +164,6 @@ export function Dashboard() {
     }
   };
 
-  // INTEGRAÇÃO: Ligar/Desligar a IA
   const handleToggleAI = async (checked: boolean) => {
     setIsAIEnabled(checked);
     setIsSavingAI(true);
@@ -139,13 +176,12 @@ export function Dashboard() {
       });
     } catch (error) {
       console.error("Erro ao salvar configuração da IA:", error);
-      setIsAIEnabled(!checked); // Reverte caso falhe
+      setIsAIEnabled(!checked);
     } finally {
       setIsSavingAI(false);
     }
   };
 
-  // INTEGRAÇÃO: Desconectar WhatsApp
   const handleDisconnectWhatsApp = async () => {
     try {
       const response = await fetch(`${backendUrl}/api/whatsapp/disconnect`, {
@@ -162,18 +198,67 @@ export function Dashboard() {
     }
   };
 
-  const handleSaveHours = () => {
-    console.log("Salvando horários:", { startTime, endTime, activeDays, serviceDuration });
+  // ==========================================
+  // SALVAR HORÁRIOS
+  // ==========================================
+  const handleSaveHours = async () => {
+    console.log("Salvando horários...");
+    try {
+      await fetch(`${backendUrl}/api/settings/hours`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: user?.email,
+          startTime,
+          endTime,
+          activeDays: JSON.stringify(activeDays),
+          serviceDuration
+        }),
+      });
+      alert("Horários atualizados com sucesso!");
+    } catch (error) {
+      console.error("Erro ao salvar horários:", error);
+      alert("Erro ao salvar horários.");
+    }
   };
 
-  const handleSaveSettings = () => {
-    console.log("Salvando configurações:", { storeName });
+  // ==========================================
+  // SALVAR NOME DA LOJA
+  // ==========================================
+  const handleSaveSettings = async () => {
+    setIsSavingSettings(true);
+    try {
+      await fetch(`${backendUrl}/api/settings/store`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: user?.email,
+          storeName
+        }),
+      });
+      alert("Nome da loja atualizado!");
+    } catch (error) {
+      console.error("Erro ao salvar configurações:", error);
+      alert("Erro ao salvar o nome da loja.");
+    } finally {
+      setIsSavingSettings(false);
+    }
   };
 
   const toggleDay = (day: string) => {
     setActiveDays((prev) =>
       prev.includes(day) ? prev.filter((d) => d !== day) : [...prev, day]
     );
+  };
+
+  // Cálculo matemático do tempo economizado
+  const calculateSavedTime = (appointments: number) => {
+    const totalMinutes = appointments * 5; // 5 minutos gastos por cada agendamento
+    const hours = Math.floor(totalMinutes / 60);
+    const minutes = totalMinutes % 60;
+    
+    if (hours === 0) return `${minutes}m`;
+    return `${hours}h ${minutes}m`;
   };
 
   if (!user || !user.hasPaid) {
@@ -265,8 +350,12 @@ export function Dashboard() {
             {/* User Info & Logout */}
             <div className="p-4 border-t border-gray-100 space-y-3">
               <div className="bg-slate-50 rounded-lg p-3">
-                <p className="text-xs text-gray-500 mb-1">Conta conectada:</p>
-                <p className="text-sm font-medium text-gray-900 truncate">{user?.email}</p>
+                <p className="text-xs text-gray-500 mb-1">Loja de:</p>
+                {/* Mostra o nome da loja na barra lateral */}
+                <p className="text-sm font-bold text-gray-900 truncate">
+                  {storeName || "Minha Loja"}
+                </p>
+                <p className="text-xs text-gray-500 mt-1 truncate">{user?.email}</p>
               </div>
               <Button
                 variant="ghost"
@@ -290,7 +379,9 @@ export function Dashboard() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
           >
-            <h2 className="text-3xl font-bold text-gray-900">Painel de Controle</h2>
+            <h2 className="text-3xl font-bold text-gray-900">
+              Olá, {storeName ? storeName.split(' ')[0] : 'Admin'}! 👋
+            </h2>
             <p className="text-gray-600 mt-1">Gerencie sua automação de agendamentos</p>
           </motion.div>
 
@@ -299,7 +390,6 @@ export function Dashboard() {
             {/* Visão Geral - Cards A e B */}
             {activeSection === "overview" && (
               <>
-                {/* Card A - WhatsApp Connection */}
                 <motion.div
                   initial={{ opacity: 0, y: 30 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -372,7 +462,6 @@ export function Dashboard() {
                   </Card>
                 </motion.div>
 
-                {/* Card B - AI Toggle */}
                 <motion.div
                   initial={{ opacity: 0, y: 30 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -418,7 +507,7 @@ export function Dashboard() {
               </>
             )}
 
-            {/* Horários - Card C */}
+            {/* Horários */}
             {activeSection === "hours" && (
               <motion.div
                 initial={{ opacity: 0, y: 30 }}
@@ -571,9 +660,11 @@ export function Dashboard() {
                     <div className="pt-4">
                       <Button
                         onClick={handleSaveSettings}
-                        className="w-full bg-gradient-to-r from-[#007BFF] to-[#6F42C1] hover:from-[#0056b3] hover:to-[#553c9a] text-white shadow-md"
+                        disabled={isSavingSettings}
+                        className="w-full bg-gradient-to-r from-[#007BFF] to-[#6F42C1] hover:from-[#0056b3] hover:to-[#553c9a] text-white shadow-md disabled:opacity-70"
                       >
-                        Salvar Configurações
+                        {isSavingSettings ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
+                        {isSavingSettings ? "Salvando..." : "Salvar Configurações"}
                       </Button>
                     </div>
                   </CardContent>
@@ -581,7 +672,7 @@ export function Dashboard() {
               </motion.div>
             )}
 
-            {/* Analytics */}
+            {/* Analytics com Dados Reais */}
             {activeSection === "analytics" && (
               <>
                 <motion.div
@@ -598,14 +689,11 @@ export function Dashboard() {
                     </CardHeader>
                     <CardContent>
                       <div className="flex items-baseline gap-2">
-                        <p className="text-5xl font-bold text-gray-900">47</p>
-                        <span className="text-sm text-green-600 font-medium flex items-center gap-1">
-                          <Zap className="w-3 h-3" />
-                          +12% vs ontem
-                        </span>
+                        <p className="text-5xl font-bold text-gray-900">{messagesAnswered}</p>
+                        {/* A remover a estatística falsa de "vs ontem" para focar em dados reais */}
                       </div>
                       <p className="text-sm text-gray-500 mt-3">
-                        A IA respondeu automaticamente 47 conversas dos seus clientes
+                        A IA respondeu automaticamente a {messagesAnswered} interações.
                       </p>
                     </CardContent>
                   </Card>
@@ -620,19 +708,15 @@ export function Dashboard() {
                     <CardHeader>
                       <CardTitle className="flex items-center gap-2 text-lg">
                         <CalendarCheck className="w-5 h-5 text-purple-500" />
-                        Agendamentos Esta Semana
+                        Agendamentos Realizados
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
                       <div className="flex items-baseline gap-2">
-                        <p className="text-5xl font-bold text-gray-900">23</p>
-                        <span className="text-sm text-green-600 font-medium flex items-center gap-1">
-                          <Zap className="w-3 h-3" />
-                          +8 novos
-                        </span>
+                        <p className="text-5xl font-bold text-gray-900">{appointmentsMade}</p>
                       </div>
                       <p className="text-sm text-gray-500 mt-3">
-                        23 horários confirmados automaticamente esta semana
+                        {appointmentsMade} horários foram confirmados automaticamente pela IA.
                       </p>
                     </CardContent>
                   </Card>
@@ -652,14 +736,16 @@ export function Dashboard() {
                     </CardHeader>
                     <CardContent>
                       <div className="flex items-baseline gap-2">
-                        <p className="text-5xl font-bold text-gray-900">1h 55m</p>
+                        <p className="text-5xl font-bold text-gray-900">
+                          {calculateSavedTime(appointmentsMade)}
+                        </p>
                       </div>
                       <div className="mt-4 p-3 bg-emerald-50 rounded-lg border border-emerald-100">
                         <p className="text-sm text-emerald-800 font-medium">
-                          💡 Cálculo: 23 agendamentos × 5 min/cada
+                          💡 Cálculo: {appointmentsMade} agendamentos × 5 min
                         </p>
                         <p className="text-xs text-emerald-600 mt-1">
-                          Tempo que você economizou não fazendo agendamentos manuais
+                          Tempo devolvido ao seu dia.
                         </p>
                       </div>
                     </CardContent>
@@ -669,7 +755,6 @@ export function Dashboard() {
             )}
           </div>
 
-          {/* Footer */}
           <motion.footer
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
