@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from "motion/react";
 import {
   Calendar, LayoutDashboard, Clock, Settings, LogOut, Menu, X, QrCode,
   Bot, RefreshCw, Phone, CheckCircle2, BarChart3, MessageSquare,
-  CalendarCheck, Zap, Loader2, Check, Timer, Coffee, Moon, Sun, Copy
+  CalendarCheck, Zap, Loader2, Check, Timer, Coffee, Moon, Sun, Copy, AlertTriangle
 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/card";
 import { Button } from "../components/ui/button";
@@ -32,6 +32,7 @@ export function Dashboard() {
   const [qrCode, setQrCode] = useState<string | null>(null);
   const [isLoadingQR, setIsLoadingQR] = useState(false);
   const [isDisconnecting, setIsDisconnecting] = useState(false);
+  const [showConfirmDisconnect, setShowConfirmDisconnect] = useState(false); // Nova Feature
   const [isSavingAI, setIsSavingAI] = useState(false);
   const [isSavingSettings, setIsSavingSettings] = useState(false);
   const [isSavingHours, setIsSavingHours] = useState(false);
@@ -113,8 +114,6 @@ export function Dashboard() {
   };
 
   const handleDisconnectWhatsApp = async () => {
-    if (!confirm("Tem certeza que deseja desconectar o WhatsApp?")) return;
-    
     setIsDisconnecting(true);
     try {
       const response = await fetch(`${backendUrl}/api/whatsapp/disconnect`, {
@@ -126,6 +125,7 @@ export function Dashboard() {
       if (response.ok) {
         setIsWhatsAppConnected(false);
         setQrCode(null);
+        setShowConfirmDisconnect(false);
       }
     } catch (error) {
       console.error("Erro ao desconectar:", error);
@@ -246,11 +246,55 @@ export function Dashboard() {
                          isWhatsAppConnected ? <div className="text-center"><Check className="text-emerald-500 w-12 h-12 mx-auto" /><span className="text-emerald-600 font-bold">Conectado</span></div> :
                          qrCode ? <img src={qrCode} className="w-full h-full p-2" /> : <QrCode className="text-gray-300 w-20 h-20" />}
                       </div>
-                      <div className="grid grid-cols-2 gap-3 mt-6 w-full">
-                        <Button onClick={handleGenerateQR} disabled={isLoadingQR || isWhatsAppConnected} className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold">Gerar QR</Button>
-                        <Button variant="outline" className="text-red-500 hover:bg-red-50" onClick={handleDisconnectWhatsApp} disabled={!isWhatsAppConnected || isDisconnecting}>
-                          {isDisconnecting ? <Loader2 className="animate-spin" /> : "Desconectar"}
-                        </Button>
+                      
+                      <div className="mt-6 w-full max-w-sm">
+                        <AnimatePresence mode="wait">
+                          {!showConfirmDisconnect ? (
+                            <motion.div 
+                              key="normal" 
+                              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                              className="grid grid-cols-2 gap-3"
+                            >
+                              <Button onClick={handleGenerateQR} disabled={isLoadingQR || isWhatsAppConnected} className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold">Gerar QR</Button>
+                              <Button 
+                                variant="outline" 
+                                className="text-red-500 border-red-100 hover:bg-red-50" 
+                                onClick={() => setShowConfirmDisconnect(true)} 
+                                disabled={!isWhatsAppConnected || isDisconnecting}
+                              >
+                                Desconectar
+                              </Button>
+                            </motion.div>
+                          ) : (
+                            <motion.div 
+                              key="confirm" 
+                              initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }}
+                              className="bg-red-50 border border-red-200 p-3 rounded-xl flex flex-col items-center gap-3"
+                            >
+                              <p className="text-xs font-bold text-red-700 flex items-center gap-1">
+                                <AlertTriangle className="w-3 h-3" /> Tem certeza que deseja desconectar?
+                              </p>
+                              <div className="flex gap-2 w-full">
+                                <Button 
+                                  size="sm" 
+                                  className="flex-1 bg-red-600 hover:bg-red-700 text-white" 
+                                  onClick={handleDisconnectWhatsApp}
+                                  disabled={isDisconnecting}
+                                >
+                                  {isDisconnecting ? <Loader2 className="animate-spin w-4 h-4" /> : "Sim, desconectar"}
+                                </Button>
+                                <Button 
+                                  size="sm" 
+                                  variant="ghost" 
+                                  className="flex-1 text-gray-500" 
+                                  onClick={() => setShowConfirmDisconnect(false)}
+                                >
+                                  Não
+                                </Button>
+                              </div>
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
                       </div>
                     </CardContent>
                   </Card>
