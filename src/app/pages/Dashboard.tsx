@@ -40,7 +40,7 @@ export function Dashboard() {
   const [showHoursSuccess, setShowHoursSuccess] = useState(false);
   const [showSettingsSuccess, setShowSettingsSuccess] = useState(false);
 
-  // NOVO: Estado de Horários (Objeto JSONB)
+  // Estado de Horários (Objeto JSONB)
   const [workingHours, setWorkingHours] = useState<Record<string, any>>({});
   const [serviceDuration, setServiceDuration] = useState<number>(30);
   const [storeName, setStoreName] = useState("");
@@ -67,7 +67,6 @@ export function Dashboard() {
           setAppointmentsMade(data.appointments_count || 0);
           setServiceDuration(data.service_duration || 30);
 
-          // Carrega o JSONB ou inicializa um padrão
           if (data.working_hours) {
             setWorkingHours(data.working_hours);
           } else {
@@ -167,7 +166,8 @@ export function Dashboard() {
       {/* Mobile Header */}
       <div className="lg:hidden fixed top-0 left-0 right-0 z-50 bg-white border-b px-4 py-3 flex items-center justify-between shadow-sm">
         <div className="flex items-center gap-2">
-          <span className="font-bold text-lg bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">WAG BOT</span>
+          <img src="/logo.png" alt="WBOT Logo" className="w-8 h-8 object-contain" />
+          <span className="font-bold text-lg text-emerald-600">WBOT</span>
         </div>
         <Button variant="ghost" size="icon" onClick={() => setIsSidebarOpen(!isSidebarOpen)}>
           {isSidebarOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
@@ -179,7 +179,10 @@ export function Dashboard() {
         {(isSidebarOpen || isDesktop) && (
           <motion.aside initial={{ x: -280 }} animate={{ x: 0 }} exit={{ x: -280 }} className="fixed top-0 left-0 h-screen w-72 bg-white border-r z-40 flex flex-col">
             <div className="p-6 border-b">
-              <h1 className="font-bold text-xl bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">WAG BOT</h1>
+              <div className="flex items-center gap-3 mb-1">
+                <img src="/logo.png" alt="WBOT Logo" className="w-10 h-10 object-contain" />
+                <h1 className="font-bold text-2xl text-emerald-600">WBOT</h1>
+              </div>
               <p className="text-xs text-gray-500">Painel de Controle</p>
             </div>
             <nav className="flex-1 p-4 space-y-2">
@@ -213,24 +216,24 @@ export function Dashboard() {
               <>
                 <div className="lg:col-span-2">
                   <Card className="shadow-sm">
-                    <CardHeader><CardTitle className="flex items-center gap-2"><Phone className="text-green-500 w-5 h-5" /> Conexão WhatsApp</CardTitle></CardHeader>
+                    <CardHeader><CardTitle className="flex items-center gap-2"><Phone className="text-emerald-500 w-5 h-5" /> Conexão WhatsApp</CardTitle></CardHeader>
                     <CardContent className="flex flex-col items-center py-6">
-                      <div className="w-60 h-60 border-2 border-dashed rounded-2xl flex items-center justify-center bg-white shadow-inner overflow-hidden relative">
-                        {isLoadingQR ? <Loader2 className="animate-spin" /> : 
-                         isWhatsAppConnected ? <div className="text-center"><Check className="text-green-500 w-12 h-12 mx-auto" /><span className="text-green-600 font-bold">Conectado</span></div> :
+                      <div className="w-60 h-60 border-2 border-dashed rounded-2xl flex items-center justify-center bg-white shadow-inner overflow-hidden relative border-emerald-100">
+                        {isLoadingQR ? <Loader2 className="animate-spin text-emerald-500" /> : 
+                         isWhatsAppConnected ? <div className="text-center"><Check className="text-emerald-500 w-12 h-12 mx-auto" /><span className="text-emerald-600 font-bold">Conectado</span></div> :
                          qrCode ? <img src={qrCode} className="w-full h-full p-2" /> : <QrCode className="text-gray-300 w-20 h-20" />}
                       </div>
                       <div className="grid grid-cols-2 gap-3 mt-6 w-full">
-                        <Button onClick={handleGenerateQR} disabled={isLoadingQR || isWhatsAppConnected} className="bg-green-500 hover:bg-green-600">Gerar QR</Button>
-                        <Button variant="outline" className="text-red-500" onClick={() => {}}>Desconectar</Button>
+                        <Button onClick={handleGenerateQR} disabled={isLoadingQR || isWhatsAppConnected} className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold">Gerar QR</Button>
+                        <Button variant="outline" className="text-red-500 hover:bg-red-50" onClick={() => {}}>Desconectar</Button>
                       </div>
                     </CardContent>
                   </Card>
                 </div>
                 <Card className="shadow-sm">
-                  <CardHeader><CardTitle className="flex items-center gap-2"><Bot className="text-purple-600 w-5 h-5" /> IA Lucy</CardTitle></CardHeader>
+                  <CardHeader><CardTitle className="flex items-center gap-2"><Bot className="text-emerald-600 w-5 h-5" /> IA Lucy</CardTitle></CardHeader>
                   <CardContent className="flex flex-col items-center justify-center py-8">
-                    <Switch checked={isAIEnabled} onCheckedChange={handleToggleAI} disabled={isSavingAI} className="scale-150" />
+                    <Switch checked={isAIEnabled} onCheckedChange={handleToggleAI} disabled={isSavingAI} className="data-[state=checked]:bg-emerald-600 scale-150" />
                     <span className="mt-4 font-medium">{isAIEnabled ? "Ativado" : "Pausado"}</span>
                   </CardContent>
                 </Card>
@@ -242,15 +245,15 @@ export function Dashboard() {
                 <Card className="shadow-sm border-none">
                   <CardHeader className="flex flex-row justify-between items-center bg-white border-b rounded-t-xl">
                     <div>
-                      <CardTitle className="flex items-center gap-2 text-blue-600"><Clock /> Agenda por Dia</CardTitle>
+                      <CardTitle className="flex items-center gap-2 text-emerald-600"><Clock /> Agenda por Dia</CardTitle>
                       <CardDescription>Clique no dia para configurar turnos específicos.</CardDescription>
                     </div>
-                    <Button variant="outline" size="sm" onClick={copyToAllDays} className="gap-2"><Copy className="w-4 h-4" /> Replicar {selectedDay}</Button>
+                    <Button variant="outline" size="sm" onClick={copyToAllDays} className="gap-2 border-emerald-200 text-emerald-700 hover:bg-emerald-50"><Copy className="w-4 h-4" /> Replicar {selectedDay}</Button>
                   </CardHeader>
 
                   <div className="flex overflow-x-auto gap-2 p-4 bg-slate-100/50">
                     {DAYS_OF_WEEK.map(day => (
-                      <button key={day} onClick={() => setSelectedDay(day)} className={`px-4 py-2 rounded-lg text-xs font-bold whitespace-nowrap transition-all ${selectedDay === day ? "bg-blue-600 text-white shadow-md" : "bg-white text-gray-500 border"}`}>
+                      <button key={day} onClick={() => setSelectedDay(day)} className={`px-4 py-2 rounded-lg text-xs font-bold whitespace-nowrap transition-all ${selectedDay === day ? "bg-emerald-600 text-white shadow-md" : "bg-white text-gray-500 border border-emerald-100"}`}>
                         {day}
                       </button>
                     ))}
@@ -264,16 +267,16 @@ export function Dashboard() {
                     </div>
 
                     <div className="pt-6 border-t flex flex-col md:flex-row justify-between items-center gap-6">
-                      <div className="flex items-center gap-4 bg-slate-50 p-3 rounded-xl border">
+                      <div className="flex items-center gap-4 bg-slate-50 p-3 rounded-xl border border-emerald-50">
                         <Label className="text-sm font-bold text-gray-600">Duração:</Label>
-                        <Input type="number" value={serviceDuration} onChange={(e) => setServiceDuration(Number(e.target.value))} className="w-20 bg-white" />
+                        <Input type="number" value={serviceDuration} onChange={(e) => setServiceDuration(Number(e.target.value))} className="w-20 bg-white border-emerald-100" />
                         <span className="text-xs text-gray-400">minutos</span>
                       </div>
                       <div className="w-full md:w-auto">
-                        <Button onClick={handleSaveHours} disabled={isSavingHours} className="w-full md:w-72 bg-blue-600 h-12 font-bold">
+                        <Button onClick={handleSaveHours} disabled={isSavingHours} className="w-full md:w-72 bg-emerald-600 hover:bg-emerald-700 h-12 font-bold text-white shadow-lg">
                           {isSavingHours ? <Loader2 className="animate-spin" /> : "Salvar Toda a Agenda"}
                         </Button>
-                        {showHoursSuccess && <p className="text-center text-green-600 text-xs mt-2 font-bold">Configurações salvas!</p>}
+                        {showHoursSuccess && <p className="text-center text-emerald-600 text-xs mt-2 font-bold">Configurações salvas!</p>}
                       </div>
                     </div>
                   </CardContent>
@@ -283,25 +286,25 @@ export function Dashboard() {
 
             {activeSection === "analytics" && (
               <>
-                <AnalyticsCard icon={<MessageSquare className="text-blue-500" />} title="Mensagens Lucy" value={messagesAnswered} color="border-l-blue-500" />
-                <AnalyticsCard icon={<CalendarCheck className="text-purple-500" />} title="Agendamentos" value={appointmentsMade} color="border-l-purple-500" />
-                <AnalyticsCard icon={<Zap className="text-emerald-500" />} title="Tempo Ganho" value={`${(appointmentsMade * 5)}m`} color="border-l-emerald-500" />
+                <AnalyticsCard icon={<MessageSquare className="text-emerald-500" />} title="Mensagens Lucy" value={messagesAnswered} color="border-l-emerald-500" />
+                <AnalyticsCard icon={<CalendarCheck className="text-emerald-600" />} title="Agendamentos" value={appointmentsMade} color="border-l-emerald-600" />
+                <AnalyticsCard icon={<Zap className="text-emerald-400" />} title="Tempo Ganho" value={`${(appointmentsMade * 5)}m`} color="border-l-emerald-400" />
               </>
             )}
 
             {activeSection === "settings" && (
               <motion.div className="lg:col-span-3">
                 <Card className="shadow-sm">
-                  <CardHeader><CardTitle className="flex items-center gap-2"><Settings className="text-purple-600" /> Perfil da Loja</CardTitle></CardHeader>
+                  <CardHeader><CardTitle className="flex items-center gap-2"><Settings className="text-emerald-600" /> Perfil da Loja</CardTitle></CardHeader>
                   <CardContent className="space-y-4">
                     <div className="space-y-2">
                       <Label>Nome Comercial</Label>
-                      <Input value={storeName} onChange={(e) => setStoreName(e.target.value)} placeholder="Ex: Salão da Lucy" />
+                      <Input value={storeName} onChange={(e) => setStoreName(e.target.value)} placeholder="Ex: Salão da Lucy" className="border-emerald-100" />
                     </div>
-                    <Button onClick={handleSaveSettings} disabled={isSavingSettings} className="w-full bg-purple-600">
+                    <Button onClick={handleSaveSettings} disabled={isSavingSettings} className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold">
                       {isSavingSettings ? <Loader2 className="animate-spin" /> : "Salvar Alterações"}
                     </Button>
-                    {showSettingsSuccess && <p className="text-green-600 text-xs font-bold mt-2">Perfil atualizado!</p>}
+                    {showSettingsSuccess && <p className="text-emerald-600 text-xs font-bold mt-2">Perfil atualizado!</p>}
                   </CardContent>
                 </Card>
               </motion.div>
@@ -316,23 +319,28 @@ export function Dashboard() {
 // Componentes Auxiliares Locais
 function NavItem({ icon, label, active, onClick }: any) {
   return (
-    <button onClick={onClick} className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${active ? "bg-blue-50 text-blue-600 font-semibold" : "text-gray-700 hover:bg-gray-50"}`}>
-      {icon} <span>{label}</span>
+    <button onClick={onClick} className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${active ? "bg-emerald-50 text-emerald-600 font-semibold shadow-sm" : "text-gray-700 hover:bg-emerald-50/50"}`}>
+      <span className={active ? "text-emerald-600" : "text-gray-400"}>{icon}</span>
+      <span>{label}</span>
     </button>
   );
 }
 
 function TurnoCard({ title, icon, color, active, onToggle, start, end, onStart, onEnd }: any) {
-  const colors: any = { amber: "bg-amber-50 border-amber-200 text-amber-700", emerald: "bg-emerald-50 border-emerald-200 text-emerald-700", indigo: "bg-indigo-50 border-indigo-200 text-indigo-700" };
+  const colors: any = { 
+    amber: "bg-amber-50 border-amber-200 text-amber-700", 
+    emerald: "bg-emerald-50 border-emerald-200 text-emerald-700", 
+    indigo: "bg-indigo-50 border-indigo-200 text-indigo-700" 
+  };
   return (
     <div className={`p-4 rounded-xl border-2 transition-all ${active ? colors[color] : "bg-gray-50 border-transparent opacity-40"}`}>
       <div className="flex items-center justify-between mb-4">
         <Label className="flex items-center gap-2 font-bold">{icon} {title}</Label>
-        <Switch checked={active} onCheckedChange={onToggle} />
+        <Switch checked={active} onCheckedChange={onToggle} className="data-[state=checked]:bg-emerald-600" />
       </div>
       <div className="grid grid-cols-2 gap-2">
-        <Input type="time" value={start} onChange={(e) => onStart(e.target.value)} disabled={!active} className="bg-white" />
-        <Input type="time" value={end} onChange={(e) => onEnd(e.target.value)} disabled={!active} className="bg-white" />
+        <Input type="time" value={start} onChange={(e) => onStart(e.target.value)} disabled={!active} className="bg-white border-emerald-50" />
+        <Input type="time" value={end} onChange={(e) => onEnd(e.target.value)} disabled={!active} className="bg-white border-emerald-50" />
       </div>
     </div>
   );
