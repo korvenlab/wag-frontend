@@ -8,14 +8,20 @@ export function LoginPage() {
 
   const handleGoogleLogin = async () => {
     try {
-      console.log("Iniciando login seguro com Supabase + Google...");
+      console.log("Iniciando login seguro com Supabase + Google (Permissão de Calendário)...");
       
-      // A grande magia acontece aqui. Dizemos ao Supabase para abrir o pop-up do Google.
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
           // Para onde o Supabase deve redirecionar o utilizador DEPOIS de logar com sucesso
           redirectTo: `${window.location.origin}/dashboard`,
+          // ADICIONADO: Escopos para a Lucy conseguir ler e criar eventos na agenda
+          scopes: 'https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/calendar.events',
+          // ADICIONADO: Força o acesso offline para recebermos o refresh_token
+          queryParams: {
+            access_type: 'offline',
+            prompt: 'consent',
+          },
         }
       });
 
