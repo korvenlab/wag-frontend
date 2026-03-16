@@ -31,6 +31,7 @@ export function Dashboard() {
   const [isAIEnabled, setIsAIEnabled] = useState(true);
   const [qrCode, setQrCode] = useState<string | null>(null);
   const [isLoadingQR, setIsLoadingQR] = useState(false);
+  const [isDisconnecting, setIsDisconnecting] = useState(false);
   const [isSavingAI, setIsSavingAI] = useState(false);
   const [isSavingSettings, setIsSavingSettings] = useState(false);
   const [isSavingHours, setIsSavingHours] = useState(false);
@@ -109,6 +110,28 @@ export function Dashboard() {
         setQrCode(data.qrCode);
       }
     } catch (error) { console.error(error); } finally { setIsLoadingQR(false); }
+  };
+
+  const handleDisconnectWhatsApp = async () => {
+    if (!confirm("Tem certeza que deseja desconectar o WhatsApp?")) return;
+    
+    setIsDisconnecting(true);
+    try {
+      const response = await fetch(`${backendUrl}/api/whatsapp/disconnect`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: user?.email }),
+      });
+      
+      if (response.ok) {
+        setIsWhatsAppConnected(false);
+        setQrCode(null);
+      }
+    } catch (error) {
+      console.error("Erro ao desconectar:", error);
+    } finally {
+      setIsDisconnecting(false);
+    }
   };
 
   const handleToggleAI = async (checked: boolean) => {
@@ -197,7 +220,7 @@ export function Dashboard() {
                 <p className="text-xs text-gray-500 truncate">{user?.email}</p>
               </div>
               <Button variant="ghost" className="w-full justify-start text-red-600 hover:bg-red-50" onClick={handleLogout}>
-                <LogOut className="w-4 h-4 mr-2" /> Desconectar
+                <LogOut className="w-4 h-4 mr-2" /> Desconectar WBOT
               </Button>
             </div>
           </motion.aside>
@@ -225,13 +248,15 @@ export function Dashboard() {
                       </div>
                       <div className="grid grid-cols-2 gap-3 mt-6 w-full">
                         <Button onClick={handleGenerateQR} disabled={isLoadingQR || isWhatsAppConnected} className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold">Gerar QR</Button>
-                        <Button variant="outline" className="text-red-500 hover:bg-red-50" onClick={() => {}}>Desconectar</Button>
+                        <Button variant="outline" className="text-red-500 hover:bg-red-50" onClick={handleDisconnectWhatsApp} disabled={!isWhatsAppConnected || isDisconnecting}>
+                          {isDisconnecting ? <Loader2 className="animate-spin" /> : "Desconectar"}
+                        </Button>
                       </div>
                     </CardContent>
                   </Card>
                 </div>
                 <Card className="shadow-sm">
-                  <CardHeader><CardTitle className="flex items-center gap-2"><Bot className="text-emerald-600 w-5 h-5" /> IA Lucy</CardTitle></CardHeader>
+                  <CardHeader><CardTitle className="flex items-center gap-2"><Bot className="text-emerald-600 w-5 h-5" /> IA WBOT</CardTitle></CardHeader>
                   <CardContent className="flex flex-col items-center justify-center py-8">
                     <Switch checked={isAIEnabled} onCheckedChange={handleToggleAI} disabled={isSavingAI} className="data-[state=checked]:bg-emerald-600 scale-150" />
                     <span className="mt-4 font-medium">{isAIEnabled ? "Ativado" : "Pausado"}</span>
@@ -286,7 +311,7 @@ export function Dashboard() {
 
             {activeSection === "analytics" && (
               <>
-                <AnalyticsCard icon={<MessageSquare className="text-emerald-500" />} title="Mensagens Lucy" value={messagesAnswered} color="border-l-emerald-500" />
+                <AnalyticsCard icon={<MessageSquare className="text-emerald-500" />} title="Mensagens WBOT" value={messagesAnswered} color="border-l-emerald-500" />
                 <AnalyticsCard icon={<CalendarCheck className="text-emerald-600" />} title="Agendamentos" value={appointmentsMade} color="border-l-emerald-600" />
                 <AnalyticsCard icon={<Zap className="text-emerald-400" />} title="Tempo Ganho" value={`${(appointmentsMade * 5)}m`} color="border-l-emerald-400" />
               </>
@@ -299,7 +324,7 @@ export function Dashboard() {
                   <CardContent className="space-y-4">
                     <div className="space-y-2">
                       <Label>Nome Comercial</Label>
-                      <Input value={storeName} onChange={(e) => setStoreName(e.target.value)} placeholder="Ex: Salão da Lucy" className="border-emerald-100" />
+                      <Input value={storeName} onChange={(e) => setStoreName(e.target.value)} placeholder="Ex: Salão da WBOT" className="border-emerald-100" />
                     </div>
                     <Button onClick={handleSaveSettings} disabled={isSavingSettings} className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold">
                       {isSavingSettings ? <Loader2 className="animate-spin" /> : "Salvar Alterações"}
