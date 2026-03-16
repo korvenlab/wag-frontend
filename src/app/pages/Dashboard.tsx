@@ -2,8 +2,8 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import {
   Calendar, LayoutDashboard, Clock, Settings, LogOut, Menu, X, QrCode,
-  Bot, RefreshCw, Phone, CheckCircle2, BarChart3, MessageSquare,
-  CalendarCheck, Zap, Loader2, Check, Timer, Coffee, Moon, Sun, Copy, AlertTriangle, Link2
+  Bot, Phone, CheckCircle2, BarChart3, MessageSquare,
+  CalendarCheck, Zap, Loader2, Check, Timer, Coffee, Moon, Sun, Copy, AlertTriangle
 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/card";
 import { Button } from "../components/ui/button";
@@ -37,7 +37,7 @@ export function Dashboard() {
   const [isSavingSettings, setIsSavingSettings] = useState(false);
   const [isSavingHours, setIsSavingHours] = useState(false);
   const [isWhatsAppConnected, setIsWhatsAppConnected] = useState(false);
-  const [isGoogleConnected, setIsGoogleConnected] = useState(false); // NOVO: Status Google
+  const [isGoogleConnected, setIsGoogleConnected] = useState(false);
 
   // Estados de Feedback Visual
   const [showHoursSuccess, setShowHoursSuccess] = useState(false);
@@ -70,7 +70,7 @@ export function Dashboard() {
           setAppointmentsMade(data.appointments_count || 0);
           setServiceDuration(data.service_duration || 30);
           
-          // Verifica se o objeto googleAuth existe e tem o refreshToken
+          // Status da agenda interna
           setIsGoogleConnected(!!(data.googleAuth && data.googleAuth.refreshToken));
 
           if (data.working_hours) {
@@ -181,17 +181,6 @@ export function Dashboard() {
     } catch (error) { console.error(error); } finally { setIsSavingSettings(false); }
   };
 
-  // Função para reconectar Google caso falhe a sincronização automática
-  const handleReconnectGoogle = async () => {
-    try {
-      const res = await fetch(`${backendUrl}/api/auth/google/url?email=${user?.email}`);
-      const { url } = await res.json();
-      window.location.href = url;
-    } catch (err) {
-      console.error("Erro ao redirecionar para Google", err);
-    }
-  };
-
   if (!user || !user.hasPaid) return null;
 
   return (
@@ -244,10 +233,13 @@ export function Dashboard() {
               <h2 className="text-3xl font-bold text-gray-900">Olá, {storeName ? storeName.split(' ')[0] : 'Admin'}! 👋</h2>
               <p className="text-gray-600 mt-1">Gerencie sua automação de agendamentos</p>
             </div>
-            {/* Status do Google na Header do Dashboard */}
-            <div className={`flex items-center gap-2 px-4 py-2 rounded-full border text-sm font-medium ${isGoogleConnected ? "bg-emerald-50 text-emerald-700 border-emerald-200" : "bg-amber-50 text-amber-700 border-amber-200"}`}>
-              {isGoogleConnected ? <><CheckCircle2 className="w-4 h-4" /> Agenda Google Conectada</> : <><AlertTriangle className="w-4 h-4" /> Agenda Desconectada</>}
-            </div>
+            
+            {/* Status do Google sutil na Header - Só mostra se estiver conectado */}
+            {isGoogleConnected && (
+              <div className="flex items-center gap-2 px-4 py-2 rounded-full border border-emerald-200 bg-emerald-50 text-emerald-700 text-sm font-medium">
+                <CheckCircle2 className="w-4 h-4" /> Agenda Sincronizada
+              </div>
+            )}
           </motion.div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -299,23 +291,14 @@ export function Dashboard() {
                     </CardContent>
                   </Card>
 
-                  {/* Card de Conexão Agenda Google */}
+                  {/* Card informativo de Sincronização Google */}
                   <Card className="shadow-sm border-none bg-gradient-to-br from-white to-blue-50/50">
-                    <CardHeader><CardTitle className="flex items-center gap-2 text-sm"><Calendar className="text-blue-500 w-4 h-4" /> Sincronização Google</CardTitle></CardHeader>
+                    <CardHeader><CardTitle className="flex items-center gap-2 text-sm"><Calendar className="text-blue-500 w-4 h-4" /> Google Calendar</CardTitle></CardHeader>
                     <CardContent>
-                      {isGoogleConnected ? (
-                        <div className="flex items-center gap-2 text-emerald-600 bg-emerald-50 p-3 rounded-xl border border-emerald-100">
-                          <CheckCircle2 className="w-5 h-5" />
-                          <span className="text-xs font-bold">Lucy tem acesso total à sua agenda.</span>
-                        </div>
-                      ) : (
-                        <div className="space-y-3">
-                          <p className="text-xs text-gray-500">A Lucy precisa de acesso para agendar horários automaticamente.</p>
-                          <Button onClick={handleReconnectGoogle} variant="outline" className="w-full text-blue-600 border-blue-200 hover:bg-blue-50 gap-2 text-xs h-9">
-                            <Link2 className="w-3 h-3" /> Conectar Agenda Manualmente
-                          </Button>
-                        </div>
-                      )}
+                      <div className="flex items-center gap-2 text-blue-600 bg-blue-50 p-3 rounded-xl border border-blue-100">
+                        <CheckCircle2 className="w-5 h-5" />
+                        <span className="text-xs font-bold">A Lucy já sincronizou seus eventos e horários automaticamente.</span>
+                      </div>
                     </CardContent>
                   </Card>
                 </div>
