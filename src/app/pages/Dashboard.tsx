@@ -19,7 +19,8 @@ import {
   Zap,
   Mail,
   Store,
-  Loader2
+  Loader2,
+  Check
 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/card";
 import { Button } from "../components/ui/button";
@@ -40,6 +41,12 @@ export function Dashboard() {
   const [isLoadingQR, setIsLoadingQR] = useState(false);
   const [isSavingAI, setIsSavingAI] = useState(false);
   const [isSavingSettings, setIsSavingSettings] = useState(false);
+  const [isSavingHours, setIsSavingHours] = useState(false);
+  const [isWhatsAppConnected, setIsWhatsAppConnected] = useState(false);
+
+  // Estados de Feedback Visual (Sucesso)
+  const [showHoursSuccess, setShowHoursSuccess] = useState(false);
+  const [showSettingsSuccess, setShowSettingsSuccess] = useState(false);
 
   // Estados de Configuração da Loja (Reais)
   const [startTime, setStartTime] = useState("08:00");
@@ -75,27 +82,22 @@ export function Dashboard() {
     { value: 90, label: "1:30h" },
   ];
 
-  // ==========================================
-  // CARREGAR DADOS INICIAIS DO UTILIZADOR
-  // ==========================================
   useEffect(() => {
     const fetchUserData = async () => {
       if (!user?.email) return;
 
       try {
-        // Buscar dados do perfil na sua API (Nova rota que criaremos a seguir)
         const response = await fetch(`${backendUrl}/api/user/profile?email=${user.email}`);
         
         if (response.ok) {
           const data = await response.json();
           
-          // Preenche a tela com os dados que vieram do banco
           setStoreName(data.store_name || "");
           setIsAIEnabled(data.is_ai_enabled ?? true);
           setStartTime(data.start_time || "08:00");
           setEndTime(data.end_time || "18:00");
+          setIsWhatsAppConnected(!!data.whatsapp_session); // Se tiver algo na coluna, está conectado
           
-          // Se o banco retornar dias como string JSON, nós convertemos. Se estiver vazio, poe padrão.
           if (data.active_days) {
             setActiveDays(JSON.parse(data.active_days));
           } else {
@@ -116,8 +118,6 @@ export function Dashboard() {
     }
   }, [user, backendUrl]);
 
-
-  // PROTEÇÃO DE ROTA
   useEffect(() => {
     if (user) {
       if (!user.hasPaid) {
@@ -192,17 +192,15 @@ export function Dashboard() {
 
       if (response.ok) {
         setQrCode(null);
+        setIsWhatsAppConnected(false);
       }
     } catch (error) {
       console.error("Erro ao tentar desconectar:", error);
     }
   };
 
-  // ==========================================
-  // SALVAR HORÁRIOS
-  // ==========================================
   const handleSaveHours = async () => {
-    console.log("Salvando horários...");
+    setIsSavingHours(true);
     try {
       await fetch(`${backendUrl}/api/settings/hours`, {
         method: "POST",
@@ -215,16 +213,15 @@ export function Dashboard() {
           serviceDuration
         }),
       });
-      alert("Horários atualizados com sucesso!");
+      setShowHoursSuccess(true);
+      setTimeout(() => setShowHoursSuccess(false), 3000);
     } catch (error) {
       console.error("Erro ao salvar horários:", error);
-      alert("Erro ao salvar horários.");
+    } finally {
+      setIsSavingHours(false);
     }
   };
 
-  // ==========================================
-  // SALVAR NOME DA LOJA
-  // ==========================================
   const handleSaveSettings = async () => {
     setIsSavingSettings(true);
     try {
@@ -236,10 +233,10 @@ export function Dashboard() {
           storeName
         }),
       });
-      alert("Nome da loja atualizado!");
+      setShowSettingsSuccess(true);
+      setTimeout(() => setShowSettingsSuccess(false), 3000);
     } catch (error) {
       console.error("Erro ao salvar configurações:", error);
-      alert("Erro ao salvar o nome da loja.");
     } finally {
       setIsSavingSettings(false);
     }
@@ -251,19 +248,15 @@ export function Dashboard() {
     );
   };
 
-  // Cálculo matemático do tempo economizado
   const calculateSavedTime = (appointments: number) => {
-    const totalMinutes = appointments * 5; // 5 minutos gastos por cada agendamento
+    const totalMinutes = appointments * 5;
     const hours = Math.floor(totalMinutes / 60);
     const minutes = totalMinutes % 60;
-    
     if (hours === 0) return `${minutes}m`;
     return `${hours}h ${minutes}m`;
   };
 
-  if (!user || !user.hasPaid) {
-    return null; 
-  }
+  if (!user || !user.hasPaid) return null;
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -275,11 +268,7 @@ export function Dashboard() {
             WAG BOT
           </span>
         </div>
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-        >
+        <Button variant="ghost" size="icon" onClick={() => setIsSidebarOpen(!isSidebarOpen)}>
           {isSidebarOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
         </Button>
       </div>
@@ -294,7 +283,6 @@ export function Dashboard() {
             transition={{ duration: 0.3, ease: "easeInOut" }}
             className="fixed top-0 left-0 h-screen w-72 bg-white border-r border-gray-200 shadow-sm z-40 flex flex-col"
           >
-            {/* Logo */}
             <div className="p-6 border-b border-gray-100">
               <div className="flex items-center gap-3">
                 <img src="/logo.png" alt="WAG BOT" className="w-10 h-10" />
@@ -307,153 +295,86 @@ export function Dashboard() {
               </div>
             </div>
 
-            {/* Navigation */}
             <nav className="flex-1 p-4 space-y-2">
-              <NavItem
-                icon={<LayoutDashboard className="w-5 h-5" />}
-                label="Visão Geral"
-                active={activeSection === "overview"}
-                onClick={() => {
-                  setActiveSection("overview");
-                  setIsSidebarOpen(false);
-                }}
-              />
-              <NavItem
-                icon={<BarChart3 className="w-5 h-5" />}
-                label="Analytics"
-                active={activeSection === "analytics"}
-                onClick={() => {
-                  setActiveSection("analytics");
-                  setIsSidebarOpen(false);
-                }}
-              />
-              <NavItem
-                icon={<Clock className="w-5 h-5" />}
-                label="Horários"
-                active={activeSection === "hours"}
-                onClick={() => {
-                  setActiveSection("hours");
-                  setIsSidebarOpen(false);
-                }}
-              />
-              <NavItem
-                icon={<Settings className="w-5 h-5" />}
-                label="Configurações"
-                active={activeSection === "settings"}
-                onClick={() => {
-                  setActiveSection("settings");
-                  setIsSidebarOpen(false);
-                }}
-              />
+              <NavItem icon={<LayoutDashboard className="w-5 h-5" />} label="Visão Geral" active={activeSection === "overview"} onClick={() => { setActiveSection("overview"); setIsSidebarOpen(false); }} />
+              <NavItem icon={<BarChart3 className="w-5 h-5" />} label="Analytics" active={activeSection === "analytics"} onClick={() => { setActiveSection("analytics"); setIsSidebarOpen(false); }} />
+              <NavItem icon={<Clock className="w-5 h-5" />} label="Horários" active={activeSection === "hours"} onClick={() => { setActiveSection("hours"); setIsSidebarOpen(false); }} />
+              <NavItem icon={<Settings className="w-5 h-5" />} label="Configurações" active={activeSection === "settings"} onClick={() => { setActiveSection("settings"); setIsSidebarOpen(false); }} />
             </nav>
 
-            {/* User Info & Logout */}
             <div className="p-4 border-t border-gray-100 space-y-3">
               <div className="bg-slate-50 rounded-lg p-3">
                 <p className="text-xs text-gray-500 mb-1">Loja de:</p>
-                {/* Mostra o nome da loja na barra lateral */}
-                <p className="text-sm font-bold text-gray-900 truncate">
-                  {storeName || "Minha Loja"}
-                </p>
+                <p className="text-sm font-bold text-gray-900 truncate">{storeName || "Minha Loja"}</p>
                 <p className="text-xs text-gray-500 mt-1 truncate">{user?.email}</p>
               </div>
-              <Button
-                variant="ghost"
-                className="w-full justify-start text-red-600 hover:text-red-700 hover:bg-red-50"
-                onClick={handleLogout}
-              >
+              <Button variant="ghost" className="w-full justify-start text-red-600 hover:text-red-700 hover:bg-red-50" onClick={handleLogout}>
                 <LogOut className="w-4 h-4 mr-2" />
-                Desconectar Conta Google
+                Desconectar
               </Button>
             </div>
           </motion.aside>
         )}
       </AnimatePresence>
 
-      {/* Main Content */}
       <div className="lg:ml-72 pt-16 lg:pt-0">
         <div className="max-w-7xl mx-auto p-6 lg:p-8 space-y-8">
-          {/* Header */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-          >
-            <h2 className="text-3xl font-bold text-gray-900">
-              Olá, {storeName ? storeName.split(' ')[0] : 'Admin'}! 👋
-            </h2>
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
+            <h2 className="text-3xl font-bold text-gray-900">Olá, {storeName ? storeName.split(' ')[0] : 'Admin'}! 👋</h2>
             <p className="text-gray-600 mt-1">Gerencie sua automação de agendamentos</p>
           </motion.div>
 
-          {/* Dashboard Grid */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Visão Geral - Cards A e B */}
             {activeSection === "overview" && (
               <>
-                <motion.div
-                  initial={{ opacity: 0, y: 30 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.5, delay: 0.1 }}
-                  className="lg:col-span-2"
-                >
+                <motion.div className="lg:col-span-2">
                   <Card className="shadow-sm">
                     <CardHeader>
                       <CardTitle className="flex items-center gap-2">
-                        <Phone className="w-5 h-5 text-[#25D366]" />
+                        <Phone className={`w-5 h-5 ${isWhatsAppConnected ? "text-[#25D366]" : "text-gray-400"}`} />
                         Status da Conexão
                       </CardTitle>
-                      <CardDescription>Conecte seu WhatsApp para começar a automatizar</CardDescription>
+                      <CardDescription>
+                        {isWhatsAppConnected ? "Seu WhatsApp está pronto para atender" : "Conecte seu WhatsApp para começar"}
+                      </CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-6">
-                      <div className="bg-blue-50 border border-blue-100 rounded-xl p-4">
-                        <h4 className="font-semibold text-sm text-blue-900 mb-3">Como conectar:</h4>
-                        <ol className="space-y-2 text-sm text-blue-800">
-                          <li className="flex items-start gap-2">
-                            <span className="font-bold">1.</span>
-                            <span>Abra o WhatsApp no seu celular</span>
-                          </li>
-                          <li className="flex items-start gap-2">
-                            <span className="font-bold">2.</span>
-                            <span>Vá em Aparelhos Conectados</span>
-                          </li>
-                          <li className="flex items-start gap-2">
-                            <span className="font-bold">3.</span>
-                            <span>Leia o QR Code abaixo</span>
-                          </li>
-                        </ol>
-                      </div>
+                      {!isWhatsAppConnected && (
+                        <div className="bg-blue-50 border border-blue-100 rounded-xl p-4">
+                          <h4 className="font-semibold text-sm text-blue-900 mb-2">Como conectar:</h4>
+                          <ol className="space-y-1 text-xs text-blue-800">
+                            <li>1. Abra o WhatsApp no celular</li>
+                            <li>2. Vá em Aparelhos Conectados</li>
+                            <li>3. Leia o QR Code abaixo</li>
+                          </ol>
+                        </div>
+                      )}
 
-                      {/* QR Code Area */}
                       <div className="flex flex-col items-center py-6">
                         <div className="w-60 h-60 border-2 border-dashed border-gray-300 rounded-2xl flex items-center justify-center bg-white shadow-inner overflow-hidden relative">
                           {isLoadingQR ? (
                             <Loader2 className="w-10 h-10 text-gray-400 animate-spin" />
+                          ) : isWhatsAppConnected ? (
+                            <div className="flex flex-col items-center gap-2 animate-in zoom-in duration-300">
+                                <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center">
+                                    <Check className="w-8 h-8 text-green-600" />
+                                </div>
+                                <span className="font-bold text-green-600">Conectado com sucesso ✔</span>
+                            </div>
                           ) : qrCode ? (
-                            <img src={qrCode} alt="WhatsApp QR Code" className="w-full h-full object-cover p-2" />
+                            <img src={qrCode} alt="QR Code" className="w-full h-full object-cover p-2" />
                           ) : (
                             <QrCode className="w-24 h-24 text-gray-300" />
                           )}
                         </div>
-                        <div className="mt-4 flex items-center gap-2 text-sm text-gray-600">
-                          <div className={`w-2 h-2 rounded-full ${qrCode ? "bg-green-500" : "bg-amber-500 animate-pulse"}`} />
-                          <span>{qrCode ? "Pronto para leitura!" : "A aguardar leitura do código..."}</span>
-                        </div>
                       </div>
 
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        <Button
-                          onClick={handleGenerateQR}
-                          disabled={isLoadingQR}
-                          className="bg-[#25D366] hover:bg-[#1fb855] text-white disabled:opacity-70"
-                        >
+                        <Button onClick={handleGenerateQR} disabled={isLoadingQR || isWhatsAppConnected} className="bg-[#25D366] hover:bg-[#1fb855] text-white">
                           {isLoadingQR ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <RefreshCw className="w-4 h-4 mr-2" />}
-                          {isLoadingQR ? "Gerando..." : "Gerar Novo QR Code"}
+                          Gerar Novo QR Code
                         </Button>
-                        <Button
-                          onClick={handleDisconnectWhatsApp}
-                          variant="outline"
-                          className="border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300"
-                        >
+                        <Button onClick={handleDisconnectWhatsApp} variant="outline" className="text-red-600 border-red-200">
                           <LogOut className="w-4 h-4 mr-2" />
                           Sair do WhatsApp
                         </Button>
@@ -462,44 +383,26 @@ export function Dashboard() {
                   </Card>
                 </motion.div>
 
-                <motion.div
-                  initial={{ opacity: 0, y: 30 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.5, delay: 0.2 }}
-                >
+                <motion.div>
                   <Card className="shadow-sm h-full">
                     <CardHeader>
                       <CardTitle className="flex items-center gap-2">
                         <Bot className="w-5 h-5 text-[#6F42C1]" />
                         Atendimento Automático
                       </CardTitle>
-                      <CardDescription>
-                        A IA está ativada e responderá às mensagens dos seus clientes automaticamente.
-                      </CardDescription>
                     </CardHeader>
                     <CardContent className="flex flex-col items-center justify-center py-8">
                       <div className="flex items-center gap-4">
-                        <Label htmlFor="ai-toggle" className="text-base font-semibold flex items-center gap-2">
+                        <Label htmlFor="ai-toggle" className="text-base font-semibold">
                           {isAIEnabled ? "Ligado" : "Desligado"}
-                          {isSavingAI && <Loader2 className="w-3 h-3 text-gray-400 animate-spin" />}
                         </Label>
-                        <Switch
-                          id="ai-toggle"
-                          checked={isAIEnabled}
-                          onCheckedChange={handleToggleAI}
-                          disabled={isSavingAI}
-                          className="scale-150"
-                        />
+                        <Switch id="ai-toggle" checked={isAIEnabled} onCheckedChange={handleToggleAI} disabled={isSavingAI} className="scale-150" />
                       </div>
                       {isAIEnabled && (
-                        <motion.div
-                          initial={{ opacity: 0, scale: 0.8 }}
-                          animate={{ opacity: 1, scale: 1 }}
-                          className="mt-6 flex items-center gap-2 text-sm text-green-600 font-medium"
-                        >
+                        <div className="mt-6 flex items-center gap-2 text-sm text-green-600 font-medium">
                           <CheckCircle2 className="w-4 h-4" />
-                          <span>IA Ativa</span>
-                        </motion.div>
+                          IA Ativa
+                        </div>
                       )}
                     </CardContent>
                   </Card>
@@ -507,94 +410,40 @@ export function Dashboard() {
               </>
             )}
 
-            {/* Horários */}
             {activeSection === "hours" && (
-              <motion.div
-                initial={{ opacity: 0, y: 30 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.1 }}
-                className="lg:col-span-3"
-              >
+              <motion.div className="lg:col-span-3">
                 <Card className="shadow-sm">
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
-                      <Clock className="w-5 h-5 text-[#007BFF]" />
-                      Horário de Funcionamento
+                      <Clock className="w-5 h-5 text-[#007BFF]" /> Horários
                     </CardTitle>
-                    <CardDescription>
-                      A IA só marcará agendamentos neste intervalo.
-                    </CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-6">
-                    <div className="space-y-3">
-                      <Label className="text-base">Dias de Funcionamento</Label>
-                      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-2">
-                        {daysOfWeek.map((day) => (
-                          <button
-                            key={day}
-                            onClick={() => toggleDay(day)}
-                            className={`px-3 py-2.5 rounded-lg text-sm font-medium transition-all border-2 ${
-                              activeDays.includes(day)
-                                ? "bg-[#007BFF] border-[#007BFF] text-white shadow-sm"
-                                : "bg-white border-gray-200 text-gray-600 hover:border-gray-300 hover:bg-gray-50"
-                            }`}
-                          >
-                            {day.slice(0, 3)}
-                          </button>
-                        ))}
-                      </div>
-                      <p className="text-xs text-gray-500">
-                        Clique nos dias para ativar/desativar o funcionamento do bot
-                      </p>
+                    <div className="grid grid-cols-2 sm:grid-cols-7 gap-2">
+                      {daysOfWeek.map((day) => (
+                        <button key={day} onClick={() => toggleDay(day)} className={`px-3 py-2.5 rounded-lg text-sm font-medium border-2 transition-all ${activeDays.includes(day) ? "bg-[#007BFF] border-[#007BFF] text-white" : "bg-white border-gray-200 text-gray-600"}`}>
+                          {day.slice(0, 3)}
+                        </button>
+                      ))}
                     </div>
-
-                    <div className="space-y-3 pt-4 border-t border-gray-100">
-                      <Label className="text-base">Duração do Atendimento</Label>
-                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                        {durationOptions.map((option) => (
-                          <button
-                            key={option.value}
-                            onClick={() => setServiceDuration(option.value)}
-                            className={`px-4 py-3 rounded-lg text-sm font-medium transition-all border-2 ${
-                              serviceDuration === option.value
-                                ? "bg-[#6F42C1] border-[#6F42C1] text-white shadow-sm"
-                                : "bg-white border-gray-200 text-gray-600 hover:border-gray-300 hover:bg-gray-50"
-                            }`}
-                          >
-                            {option.label}
-                          </button>
-                        ))}
-                      </div>
-                      <p className="text-xs text-gray-500">
-                        Tempo de marcação entre um horário e outro
-                      </p>
-                    </div>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-end pt-4 border-t border-gray-100">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-end pt-4 border-t">
                       <div className="space-y-2">
-                        <Label htmlFor="start-time">Das</Label>
-                        <Input
-                          id="start-time"
-                          type="time"
-                          value={startTime}
-                          onChange={(e) => setStartTime(e.target.value)}
-                          className="text-base"
-                        />
+                        <Label>Das</Label>
+                        <Input type="time" value={startTime} onChange={(e) => setStartTime(e.target.value)} />
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="end-time">Até às</Label>
-                        <Input
-                          id="end-time"
-                          type="time"
-                          value={endTime}
-                          onChange={(e) => setEndTime(e.target.value)}
-                          className="text-base"
-                        />
+                        <Label>Até às</Label>
+                        <Input type="time" value={endTime} onChange={(e) => setEndTime(e.target.value)} />
                       </div>
                       <div className="sm:col-span-2">
-                        <Button onClick={handleSaveHours} className="w-full bg-[#007BFF] hover:bg-[#0056b3]">
-                          Salvar Horários
+                        <Button onClick={handleSaveHours} disabled={isSavingHours} className="w-full bg-[#007BFF]">
+                          {isSavingHours ? <Loader2 className="w-4 h-4 animate-spin" /> : "Salvar Horários"}
                         </Button>
+                        {showHoursSuccess && (
+                          <p className="text-green-600 text-xs font-medium mt-2 flex items-center gap-1 animate-in fade-in">
+                            <Check className="w-3 h-3" /> Salvo com sucesso!
+                          </p>
+                        )}
                       </div>
                     </div>
                   </CardContent>
@@ -602,207 +451,74 @@ export function Dashboard() {
               </motion.div>
             )}
 
-            {/* Configurações */}
             {activeSection === "settings" && (
-              <motion.div
-                initial={{ opacity: 0, y: 30 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.1 }}
-                className="lg:col-span-3"
-              >
+              <motion.div className="lg:col-span-3">
                 <Card className="shadow-sm">
                   <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <Settings className="w-5 h-5 text-[#6F42C1]" />
-                      Configurações
-                    </CardTitle>
-                    <CardDescription>
-                      Personalize o comportamento do seu bot
-                    </CardDescription>
+                    <CardTitle className="flex items-center gap-2"><Settings className="w-5 h-5 text-[#6F42C1]" /> Configurações</CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-6">
                     <div className="space-y-3">
-                      <Label className="flex items-center gap-2 text-base">
-                        <Mail className="w-4 h-4 text-gray-500" />
-                        Gmail Conectado
-                      </Label>
-                      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center border-2 border-blue-300">
-                            <Mail className="w-5 h-5 text-blue-600" />
-                          </div>
-                          <div className="flex-1">
-                            <p className="text-sm font-semibold text-gray-900">{user?.email}</p>
-                            <p className="text-xs text-gray-500">Conta autenticada com Google</p>
-                          </div>
-                        </div>
-                      </div>
+                      <Label>Nome da Loja</Label>
+                      <Input value={storeName} onChange={(e) => setStoreName(e.target.value)} placeholder="Ex: Salão da Lucy" />
                     </div>
-
-                    <div className="space-y-3 pt-4 border-t border-gray-100">
-                      <Label htmlFor="store-name" className="flex items-center gap-2 text-base">
-                        <Store className="w-4 h-4 text-gray-500" />
-                        Nome da Loja
-                      </Label>
-                      <Input
-                        id="store-name"
-                        type="text"
-                        placeholder="Ex: Salão Beleza Natural"
-                        value={storeName}
-                        onChange={(e) => setStoreName(e.target.value)}
-                        className="text-base"
-                      />
-                      <p className="text-xs text-gray-500">
-                        Este nome será usado nas mensagens automáticas do bot
-                      </p>
-                    </div>
-
                     <div className="pt-4">
-                      <Button
-                        onClick={handleSaveSettings}
-                        disabled={isSavingSettings}
-                        className="w-full bg-gradient-to-r from-[#007BFF] to-[#6F42C1] hover:from-[#0056b3] hover:to-[#553c9a] text-white shadow-md disabled:opacity-70"
-                      >
-                        {isSavingSettings ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
-                        {isSavingSettings ? "Salvando..." : "Salvar Configurações"}
+                      <Button onClick={handleSaveSettings} disabled={isSavingSettings} className="w-full bg-gradient-to-r from-[#007BFF] to-[#6F42C1] text-white">
+                        {isSavingSettings ? <Loader2 className="w-4 h-4 animate-spin" /> : "Salvar Configurações"}
                       </Button>
+                      {showSettingsSuccess && (
+                        <p className="text-green-600 text-xs font-medium mt-2 flex items-center gap-1 animate-in fade-in">
+                          <Check className="w-3 h-3" /> Salvo com sucesso!
+                        </p>
+                      )}
                     </div>
                   </CardContent>
                 </Card>
               </motion.div>
             )}
 
-            {/* Analytics com Dados Reais */}
             {activeSection === "analytics" && (
               <>
-                <motion.div
-                  initial={{ opacity: 0, y: 30 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.5, delay: 0.1 }}
-                >
-                  <Card className="shadow-sm border-l-4 border-l-blue-500">
-                    <CardHeader>
-                      <CardTitle className="flex items-center gap-2 text-lg">
-                        <MessageSquare className="w-5 h-5 text-blue-500" />
-                        Mensagens Respondidas Hoje
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="flex items-baseline gap-2">
-                        <p className="text-5xl font-bold text-gray-900">{messagesAnswered}</p>
-                        {/* A remover a estatística falsa de "vs ontem" para focar em dados reais */}
-                      </div>
-                      <p className="text-sm text-gray-500 mt-3">
-                        A IA respondeu automaticamente a {messagesAnswered} interações.
-                      </p>
-                    </CardContent>
-                  </Card>
-                </motion.div>
-
-                <motion.div
-                  initial={{ opacity: 0, y: 30 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.5, delay: 0.2 }}
-                >
-                  <Card className="shadow-sm border-l-4 border-l-purple-500">
-                    <CardHeader>
-                      <CardTitle className="flex items-center gap-2 text-lg">
-                        <CalendarCheck className="w-5 h-5 text-purple-500" />
-                        Agendamentos Realizados
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="flex items-baseline gap-2">
-                        <p className="text-5xl font-bold text-gray-900">{appointmentsMade}</p>
-                      </div>
-                      <p className="text-sm text-gray-500 mt-3">
-                        {appointmentsMade} horários foram confirmados automaticamente pela IA.
-                      </p>
-                    </CardContent>
-                  </Card>
-                </motion.div>
-
-                <motion.div
-                  initial={{ opacity: 0, y: 30 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.5, delay: 0.3 }}
-                >
-                  <Card className="shadow-sm border-l-4 border-l-emerald-500">
-                    <CardHeader>
-                      <CardTitle className="flex items-center gap-2 text-lg">
-                        <Zap className="w-5 h-5 text-emerald-500" />
-                        Tempo Economizado
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="flex items-baseline gap-2">
-                        <p className="text-5xl font-bold text-gray-900">
-                          {calculateSavedTime(appointmentsMade)}
-                        </p>
-                      </div>
-                      <div className="mt-4 p-3 bg-emerald-50 rounded-lg border border-emerald-100">
-                        <p className="text-sm text-emerald-800 font-medium">
-                          💡 Cálculo: {appointmentsMade} agendamentos × 5 min
-                        </p>
-                        <p className="text-xs text-emerald-600 mt-1">
-                          Tempo devolvido ao seu dia.
-                        </p>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </motion.div>
+                <AnalyticsCard icon={<MessageSquare className="text-blue-500" />} title="Respondidas Hoje" value={messagesAnswered} color="border-l-blue-500" />
+                <AnalyticsCard icon={<CalendarCheck className="text-purple-500" />} title="Agendamentos" value={appointmentsMade} color="border-l-purple-500" />
+                <AnalyticsCard icon={<Zap className="text-emerald-500" />} title="Tempo Ganho" value={calculateSavedTime(appointmentsMade)} color="border-l-emerald-500" />
               </>
             )}
           </div>
 
-          <motion.footer
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.6 }}
-            className="text-center py-8 border-t border-gray-200 mt-12"
-          >
+          <footer className="text-center py-8 border-t border-gray-200 mt-12">
             <div className="flex items-center justify-center gap-2">
-              <p className="text-gray-400 uppercase tracking-wide text-[14px] leading-none">
-                Desenvolvido por
-              </p>
-              <a 
-                href="https://korvenlab.vercel.app/" 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="transition-opacity hover:opacity-70"
-              >
-                <img src="/logokorven.png" alt="Korven Lab" className="h-4 translate-y-[1px]" />
+              <p className="text-gray-400 uppercase tracking-wide text-[14px]">Desenvolvido por</p>
+              <a href="https://korvenlab.vercel.app/" target="_blank" rel="noopener noreferrer">
+                <img src="/logokorven.png" alt="Korven Lab" className="h-4" />
               </a>
             </div>
-          </motion.footer>
+          </footer>
         </div>
       </div>
     </div>
   );
 }
 
-function NavItem({
-  icon,
-  label,
-  active,
-  onClick,
-}: {
-  icon: React.ReactNode;
-  label: string;
-  active: boolean;
-  onClick: () => void;
-}) {
+function NavItem({ icon, label, active, onClick }: { icon: React.ReactNode; label: string; active: boolean; onClick: () => void; }) {
   return (
-    <button
-      onClick={onClick}
-      className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${
-        active
-          ? "bg-blue-50 text-[#007BFF] font-semibold"
-          : "text-gray-700 hover:bg-gray-50 hover:text-gray-900"
-      }`}
-    >
-      {icon}
-      <span>{label}</span>
+    <button onClick={onClick} className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${active ? "bg-blue-50 text-[#007BFF] font-semibold" : "text-gray-700 hover:bg-gray-50"}`}>
+      {icon} <span>{label}</span>
     </button>
   );
+}
+
+function AnalyticsCard({ icon, title, value, color }: { icon: React.ReactNode; title: string; value: string | number; color: string; }) {
+    return (
+        <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }}>
+            <Card className={`shadow-sm border-l-4 ${color}`}>
+                <CardHeader>
+                    <CardTitle className="flex items-center gap-2 text-lg">{icon} {title}</CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <p className="text-5xl font-bold text-gray-900">{value}</p>
+                </CardContent>
+            </Card>
+        </motion.div>
+    );
 }
