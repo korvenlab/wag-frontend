@@ -1,74 +1,70 @@
 import { motion } from "motion/react";
 import { useNavigate } from "react-router";
 import { useEffect } from "react";
-// IMPORTANTE: Precisamos de importar o cliente do Supabase que criámos anteriormente
 import { supabase } from "../lib/supabase"; 
 
 export function LoginPage() {
   const navigate = useNavigate();
 
-  // EFEITO PARA CAPTURAR O TOKEN AUTOMATICAMENTE APÓS O REDIRECIONAMENTO
   useEffect(() => {
-    const syncTokensOnLoad = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
+    // Escutamos mudanças na autenticação para capturar o momento exato do login
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       
-      // Se houver uma sessão e ela tiver o provider_token (Google)
-      if (session?.provider_token && session.user?.email) {
+      if (event === "SIGNED_IN" && session?.provider_token && session.user?.email) {
         try {
-          console.log("Sincronizando credenciais do Google com o banco de dados...");
+          console.log("🔄 Sincronizando credenciais do Google...");
           
-          await fetch(`${import.meta.env.VITE_API_URL}/api/auth/sync`, {
+          const response = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/sync`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               email: session.user.email,
               accessToken: session.provider_token,
-              refreshToken: session.provider_refresh_token, // Crucial para a Lucy
+              refreshToken: session.provider_refresh_token, // Se vier NULL, veja a observação abaixo
               expiresAt: session.expires_at
             })
           });
 
-          console.log("✅ Credenciais sincronizadas com sucesso.");
+          if (response.ok) {
+            console.log("✅ Banco de dados atualizado com sucesso.");
+            navigate("/dashboard");
+          } else {
+            console.error("❌ Erro na resposta do servidor de sync");
+          }
         } catch (err) {
-          console.error("❌ Erro ao sincronizar tokens:", err);
+          console.error("❌ Erro ao conectar com a API de sync:", err);
         }
       }
-    };
+    });
 
-    syncTokensOnLoad();
-  }, []);
+    return () => subscription.unsubscribe();
+  }, [navigate]);
 
   const handleGoogleLogin = async () => {
     try {
       console.log("Iniciando login com Google + Permissões de Agenda...");
       
-      const { data, error } = await supabase.auth.signInWithOAuth({
+      const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          // Mantemos o redirecionamento para o dashboard
           redirectTo: `${window.location.origin}/dashboard`,
-          // Escopos para a Lucy conseguir gerenciar a agenda
           scopes: 'https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/calendar.events',
           queryParams: {
-            access_type: 'offline', // Necessário para pegar o refresh_token
-            prompt: 'consent',     // Força a tela de permissão da agenda aparecer
+            access_type: 'offline',
+            prompt: 'consent', // FORÇA o Google a mandar o Refresh Token
           },
         }
       });
 
-      if (error) {
-        console.error("Erro durante o login com Google:", error.message);
-        alert("Ocorreu um erro ao tentar entrar com o Google.");
-      }
-
-    } catch (err) {
-      console.error("Erro inesperado:", err);
+      if (error) throw error;
+    } catch (err: any) {
+      console.error("Erro durante o login:", err.message);
+      alert("Erro ao tentar entrar com o Google.");
     }
   };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-white via-gray-50 to-blue-50/30 flex items-center justify-center px-4 relative overflow-hidden">
-      
       {/* Background Effects */}
       <div className="absolute inset-0 pointer-events-none">
         <div className="absolute top-1/4 right-1/4 w-[600px] h-[600px] rounded-full bg-blue-100/30 blur-3xl" />
@@ -101,7 +97,6 @@ export function LoginPage() {
         <div className="absolute -inset-4 bg-gradient-to-r from-blue-100 to-purple-100 rounded-3xl blur-2xl opacity-40" />
 
         <div className="relative bg-white rounded-3xl shadow-2xl border border-gray-100 p-8 sm:p-12">
-          
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
