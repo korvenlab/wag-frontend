@@ -20,7 +20,8 @@ import {
   Mail,
   Store,
   Loader2,
-  Check
+  Check,
+  Timer
 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/card";
 import { Button } from "../components/ui/button";
@@ -96,7 +97,7 @@ export function Dashboard() {
           setIsAIEnabled(data.is_ai_enabled ?? true);
           setStartTime(data.start_time || "08:00");
           setEndTime(data.end_time || "18:00");
-          setIsWhatsAppConnected(!!data.whatsapp_session); // Se tiver algo na coluna, está conectado
+          setIsWhatsAppConnected(!!data.whatsapp_session); 
           
           if (data.active_days) {
             setActiveDays(JSON.parse(data.active_days));
@@ -124,7 +125,7 @@ export function Dashboard() {
         navigate("/#precos"); 
       }
     } else {
-       navigate("/login");
+        navigate("/login");
     }
   }, [user, navigate]);
 
@@ -415,36 +416,69 @@ export function Dashboard() {
                 <Card className="shadow-sm">
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
-                      <Clock className="w-5 h-5 text-[#007BFF]" /> Horários
+                      <Clock className="w-5 h-5 text-[#007BFF]" /> Configurar Atendimento
                     </CardTitle>
+                    <CardDescription>Defina os dias e horários em que o bot poderá agendar clientes</CardDescription>
                   </CardHeader>
-                  <CardContent className="space-y-6">
-                    <div className="grid grid-cols-2 sm:grid-cols-7 gap-2">
-                      {daysOfWeek.map((day) => (
-                        <button key={day} onClick={() => toggleDay(day)} className={`px-3 py-2.5 rounded-lg text-sm font-medium border-2 transition-all ${activeDays.includes(day) ? "bg-[#007BFF] border-[#007BFF] text-white" : "bg-white border-gray-200 text-gray-600"}`}>
-                          {day.slice(0, 3)}
-                        </button>
-                      ))}
+                  <CardContent className="space-y-8">
+                    {/* Seleção de Dias */}
+                    <div className="space-y-3">
+                      <Label className="text-gray-700 font-semibold">Dias em que o Bot atende:</Label>
+                      <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2">
+                        {daysOfWeek.map((day) => (
+                          <button 
+                            key={day} 
+                            onClick={() => toggleDay(day)} 
+                            className={`px-3 py-2.5 rounded-lg text-xs font-medium border-2 transition-all ${activeDays.includes(day) ? "bg-[#007BFF] border-[#007BFF] text-white" : "bg-white border-gray-200 text-gray-600 hover:border-blue-200"}`}
+                          >
+                            {day.slice(0, 3)}
+                          </button>
+                        ))}
+                      </div>
                     </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-end pt-4 border-t">
+
+                    {/* Configurações de Horários e Duração */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 pt-6 border-t">
                       <div className="space-y-2">
-                        <Label>Das</Label>
+                        <Label className="flex items-center gap-2">
+                           <Clock className="w-4 h-4 text-gray-500" /> Abre das:
+                        </Label>
                         <Input type="time" value={startTime} onChange={(e) => setStartTime(e.target.value)} />
                       </div>
+                      
                       <div className="space-y-2">
-                        <Label>Até às</Label>
+                        <Label className="flex items-center gap-2">
+                           <Clock className="w-4 h-4 text-gray-500" /> Fecha às:
+                        </Label>
                         <Input type="time" value={endTime} onChange={(e) => setEndTime(e.target.value)} />
                       </div>
-                      <div className="sm:col-span-2">
-                        <Button onClick={handleSaveHours} disabled={isSavingHours} className="w-full bg-[#007BFF]">
-                          {isSavingHours ? <Loader2 className="w-4 h-4 animate-spin" /> : "Salvar Horários"}
-                        </Button>
-                        {showHoursSuccess && (
-                          <p className="text-green-600 text-xs font-medium mt-2 flex items-center gap-1 animate-in fade-in">
-                            <Check className="w-3 h-3" /> Salvo com sucesso!
-                          </p>
-                        )}
+
+                      <div className="space-y-2">
+                        <Label className="flex items-center gap-2">
+                           <Timer className="w-4 h-4 text-gray-500" /> Duração do Serviço:
+                        </Label>
+                        <select 
+                          className="w-full h-10 px-3 rounded-md border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          value={serviceDuration}
+                          onChange={(e) => setServiceDuration(Number(e.target.value))}
+                        >
+                          {durationOptions.map(opt => (
+                            <option key={opt.value} value={opt.value}>{opt.label}</option>
+                          ))}
+                        </select>
                       </div>
+                    </div>
+
+                    {/* Botão Salvar Horários */}
+                    <div className="pt-4 flex flex-col items-center sm:items-end">
+                      <Button onClick={handleSaveHours} disabled={isSavingHours} className="w-full sm:w-auto min-w-[200px] bg-[#007BFF] hover:bg-blue-600">
+                        {isSavingHours ? <Loader2 className="w-4 h-4 animate-spin" /> : "Salvar Configurações de Horário"}
+                      </Button>
+                      {showHoursSuccess && (
+                        <p className="text-green-600 text-xs font-medium mt-2 flex items-center gap-1 animate-in fade-in">
+                          <Check className="w-3 h-3" /> Horários salvos com sucesso!
+                        </p>
+                      )}
                     </div>
                   </CardContent>
                 </Card>
