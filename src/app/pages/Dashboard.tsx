@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from "motion/react";
 import {
   Calendar, LayoutDashboard, Clock, Settings, LogOut, Menu, X, QrCode,
   Bot, RefreshCw, Phone, CheckCircle2, BarChart3, MessageSquare,
-  CalendarCheck, Zap, Loader2, Check, Timer, Coffee, Moon, Sun, Copy, AlertTriangle
+  CalendarCheck, Zap, Loader2, Check, Timer, Coffee, Moon, Sun, Copy, AlertTriangle, Link2
 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/card";
 import { Button } from "../components/ui/button";
@@ -32,17 +32,18 @@ export function Dashboard() {
   const [qrCode, setQrCode] = useState<string | null>(null);
   const [isLoadingQR, setIsLoadingQR] = useState(false);
   const [isDisconnecting, setIsDisconnecting] = useState(false);
-  const [showConfirmDisconnect, setShowConfirmDisconnect] = useState(false); // Nova Feature
+  const [showConfirmDisconnect, setShowConfirmDisconnect] = useState(false);
   const [isSavingAI, setIsSavingAI] = useState(false);
   const [isSavingSettings, setIsSavingSettings] = useState(false);
   const [isSavingHours, setIsSavingHours] = useState(false);
   const [isWhatsAppConnected, setIsWhatsAppConnected] = useState(false);
+  const [isGoogleConnected, setIsGoogleConnected] = useState(false); // NOVO: Status Google
 
   // Estados de Feedback Visual
   const [showHoursSuccess, setShowHoursSuccess] = useState(false);
   const [showSettingsSuccess, setShowSettingsSuccess] = useState(false);
 
-  // Estado de Horários (Objeto JSONB)
+  // Estado de Horários
   const [workingHours, setWorkingHours] = useState<Record<string, any>>({});
   const [serviceDuration, setServiceDuration] = useState<number>(30);
   const [storeName, setStoreName] = useState("");
@@ -68,6 +69,9 @@ export function Dashboard() {
           setMessagesAnswered(data.messages_answered || 0);
           setAppointmentsMade(data.appointments_count || 0);
           setServiceDuration(data.service_duration || 30);
+          
+          // Verifica se o objeto googleAuth existe e tem o refreshToken
+          setIsGoogleConnected(!!(data.googleAuth && data.googleAuth.refreshToken));
 
           if (data.working_hours) {
             setWorkingHours(data.working_hours);
@@ -121,17 +125,12 @@ export function Dashboard() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: user?.email }),
       });
-      
       if (response.ok) {
         setIsWhatsAppConnected(false);
         setQrCode(null);
         setShowConfirmDisconnect(false);
       }
-    } catch (error) {
-      console.error("Erro ao desconectar:", error);
-    } finally {
-      setIsDisconnecting(false);
-    }
+    } catch (error) { console.error("Erro ao desconectar:", error); } finally { setIsDisconnecting(false); }
   };
 
   const handleToggleAI = async (checked: boolean) => {
@@ -182,6 +181,17 @@ export function Dashboard() {
     } catch (error) { console.error(error); } finally { setIsSavingSettings(false); }
   };
 
+  // Função para reconectar Google caso falhe a sincronização automática
+  const handleReconnectGoogle = async () => {
+    try {
+      const res = await fetch(`${backendUrl}/api/auth/google/url?email=${user?.email}`);
+      const { url } = await res.json();
+      window.location.href = url;
+    } catch (err) {
+      console.error("Erro ao redirecionar para Google", err);
+    }
+  };
+
   if (!user || !user.hasPaid) return null;
 
   return (
@@ -229,9 +239,15 @@ export function Dashboard() {
 
       <div className="lg:ml-72 pt-16 lg:pt-0">
         <div className="max-w-7xl mx-auto p-6 lg:p-8 space-y-8">
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
-            <h2 className="text-3xl font-bold text-gray-900">Olá, {storeName ? storeName.split(' ')[0] : 'Admin'}! 👋</h2>
-            <p className="text-gray-600 mt-1">Gerencie sua automação de agendamentos</p>
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div>
+              <h2 className="text-3xl font-bold text-gray-900">Olá, {storeName ? storeName.split(' ')[0] : 'Admin'}! 👋</h2>
+              <p className="text-gray-600 mt-1">Gerencie sua automação de agendamentos</p>
+            </div>
+            {/* Status do Google na Header do Dashboard */}
+            <div className={`flex items-center gap-2 px-4 py-2 rounded-full border text-sm font-medium ${isGoogleConnected ? "bg-emerald-50 text-emerald-700 border-emerald-200" : "bg-amber-50 text-amber-700 border-amber-200"}`}>
+              {isGoogleConnected ? <><CheckCircle2 className="w-4 h-4" /> Agenda Google Conectada</> : <><AlertTriangle className="w-4 h-4" /> Agenda Desconectada</>}
+            </div>
           </motion.div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -250,47 +266,20 @@ export function Dashboard() {
                       <div className="mt-6 w-full max-w-sm">
                         <AnimatePresence mode="wait">
                           {!showConfirmDisconnect ? (
-                            <motion.div 
-                              key="normal" 
-                              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                              className="grid grid-cols-2 gap-3"
-                            >
+                            <motion.div key="normal" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="grid grid-cols-2 gap-3">
                               <Button onClick={handleGenerateQR} disabled={isLoadingQR || isWhatsAppConnected} className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold">Gerar QR</Button>
-                              <Button 
-                                variant="outline" 
-                                className="text-red-500 border-red-100 hover:bg-red-50" 
-                                onClick={() => setShowConfirmDisconnect(true)} 
-                                disabled={!isWhatsAppConnected || isDisconnecting}
-                              >
+                              <Button variant="outline" className="text-red-500 border-red-100 hover:bg-red-50" onClick={() => setShowConfirmDisconnect(true)} disabled={!isWhatsAppConnected || isDisconnecting}>
                                 Desconectar
                               </Button>
                             </motion.div>
                           ) : (
-                            <motion.div 
-                              key="confirm" 
-                              initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }}
-                              className="bg-red-50 border border-red-200 p-3 rounded-xl flex flex-col items-center gap-3"
-                            >
-                              <p className="text-xs font-bold text-red-700 flex items-center gap-1">
-                                <AlertTriangle className="w-3 h-3" /> Tem certeza que deseja desconectar?
-                              </p>
+                            <motion.div key="confirm" initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }} className="bg-red-50 border border-red-200 p-3 rounded-xl flex flex-col items-center gap-3">
+                              <p className="text-xs font-bold text-red-700 flex items-center gap-1"><AlertTriangle className="w-3 h-3" /> Tem certeza que deseja desconectar?</p>
                               <div className="flex gap-2 w-full">
-                                <Button 
-                                  size="sm" 
-                                  className="flex-1 bg-red-600 hover:bg-red-700 text-white" 
-                                  onClick={handleDisconnectWhatsApp}
-                                  disabled={isDisconnecting}
-                                >
+                                <Button size="sm" className="flex-1 bg-red-600 hover:bg-red-700 text-white" onClick={handleDisconnectWhatsApp} disabled={isDisconnecting}>
                                   {isDisconnecting ? <Loader2 className="animate-spin w-4 h-4" /> : "Sim, desconectar"}
                                 </Button>
-                                <Button 
-                                  size="sm" 
-                                  variant="ghost" 
-                                  className="flex-1 text-gray-500" 
-                                  onClick={() => setShowConfirmDisconnect(false)}
-                                >
-                                  Não
-                                </Button>
+                                <Button size="sm" variant="ghost" className="flex-1 text-gray-500" onClick={() => setShowConfirmDisconnect(false)}>Não</Button>
                               </div>
                             </motion.div>
                           )}
@@ -299,13 +288,37 @@ export function Dashboard() {
                     </CardContent>
                   </Card>
                 </div>
-                <Card className="shadow-sm">
-                  <CardHeader><CardTitle className="flex items-center gap-2"><Bot className="text-emerald-600 w-5 h-5" /> IA WBOT</CardTitle></CardHeader>
-                  <CardContent className="flex flex-col items-center justify-center py-8">
-                    <Switch checked={isAIEnabled} onCheckedChange={handleToggleAI} disabled={isSavingAI} className="data-[state=checked]:bg-emerald-600 scale-150" />
-                    <span className="mt-4 font-medium">{isAIEnabled ? "Ativado" : "Pausado"}</span>
-                  </CardContent>
-                </Card>
+
+                <div className="space-y-6">
+                  {/* Card de IA */}
+                  <Card className="shadow-sm">
+                    <CardHeader><CardTitle className="flex items-center gap-2"><Bot className="text-emerald-600 w-5 h-5" /> IA WBOT</CardTitle></CardHeader>
+                    <CardContent className="flex flex-col items-center justify-center py-6">
+                      <Switch checked={isAIEnabled} onCheckedChange={handleToggleAI} disabled={isSavingAI} className="data-[state=checked]:bg-emerald-600 scale-125" />
+                      <span className="mt-3 font-medium text-sm">{isAIEnabled ? "IA Ativa respondendo" : "IA Pausada"}</span>
+                    </CardContent>
+                  </Card>
+
+                  {/* Card de Conexão Agenda Google */}
+                  <Card className="shadow-sm border-none bg-gradient-to-br from-white to-blue-50/50">
+                    <CardHeader><CardTitle className="flex items-center gap-2 text-sm"><Calendar className="text-blue-500 w-4 h-4" /> Sincronização Google</CardTitle></CardHeader>
+                    <CardContent>
+                      {isGoogleConnected ? (
+                        <div className="flex items-center gap-2 text-emerald-600 bg-emerald-50 p-3 rounded-xl border border-emerald-100">
+                          <CheckCircle2 className="w-5 h-5" />
+                          <span className="text-xs font-bold">Lucy tem acesso total à sua agenda.</span>
+                        </div>
+                      ) : (
+                        <div className="space-y-3">
+                          <p className="text-xs text-gray-500">A Lucy precisa de acesso para agendar horários automaticamente.</p>
+                          <Button onClick={handleReconnectGoogle} variant="outline" className="w-full text-blue-600 border-blue-200 hover:bg-blue-50 gap-2 text-xs h-9">
+                            <Link2 className="w-3 h-3" /> Conectar Agenda Manualmente
+                          </Button>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                </div>
               </>
             )}
 
@@ -315,9 +328,9 @@ export function Dashboard() {
                   <CardHeader className="flex flex-row justify-between items-center bg-white border-b rounded-t-xl">
                     <div>
                       <CardTitle className="flex items-center gap-2 text-emerald-600"><Clock /> Agenda por Dia</CardTitle>
-                      <CardDescription>Clique no dia para configurar turnos específicos.</CardDescription>
+                      <CardDescription>Configure os turnos de funcionamento da sua loja.</CardDescription>
                     </div>
-                    <Button variant="outline" size="sm" onClick={copyToAllDays} className="gap-2 border-emerald-200 text-emerald-700 hover:bg-emerald-50"><Copy className="w-4 h-4" /> Replicar {selectedDay}</Button>
+                    <Button variant="outline" size="sm" onClick={copyToAllDays} className="gap-2 border-emerald-200 text-emerald-700 hover:bg-emerald-50"><Copy className="w-4 h-4" /> Replicar para todos</Button>
                   </CardHeader>
 
                   <div className="flex overflow-x-auto gap-2 p-4 bg-slate-100/50">
@@ -337,15 +350,15 @@ export function Dashboard() {
 
                     <div className="pt-6 border-t flex flex-col md:flex-row justify-between items-center gap-6">
                       <div className="flex items-center gap-4 bg-slate-50 p-3 rounded-xl border border-emerald-50">
-                        <Label className="text-sm font-bold text-gray-600">Duração:</Label>
+                        <Label className="text-sm font-bold text-gray-600">Duração do Serviço:</Label>
                         <Input type="number" value={serviceDuration} onChange={(e) => setServiceDuration(Number(e.target.value))} className="w-20 bg-white border-emerald-100" />
-                        <span className="text-xs text-gray-400">minutos</span>
+                        <span className="text-xs text-gray-400">min</span>
                       </div>
                       <div className="w-full md:w-auto">
                         <Button onClick={handleSaveHours} disabled={isSavingHours} className="w-full md:w-72 bg-emerald-600 hover:bg-emerald-700 h-12 font-bold text-white shadow-lg">
-                          {isSavingHours ? <Loader2 className="animate-spin" /> : "Salvar Toda a Agenda"}
+                          {isSavingHours ? <Loader2 className="animate-spin" /> : "Salvar Configurações de Agenda"}
                         </Button>
-                        {showHoursSuccess && <p className="text-center text-emerald-600 text-xs mt-2 font-bold">Configurações salvas!</p>}
+                        {showHoursSuccess && <p className="text-center text-emerald-600 text-xs mt-2 font-bold">Agenda atualizada com sucesso!</p>}
                       </div>
                     </div>
                   </CardContent>
@@ -367,11 +380,11 @@ export function Dashboard() {
                   <CardHeader><CardTitle className="flex items-center gap-2"><Settings className="text-emerald-600" /> Perfil da Loja</CardTitle></CardHeader>
                   <CardContent className="space-y-4">
                     <div className="space-y-2">
-                      <Label>Nome Comercial</Label>
+                      <Label>Nome Comercial (Como a IA se apresenta)</Label>
                       <Input value={storeName} onChange={(e) => setStoreName(e.target.value)} placeholder="Ex: Salão da WBOT" className="border-emerald-100" />
                     </div>
                     <Button onClick={handleSaveSettings} disabled={isSavingSettings} className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold">
-                      {isSavingSettings ? <Loader2 className="animate-spin" /> : "Salvar Alterações"}
+                      {isSavingSettings ? <Loader2 className="animate-spin" /> : "Salvar Alterações de Perfil"}
                     </Button>
                     {showSettingsSuccess && <p className="text-emerald-600 text-xs font-bold mt-2">Perfil atualizado!</p>}
                   </CardContent>
@@ -385,7 +398,7 @@ export function Dashboard() {
   );
 }
 
-// Componentes Auxiliares Locais
+// Componentes Auxiliares
 function NavItem({ icon, label, active, onClick }: any) {
   return (
     <button onClick={onClick} className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${active ? "bg-emerald-50 text-emerald-600 font-semibold shadow-sm" : "text-gray-700 hover:bg-emerald-50/50"}`}>
@@ -408,8 +421,8 @@ function TurnoCard({ title, icon, color, active, onToggle, start, end, onStart, 
         <Switch checked={active} onCheckedChange={onToggle} className="data-[state=checked]:bg-emerald-600" />
       </div>
       <div className="grid grid-cols-2 gap-2">
-        <Input type="time" value={start} onChange={(e) => onStart(e.target.value)} disabled={!active} className="bg-white border-emerald-50" />
-        <Input type="time" value={end} onChange={(e) => onEnd(e.target.value)} disabled={!active} className="bg-white border-emerald-50" />
+        <Input type="time" value={start} onChange={(e) => onStart(e.target.value)} disabled={!active} className="bg-white border-emerald-50 text-xs" />
+        <Input type="time" value={end} onChange={(e) => onEnd(e.target.value)} disabled={!active} className="bg-white border-emerald-50 text-xs" />
       </div>
     </div>
   );
