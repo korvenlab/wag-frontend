@@ -1,10 +1,29 @@
 import { motion, useInView } from "motion/react";
-import { Check, Zap, Shield, Headphones, BarChart } from "lucide-react";
-import { useRef } from "react";
+import { Check, Zap, Shield, Headphones, BarChart, Loader2 } from "lucide-react";
+import { useRef, useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { createClient } from "@supabase/supabase-js";
+
+// Inicialize o cliente do Supabase (ou use seu hook de Auth)
+const supabase = createClient(
+  import.meta.env.VITE_SUPABASE_URL,
+  import.meta.env.VITE_SUPABASE_ANON_KEY
+);
 
 export function Pricing() {
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, amount: 0.3 });
+  const navigate = useNavigate();
+  
+  const [loading, setLoading] = useState(false);
+  const [user, setUser] = useState<any>(null);
+
+  // Busca o usuário logado ao carregar
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => {
+      setUser(data.user);
+    });
+  }, []);
 
   const features = [
     { icon: <Zap className="w-5 h-5" />, text: "Agendamentos Ilimitados" },
@@ -14,10 +33,43 @@ export function Pricing() {
     { icon: <Check className="w-5 h-5" />, text: "Personalização Completa" },
   ];
 
-  // Função para lidar com o clique no botão de pagamento
-  const handleCheckout = () => {
-    // Substitua o link abaixo pelo seu Link de Pagamento gerado no painel da Stripe
-    window.location.href = "COLE_AQUI_O_SEU_LINK_DE_PAGAMENTO_DA_STRIPE";
+  // Função para lidar com o clique no botão de pagamento profissional
+  const handleCheckout = async () => {
+    if (!user) {
+      // Se não houver usuário, manda para o login
+      return navigate("/login");
+    }
+
+    setLoading(true);
+
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/stripe/create-checkout-session`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email: user.email,
+          userId: user.id,
+          priceId: "price_SEU_ID_AQUI", // SUBSTITUA pelo ID do preço no painel do Stripe
+        }),
+      });
+
+      const data = await response.json();
+
+      if (data.url) {
+        // Redireciona para a página oficial de pagamento do Stripe
+        window.location.href = data.url;
+      } else {
+        console.error("Erro ao criar sessão de checkout:", data);
+        alert("Ocorreu um erro ao processar o pagamento. Tente novamente.");
+      }
+    } catch (error) {
+      console.error("Erro técnico:", error);
+      alert("Erro de conexão com o servidor.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -90,10 +142,8 @@ export function Pricing() {
 
           {/* Main Card */}
           <div className="relative group">
-            {/* Soft Shadow */}
             <div className="absolute -inset-4 bg-gradient-to-r from-blue-100 to-purple-100 rounded-3xl blur-2xl opacity-30" />
 
-            {/* Card Content */}
             <div className="relative bg-white rounded-3xl border border-gray-200 overflow-hidden shadow-xl">
               <div className="relative p-10 md:p-12">
                 {/* Plan Name */}
@@ -125,10 +175,6 @@ export function Pricing() {
                       <span className="text-xl text-gray-600">/mês</span>
                     </motion.div>
                   </div>
-
-                  <p className="text-sm text-gray-500">
-                    Aproximadamente R$ 2,00 por dia • Uma fração do custo de uma secretária
-                  </p>
                 </div>
 
                 {/* Features List */}
@@ -141,13 +187,9 @@ export function Pricing() {
                       transition={{ delay: 0.7 + index * 0.1 }}
                       className="flex items-center gap-3 group/item"
                     >
-                      <motion.div
-                        whileHover={{ scale: 1.2, rotate: 360 }}
-                        transition={{ duration: 0.5 }}
-                        className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-50 to-purple-50 flex items-center justify-center text-[#007BFF] flex-shrink-0 shadow-sm"
-                      >
+                      <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-50 to-purple-50 flex items-center justify-center text-[#007BFF] flex-shrink-0 shadow-sm">
                         {feature.icon}
-                      </motion.div>
+                      </div>
                       <span className="text-gray-700 font-medium group-hover/item:text-gray-900 transition-all">
                         {feature.text}
                       </span>
@@ -158,52 +200,25 @@ export function Pricing() {
                 {/* CTA Button */}
                 <motion.button
                   onClick={handleCheckout}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={isInView ? { opacity: 1, y: 0 } : {}}
-                  transition={{ delay: 1.3 }}
-                  whileHover={{ scale: 1.02, boxShadow: "0 20px 40px rgba(0, 123, 255, 0.3)" }}
-                  whileTap={{ scale: 0.98 }}
-                  className="relative w-full py-5 rounded-2xl bg-gradient-to-r from-[#007BFF] to-[#6F42C1] text-white font-bold text-xl shadow-lg hover:shadow-xl transition-all overflow-hidden group/button"
+                  disabled={loading}
+                  whileHover={loading ? {} : { scale: 1.02, boxShadow: "0 20px 40px rgba(0, 123, 255, 0.3)" }}
+                  whileTap={loading ? {} : { scale: 0.98 }}
+                  className="relative w-full py-5 rounded-2xl bg-gradient-to-r from-[#007BFF] to-[#6F42C1] text-white font-bold text-xl shadow-lg hover:shadow-xl transition-all overflow-hidden group/button disabled:opacity-70 disabled:cursor-not-allowed"
                 >
-                  <motion.div
-                    className="absolute inset-0 bg-white/20"
-                    initial={{ x: "-100%" }}
-                    whileHover={{ x: "100%" }}
-                    transition={{ duration: 0.6 }}
-                  />
-                  <span className="relative z-10">Começar Agora</span>
+                  <span className="relative z-10 flex items-center justify-center gap-2">
+                    {loading && <Loader2 className="w-6 h-6 animate-spin" />}
+                    {loading ? "Processando..." : "Começar Agora"}
+                  </span>
                 </motion.button>
 
-                {/* Guarantee Badge */}
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={isInView ? { opacity: 1 } : {}}
-                  transition={{ delay: 1.5 }}
-                  className="text-center mt-6"
-                >
+                <div className="text-center mt-6">
                   <p className="text-sm text-gray-600">
                     ✓ Sem contrato de fidelidade • Cancele quando quiser
                   </p>
-                  <p className="text-sm text-gray-600 mt-1">
-                    ✓ Suporte Infinito 
-                  </p>
-                </motion.div>
+                </div>
               </div>
             </div>
           </div>
-        </motion.div>
-
-        {/* Bottom Message */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={isInView ? { opacity: 1, y: 0 } : {}}
-          transition={{ delay: 1.6 }}
-          className="text-center mt-12"
-        >
-          <p className="text-gray-400 max-w-2xl mx-auto">
-            Mais de <span className="text-[#007BFF] font-semibold">500 profissionais</span> já
-            economizam em média <span className="text-[#6F42C1] font-semibold">10 horas por semana</span> com o WAG BOT
-          </p>
         </motion.div>
       </div>
     </section>
