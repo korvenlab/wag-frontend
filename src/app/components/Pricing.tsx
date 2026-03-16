@@ -4,7 +4,7 @@ import { useRef, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { createClient } from "@supabase/supabase-js";
 
-// Inicialize o cliente do Supabase (ou use seu hook de Auth)
+// Inicialização do cliente Supabase
 const supabase = createClient(
   import.meta.env.VITE_SUPABASE_URL,
   import.meta.env.VITE_SUPABASE_ANON_KEY
@@ -18,11 +18,13 @@ export function Pricing() {
   const [loading, setLoading] = useState(false);
   const [user, setUser] = useState<any>(null);
 
-  // Busca o usuário logado ao carregar
+  // Verifica o usuário logado
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => {
-      setUser(data.user);
-    });
+    const getUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      setUser(user);
+    };
+    getUser();
   }, []);
 
   const features = [
@@ -33,16 +35,15 @@ export function Pricing() {
     { icon: <Check className="w-5 h-5" />, text: "Personalização Completa" },
   ];
 
-  // Função para lidar com o clique no botão de pagamento profissional
   const handleCheckout = async () => {
     if (!user) {
-      // Se não houver usuário, manda para o login
       return navigate("/login");
     }
 
     setLoading(true);
 
     try {
+      // Chamada para o seu backend atualizado
       const response = await fetch(`${import.meta.env.VITE_API_URL}/api/stripe/create-checkout-session`, {
         method: "POST",
         headers: {
@@ -51,22 +52,22 @@ export function Pricing() {
         body: JSON.stringify({
           email: user.email,
           userId: user.id,
-          priceId: "price_SEU_ID_AQUI", // SUBSTITUA pelo ID do preço no painel do Stripe
+          // O priceId agora é pego pelo backend via process.env.STRIPE_PRICE_ID
         }),
       });
 
       const data = await response.json();
 
       if (data.url) {
-        // Redireciona para a página oficial de pagamento do Stripe
+        // Redireciona para o Checkout seguro do Stripe
         window.location.href = data.url;
       } else {
-        console.error("Erro ao criar sessão de checkout:", data);
-        alert("Ocorreu um erro ao processar o pagamento. Tente novamente.");
+        console.error("Erro retornado pelo servidor:", data);
+        alert(`Erro: ${data.error || "Não foi possível iniciar o checkout."}`);
       }
     } catch (error) {
-      console.error("Erro técnico:", error);
-      alert("Erro de conexão com o servidor.");
+      console.error("Erro na requisição de checkout:", error);
+      alert("Erro de conexão. Verifique se o servidor está online.");
     } finally {
       setLoading(false);
     }
@@ -78,13 +79,13 @@ export function Pricing() {
       ref={ref}
       className="relative py-32 bg-gradient-to-b from-white via-gray-50 to-white overflow-hidden"
     >
-      {/* Background Effects */}
+      {/* Efeitos de Fundo */}
       <div className="absolute inset-0">
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-gradient-to-r from-[#007BFF] to-[#6F42C1] rounded-full opacity-[0.02] blur-[150px]" />
       </div>
 
       <div className="relative z-10 max-w-7xl mx-auto px-6">
-        {/* Section Header */}
+        {/* Cabeçalho da Seção */}
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={isInView ? { opacity: 1, y: 0 } : {}}
@@ -114,14 +115,14 @@ export function Pricing() {
           </p>
         </motion.div>
 
-        {/* Pricing Card */}
+        {/* Card de Preços */}
         <motion.div
           initial={{ opacity: 0, y: 50, scale: 0.95 }}
           animate={isInView ? { opacity: 1, y: 0, scale: 1 } : {}}
           transition={{ duration: 0.8, delay: 0.3 }}
           className="max-w-2xl mx-auto"
         >
-          {/* Limited Time Badge */}
+          {/* Badge de Oferta */}
           <motion.div
             initial={{ opacity: 0, y: -20 }}
             animate={isInView ? { opacity: 1, y: 0 } : {}}
@@ -140,13 +141,12 @@ export function Pricing() {
             </div>
           </motion.div>
 
-          {/* Main Card */}
           <div className="relative group">
+            {/* Sombra Suave */}
             <div className="absolute -inset-4 bg-gradient-to-r from-blue-100 to-purple-100 rounded-3xl blur-2xl opacity-30" />
 
             <div className="relative bg-white rounded-3xl border border-gray-200 overflow-hidden shadow-xl">
               <div className="relative p-10 md:p-12">
-                {/* Plan Name */}
                 <div className="text-center mb-8">
                   <h3 className="text-2xl font-bold text-gray-900 mb-2">
                     Plano Único Pro
@@ -156,7 +156,7 @@ export function Pricing() {
                   </p>
                 </div>
 
-                {/* Price */}
+                {/* Preço */}
                 <div className="text-center mb-10">
                   <div className="flex items-center justify-center gap-4 mb-4">
                     <span className="text-2xl text-gray-400 line-through">
@@ -177,7 +177,7 @@ export function Pricing() {
                   </div>
                 </div>
 
-                {/* Features List */}
+                {/* Lista de Recursos */}
                 <div className="space-y-4 mb-10">
                   {features.map((feature, index) => (
                     <motion.div
@@ -197,13 +197,13 @@ export function Pricing() {
                   ))}
                 </div>
 
-                {/* CTA Button */}
+                {/* Botão de Checkout */}
                 <motion.button
                   onClick={handleCheckout}
                   disabled={loading}
-                  whileHover={loading ? {} : { scale: 1.02, boxShadow: "0 20px 40px rgba(0, 123, 255, 0.3)" }}
+                  whileHover={loading ? {} : { scale: 1.02 }}
                   whileTap={loading ? {} : { scale: 0.98 }}
-                  className="relative w-full py-5 rounded-2xl bg-gradient-to-r from-[#007BFF] to-[#6F42C1] text-white font-bold text-xl shadow-lg hover:shadow-xl transition-all overflow-hidden group/button disabled:opacity-70 disabled:cursor-not-allowed"
+                  className="relative w-full py-5 rounded-2xl bg-gradient-to-r from-[#007BFF] to-[#6F42C1] text-white font-bold text-xl shadow-lg transition-all overflow-hidden disabled:opacity-70 disabled:cursor-not-allowed"
                 >
                   <span className="relative z-10 flex items-center justify-center gap-2">
                     {loading && <Loader2 className="w-6 h-6 animate-spin" />}
