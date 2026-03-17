@@ -5,50 +5,64 @@ import { supabase } from "../lib/supabase";
 
 export function LoginPage() {
   const navigate = useNavigate();
-  const [status, setStatus] = useState("Aguardando login...");
+  const [status, setStatus] = useState("Verificando sessão...");
 
   useEffect(() => {
-    // Escuta ATIVAMENTE o momento exato do login, garantindo que o token não escape
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log(`[AUTH EVENT]: ${event}`);
+    // Função separada e agressiva para garantir a sincronização
+    const syncSessionWithBackend = async (session: any) => {
+      // Se não houver token do Google, ignoramos e esperamos o utilizador clicar no botão
+      if (!session?.provider_token || !session?.user) {
+        setStatus("Aguardando login com Google...");
+        return;
+      }
+
+      setStatus("🚀 Enviando credenciais para a Lucy...");
       
-      if (event === "SIGNED_IN" && session) {
-        console.log("Sessão capturada:", session.user.email);
-        console.log("Token do Google existe?", !!session.provider_token);
+      const BACKEND_URL = "https://wag-backend.onrender.com/api/auth/sync";
 
-        if (session.provider_token) {
-          setStatus("🚀 Enviando credenciais para a Lucy...");
-          
-          const BACKEND_URL = "https://wag-backend.onrender.com/api/auth/sync";
+      try {
+        const response = await fetch(BACKEND_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            userId: session.user.id,
+            email: session.user.email,
+            accessToken: session.provider_token,
+            refreshToken: session.provider_refresh_token,
+            expiresAt: session.expires_at
+          })
+        });
 
-          try {
-            const response = await fetch(BACKEND_URL, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                userId: session.user.id,
-                email: session.user.email,
-                accessToken: session.provider_token,
-                refreshToken: session.provider_refresh_token,
-                expiresAt: session.expires_at
-              })
-            });
-
-            if (response.ok) {
-              setStatus("✅ Sucesso! Entrando...");
-              setTimeout(() => navigate("/dashboard"), 1000);
-            } else {
-              const errData = await response.json();
-              alert("O servidor recusou os dados: " + JSON.stringify(errData));
-              navigate("/dashboard");
-            }
-          } catch (err) {
-            alert("❌ Erro de conexão com o Render.");
-            navigate("/dashboard");
-          }
+        if (response.ok) {
+          setStatus("✅ Sucesso! Sincronizado com o banco.");
+          setTimeout(() => navigate("/dashboard"), 1500);
         } else {
-          // Entra aqui se o usuário já estava logado antes (não precisa reenviar o token)
+          const errData = await response.json();
+          alert("O servidor recusou os dados: " + JSON.stringify(errData));
           navigate("/dashboard");
+        }
+      } catch (err) {
+        alert("❌ Erro de conexão com o Render. O servidor pode estar offline.");
+        navigate("/dashboard");
+      }
+    };
+
+    // 1. Tenta sincronizar imediatamente com a sessão que já está guardada no navegador
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) {
+        console.log("Sessão detetada no carregamento!");
+        syncSessionWithBackend(session);
+      }
+    });
+
+    // 2. Fica à escuta de qualquer mudança (Novo Login, Restauro de Sessão, etc)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log(`[EVENTO SUPABASE]: ${event}`);
+      
+      // Captura qualquer evento que signifique "O utilizador está logado"
+      if (event === "SIGNED_IN" || event === "INITIAL_SESSION" || event === "TOKEN_REFRESHED") {
+        if (session) {
+          syncSessionWithBackend(session);
         }
       }
     });
