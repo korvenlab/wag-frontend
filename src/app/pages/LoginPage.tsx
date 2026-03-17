@@ -18,7 +18,8 @@ export function LoginPage() {
         return;
       }
 
-      if (session?.provider_token) {
+      // Verificamos se o token E o usuário existem na sessão
+      if (session?.provider_token && session?.user) {
         setStatus("🚀 Credenciais Google detectadas! Salvando...");
         
         // URL direta para evitar problemas de .env
@@ -29,6 +30,7 @@ export function LoginPage() {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
+              userId: session.user.id, // <-- CORREÇÃO: Enviando o ID do usuário para o backend
               email: session.user.email,
               accessToken: session.provider_token,
               refreshToken: session.provider_refresh_token,
