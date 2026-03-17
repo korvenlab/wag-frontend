@@ -5,57 +5,55 @@ import { supabase } from "../lib/supabase";
 
 export function LoginPage() {
   const navigate = useNavigate();
-  const [status, setStatus] = useState("Iniciando...");
+  const [status, setStatus] = useState("Aguardando login...");
 
   useEffect(() => {
-    const processAuth = async () => {
-      // 1. Buscamos a sessão ativa imediatamente
-      const { data: { session }, error } = await supabase.auth.getSession();
+    // Escuta ATIVAMENTE o momento exato do login, garantindo que o token não escape
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log(`[AUTH EVENT]: ${event}`);
       
-      if (error) {
-        console.error("Erro ao buscar sessão:", error);
-        setStatus("Erro ao carregar sessão.");
-        return;
-      }
+      if (event === "SIGNED_IN" && session) {
+        console.log("Sessão capturada:", session.user.email);
+        console.log("Token do Google existe?", !!session.provider_token);
 
-      // Verificamos se o token E o usuário existem na sessão
-      if (session?.provider_token && session?.user) {
-        setStatus("🚀 Credenciais Google detectadas! Salvando...");
-        
-        // URL direta para evitar problemas de .env
-        const BACKEND_URL = "https://wag-backend.onrender.com/api/auth/sync";
+        if (session.provider_token) {
+          setStatus("🚀 Enviando credenciais para a Lucy...");
+          
+          const BACKEND_URL = "https://wag-backend.onrender.com/api/auth/sync";
 
-        try {
-          const response = await fetch(BACKEND_URL, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              userId: session.user.id, // <-- CORREÇÃO: Enviando o ID do usuário para o backend
-              email: session.user.email,
-              accessToken: session.provider_token,
-              refreshToken: session.provider_refresh_token,
-              expiresAt: session.expires_at
-            })
-          });
+          try {
+            const response = await fetch(BACKEND_URL, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                userId: session.user.id,
+                email: session.user.email,
+                accessToken: session.provider_token,
+                refreshToken: session.provider_refresh_token,
+                expiresAt: session.expires_at
+              })
+            });
 
-          if (response.ok) {
-            setStatus("✅ Sucesso! Entrando...");
-            setTimeout(() => navigate("/dashboard"), 1000);
-          } else {
-            const errData = await response.json();
-            alert("O servidor Lucy recusou os dados: " + JSON.stringify(errData));
+            if (response.ok) {
+              setStatus("✅ Sucesso! Entrando...");
+              setTimeout(() => navigate("/dashboard"), 1000);
+            } else {
+              const errData = await response.json();
+              alert("O servidor recusou os dados: " + JSON.stringify(errData));
+              navigate("/dashboard");
+            }
+          } catch (err) {
+            alert("❌ Erro de conexão com o Render.");
             navigate("/dashboard");
           }
-        } catch (err) {
-          alert("❌ Erro de conexão com o Render. O servidor pode estar offline.");
+        } else {
+          // Entra aqui se o usuário já estava logado antes (não precisa reenviar o token)
           navigate("/dashboard");
         }
-      } else {
-        setStatus("Aguardando login com Google...");
       }
-    };
+    });
 
-    processAuth();
+    return () => subscription.unsubscribe();
   }, [navigate]);
 
   const handleGoogleLogin = async () => {
@@ -63,7 +61,6 @@ export function LoginPage() {
     await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        // Redireciona de volta para esta mesma página para processar o useEffect
         redirectTo: window.location.origin + "/login",
         scopes: 'https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/calendar.events',
         queryParams: { access_type: 'offline', prompt: 'consent' },
