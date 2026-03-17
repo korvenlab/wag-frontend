@@ -7,33 +7,45 @@ export function LoginPage() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Escutamos mudanças na autenticação para capturar o momento exato do login
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      
-      if (event === "SIGNED_IN" && session?.provider_token && session.user?.email) {
-        try {
-          console.log("🔄 Sincronizando credenciais do Google...");
-          
-          const response = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/sync`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              email: session.user.email,
-              accessToken: session.provider_token,
-              refreshToken: session.provider_refresh_token, // Se vier NULL, veja a observação abaixo
-              expiresAt: session.expires_at
-            })
-          });
+    // Função isolada para sincronizar, garantindo que o fetch termine antes de mudar de página
+    const syncData = async (session: any) => {
+      if (!session?.provider_token || !session.user?.email) return;
 
-          if (response.ok) {
-            console.log("✅ Banco de dados atualizado com sucesso.");
-            navigate("/dashboard");
-          } else {
-            console.error("❌ Erro na resposta do servidor de sync");
-          }
-        } catch (err) {
-          console.error("❌ Erro ao conectar com a API de sync:", err);
+      try {
+        console.log("🔄 Iniciando sincronização com o backend...");
+        const apiUrl = import.meta.env.VITE_API_URL;
+        
+        const response = await fetch(`${apiUrl}/api/auth/sync`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            email: session.user.email,
+            accessToken: session.provider_token,
+            refreshToken: session.provider_refresh_token || null,
+            expiresAt: session.expires_at
+          })
+        });
+
+        if (response.ok) {
+          console.log("✅ Dados salvos no banco. Redirecionando...");
+          navigate("/dashboard");
+        } else {
+          const errorData = await response.json();
+          console.error("❌ O servidor recusou a sincronização:", errorData);
+          // Mesmo com erro no sync, levamos o usuário para dentro, mas avisamos no log
+          navigate("/dashboard");
         }
+      } catch (err) {
+        console.error("❌ Erro de conexão com o Backend (CORS ou URL):", err);
+        navigate("/dashboard");
+      }
+    };
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log("🔔 Evento Auth:", event);
+      
+      if (event === "SIGNED_IN" && session) {
+        await syncData(session);
       }
     });
 
@@ -42,16 +54,19 @@ export function LoginPage() {
 
   const handleGoogleLogin = async () => {
     try {
-      console.log("Iniciando login com Google + Permissões de Agenda...");
+      // Limpar sessão antiga antes de novo login para garantir novos tokens
+      await supabase.auth.signOut();
       
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/dashboard`,
+          // IMPORTANTE: Não mande direto para o /dashboard aqui, 
+          // deixe o LoginPage processar o evento primeiro
+          redirectTo: window.location.origin + "/login", 
           scopes: 'https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/calendar.events',
           queryParams: {
             access_type: 'offline',
-            prompt: 'consent', // FORÇA o Google a mandar o Refresh Token
+            prompt: 'consent',
           },
         }
       });
@@ -59,27 +74,21 @@ export function LoginPage() {
       if (error) throw error;
     } catch (err: any) {
       console.error("Erro durante o login:", err.message);
-      alert("Erro ao tentar entrar com o Google.");
     }
   };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-white via-gray-50 to-blue-50/30 flex items-center justify-center px-4 relative overflow-hidden">
-      {/* Background Effects */}
       <div className="absolute inset-0 pointer-events-none">
         <div className="absolute top-1/4 right-1/4 w-[600px] h-[600px] rounded-full bg-blue-100/30 blur-3xl" />
         <div className="absolute bottom-1/4 left-1/4 w-[500px] h-[500px] rounded-full bg-purple-100/20 blur-3xl" />
       </div>
 
-      {/* Back to Home Button */}
       <motion.button
         onClick={() => navigate("/")}
         initial={{ opacity: 0, x: -20 }}
         animate={{ opacity: 1, x: 0 }}
-        transition={{ delay: 0.2 }}
-        whileHover={{ scale: 1.05 }}
-        whileTap={{ scale: 0.95 }}
-        className="absolute top-6 left-6 text-gray-600 hover:text-gray-900 transition-colors flex items-center gap-2 group"
+        className="absolute top-6 left-6 text-gray-600 hover:text-gray-900 flex items-center gap-2 group"
       >
         <svg className="w-5 h-5 group-hover:-translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
@@ -87,52 +96,27 @@ export function LoginPage() {
         <span className="font-medium">Voltar</span>
       </motion.button>
 
-      {/* Login Card */}
       <motion.div
         initial={{ opacity: 0, y: 30, scale: 0.95 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
-        transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
         className="relative z-10 w-full max-w-md"
       >
-        <div className="absolute -inset-4 bg-gradient-to-r from-blue-100 to-purple-100 rounded-3xl blur-2xl opacity-40" />
-
         <div className="relative bg-white rounded-3xl shadow-2xl border border-gray-100 p-8 sm:p-12">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
-            className="text-center mb-10"
-          >
+          <div className="text-center mb-10">
             <div className="flex justify-center mb-6">
-              <motion.div
-                whileHover={{ rotate: 360, scale: 1.1 }}
-                transition={{ duration: 0.6 }}
-                className="w-20 h-20 flex items-center justify-center"
-              >
-                <img 
-                  src="/logo.png"
-                  alt="WAG BOT Logo"
-                  className="w-full h-full object-contain"
-                />
-              </motion.div>
+              <img src="/logo.png" alt="Logo" className="w-20 h-20 object-contain" />
             </div>
-
             <h1 className="text-3xl font-bold bg-gradient-to-r from-[#007BFF] to-[#6F42C1] bg-clip-text text-transparent mb-3">
               WAG BOT
             </h1>
-            <p className="text-gray-600 text-base">
-              Entre com sua conta Google
-            </p>
-          </motion.div>
+            <p className="text-gray-600">Entre com sua conta Google</p>
+          </div>
 
           <motion.button
             onClick={handleGoogleLogin}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4 }}
-            whileHover={{ scale: 1.02, boxShadow: "0 10px 30px rgba(0, 0, 0, 0.12)" }}
+            whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
-            className="w-full flex items-center justify-center gap-4 px-6 py-4 bg-white border-2 border-gray-200 rounded-2xl font-semibold text-gray-700 hover:border-gray-300 hover:bg-gray-50 transition-all shadow-sm"
+            className="w-full flex items-center justify-center gap-4 px-6 py-4 bg-white border-2 border-gray-200 rounded-2xl font-semibold text-gray-700 hover:bg-gray-50 transition-all"
           >
             <svg className="w-6 h-6" viewBox="0 0 24 24">
               <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
@@ -142,18 +126,6 @@ export function LoginPage() {
             </svg>
             <span>Continuar com Google</span>
           </motion.button>
-
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.6 }}
-            className="mt-8 text-center"
-          >
-            <p className="text-xs text-gray-500 leading-relaxed">
-              Ao continuar, você concorda com nossos{" "}
-              <a href="#" className="text-[#007BFF] hover:underline">Termos de Uso</a> e <a href="#" className="text-[#007BFF] hover:underline">Política de Privacidade</a>
-            </p>
-          </motion.div>
         </div>
       </motion.div>
     </div>
