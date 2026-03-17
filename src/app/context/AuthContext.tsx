@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, ReactNode } from "react";
+import { createContext, useContext, useEffect, useState, ReactNode, useRef } from "react";
 import { supabase } from "../lib/supabase";
 import { User, Session } from "@supabase/supabase-js";
 
@@ -19,6 +19,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AppUser | null>(null);
   const [loading, setLoading] = useState(true);
 
+  // 🛑 FEATURE: A Trava de Memória (Evita o spam de logs no Render)
+  const lastSyncedToken = useRef<string | null>(null);
+
   useEffect(() => {
     // Aponta para o seu servidor seguro no Render
     const backendUrl = import.meta.env.VITE_API_URL || "https://wag-backend.onrender.com";
@@ -26,20 +29,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const processUserSession = async (authUser: User, session: Session | null) => {
       try {
         // 1. SINCRONIZAÇÃO DO GOOGLE (Garante que os tokens são salvos)
-        // Se o utilizador acabou de logar e o token existe na sessão, enviamos para o Render
         if (session?.provider_token) {
-          console.log("🚀 Enviando tokens do Google para o Backend...");
-          await fetch(`${backendUrl}/api/auth/sync`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              userId: authUser.id,
-              email: authUser.email,
-              accessToken: session.provider_token,
-              refreshToken: session.provider_refresh_token,
-              expiresAt: session.expires_at
-            })
-          });
+          
+          // Verifica se a chave atual é exatamente igual à que já enviámos
+          if (lastSyncedToken.current === session.provider_token) {
+            // Token repetido: Não fazemos nada, ignoramos o envio para não dar spam
+          } else {
+            // Token novo: Salvamos na memória e enviamos para o Render
+            lastSyncedToken.current = session.provider_token;
+            
+            console.log("🚀 Enviando tokens do Google para o Backend...");
+            await fetch(`${backendUrl}/api/auth/sync`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                userId: authUser.id,
+                email: authUser.email,
+                accessToken: session.provider_token,
+                refreshToken: session.provider_refresh_token,
+                expiresAt: session.expires_at
+              })
+            });
+          }
         }
 
         // 2. CRIAÇÃO / LEITURA DE PERFIL (Aciona a criação automática)
@@ -90,6 +101,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logout = async () => {
     await supabase.auth.signOut();
     setUser(null);
+    // Limpa a memória ao sair para que um novo utilizador possa sincronizar
+    lastSyncedToken.current = null;
   };
 
   return (
