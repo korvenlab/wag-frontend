@@ -29,7 +29,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           .from('profiles')
           .select('has_paid')
           .eq('id', authUser.id)
-          .single();
+          .maybeSingle(); // <-- CORREÇÃO: Impede o erro 406 (PGRST116)
 
         if (error) {
           console.error("Erro ao buscar perfil no Supabase:", error);
@@ -37,7 +37,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           return;
         }
 
-        // Atualiza o estado com os dados reais do banco
+        // Atualiza o estado com os dados reais do banco (se data for null, assume false)
         setUser({ ...authUser, hasPaid: data?.has_paid || false });
       } catch (error) {
         console.error("Erro inesperado ao buscar perfil:", error);
