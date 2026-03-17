@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, ReactNode, useRef } from "react";
+import { createContext, useContext, useEffect, useState, ReactNode } from "react";
 import { supabase } from "../lib/supabase";
 import { User, Session } from "@supabase/supabase-js";
 
@@ -15,56 +15,62 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+// 🛑 VARIÁVEIS GLOBAIS (Imortais)
+// Estas variáveis vivem fora do React. Sobrevivem a re-renderizações e redirecionamentos.
+let globalSyncedToken: string | null = null;
+let globalProfileFetched = false;
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AppUser | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // 🛑 FEATURE: A Trava de Memória (Evita o spam de logs no Render)
-  const lastSyncedToken = useRef<string | null>(null);
-
   useEffect(() => {
-    // Aponta para o seu servidor seguro no Render
     const backendUrl = import.meta.env.VITE_API_URL || "https://wag-backend.onrender.com";
 
-    const processUserSession = async (authUser: User, session: Session | null) => {
+    const processUserSession = async (authUser: User, session: Session | null, event: string) => {
       try {
-        // 1. SINCRONIZAÇÃO DO GOOGLE (Garante que os tokens são salvos)
+        // 1. SINCRONIZAÇÃO DO GOOGLE
         if (session?.provider_token) {
           
-          // Verifica se a chave atual é exatamente igual à que já enviámos
-          if (lastSyncedToken.current === session.provider_token) {
-            // Token repetido: Não fazemos nada, ignoramos o envio para não dar spam
+          // O Escudo Global: Bloqueia se a chave já foi enviada nesta sessão do navegador
+          if (globalSyncedToken === session.provider_token) {
+             // Ignora silenciosamente. Fim do loop.
           } else {
-            // Token novo: Salvamos na memória e enviamos para o Render
-            lastSyncedToken.current = session.provider_token;
-            
-            console.log("🚀 Enviando tokens do Google para o Backend...");
-            await fetch(`${backendUrl}/api/auth/sync`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                userId: authUser.id,
-                email: authUser.email,
-                accessToken: session.provider_token,
-                refreshToken: session.provider_refresh_token,
-                expiresAt: session.expires_at
-              })
-            });
+             globalSyncedToken = session.provider_token;
+             console.log(`🚀 Enviando tokens do Google (Evento: ${event})...`);
+             
+             // Executa a chamada HTTP sem travar a interface
+             fetch(`${backendUrl}/api/auth/sync`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  userId: authUser.id,
+                  email: authUser.email,
+                  accessToken: session.provider_token,
+                  refreshToken: session.provider_refresh_token,
+                  expiresAt: session.expires_at
+                })
+             }).catch(err => console.error("Erro no sync:", err));
           }
         }
 
-        // 2. CRIAÇÃO / LEITURA DE PERFIL (Aciona a criação automática)
-        // Fazemos o pedido ao Backend, o que acionará a lógica que fizemos no server.ts
-        console.log("🔍 Verificando perfil no Backend...");
-        const response = await fetch(`${backendUrl}/api/user/profile?email=${authUser.email}`);
-        
-        if (response.ok) {
-          const profileData = await response.json();
-          // Atualiza o estado da aplicação com os dados vindos do banco
-          setUser({ ...authUser, hasPaid: profileData.has_paid || false });
+        // 2. LEITURA DE PERFIL
+        // Só precisamos buscar o perfil na primeira vez que o site carrega ou quando há um login novo
+        if (!globalProfileFetched || event === "SIGNED_IN") {
+          globalProfileFetched = true;
+          console.log("🔍 Verificando perfil no Backend...");
+          
+          const response = await fetch(`${backendUrl}/api/user/profile?email=${authUser.email}`);
+          
+          if (response.ok) {
+            const profileData = await response.json();
+            setUser({ ...authUser, hasPaid: profileData.has_paid || false });
+          } else {
+            setUser({ ...authUser, hasPaid: false });
+          }
         } else {
-          console.warn("⚠️ O Backend não conseguiu devolver o perfil.");
-          setUser({ ...authUser, hasPaid: false });
+          // Se já buscou antes, apenas atualiza o estado para não gerar travamentos na tela
+          setUser(prev => prev ? { ...prev } : { ...authUser, hasPaid: false });
         }
 
       } catch (error) {
@@ -75,23 +81,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     };
 
-    // Quando o site abre pela primeira vez
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session?.user) {
-        processUserSession(session.user, session);
-      } else {
-        setUser(null);
-        setLoading(false);
-      }
-    });
-
-    // Quando o utilizador faz login ou a sessão é atualizada
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (session?.user) {
-        processUserSession(session.user, session);
-      } else {
-        setUser(null);
-        setLoading(false);
+    // Fica a ouvir as mudanças de estado da sessão do utilizador
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      // Filtramos apenas os eventos que realmente importam para não gerar loops
+      if (event === "INITIAL_SESSION" || event === "SIGNED_IN" || event === "TOKEN_REFRESHED") {
+        if (session?.user) {
+          processUserSession(session.user, session, event);
+        } else {
+          setUser(null);
+          setLoading(false);
+        }
       }
     });
 
@@ -99,15 +98,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const logout = async () => {
+    // Ao sair, limpamos as variáveis globais para o próximo utilizador
+    globalSyncedToken = null;
+    globalProfileFetched = false;
+    
     await supabase.auth.signOut();
     setUser(null);
-    // Limpa a memória ao sair para que um novo utilizador possa sincronizar
-    lastSyncedToken.current = null;
   };
 
   return (
     <AuthContext.Provider value={{ user, loading, logout }}>
-      {/* A aplicação só renderiza depois das validações terminarem */}
       {!loading && children}
     </AuthContext.Provider>
   );
