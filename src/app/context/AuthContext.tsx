@@ -55,8 +55,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
 
         // 2. LEITURA DE PERFIL
-        // Só precisamos buscar o perfil na primeira vez que o site carrega ou quando há um login novo
-        if (!globalProfileFetched || event === "SIGNED_IN") {
+        // 🛑 A CURA DA TROCA DE ABAS: O Supabase dispara eventos ao focar na aba, 
+        // mas nós só deixamos passar se for a PRIMEIRA vez absoluta.
+        if (!globalProfileFetched) {
           globalProfileFetched = true;
           console.log("🔍 Verificando perfil no Backend...");
           
@@ -69,7 +70,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             setUser({ ...authUser, hasPaid: false });
           }
         } else {
-          // Se já buscou antes, apenas atualiza o estado para não gerar travamentos na tela
+          // Apenas mantém o estado se trocar de aba, sem fazer requisições ao Render
           setUser(prev => prev ? { ...prev } : { ...authUser, hasPaid: false });
         }
 
