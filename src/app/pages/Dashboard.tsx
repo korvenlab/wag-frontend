@@ -52,13 +52,16 @@ export function Dashboard() {
   const [messagesAnswered, setMessagesAnswered] = useState(0);
   const [appointmentsMade, setAppointmentsMade] = useState(0);
 
-  const { user, logout } = useAuth();
+  // 🛑 FEATURE: Importamos o loading para evitar o loop de redirecionamento
+  const { user, loading, logout } = useAuth();
   const navigate = useNavigate();
-  const backendUrl = import.meta.env.VITE_API_URL || "http://localhost:3000";
+  const backendUrl = import.meta.env.VITE_API_URL || "https://wag-backend.onrender.com";
 
   useEffect(() => {
+    // Só carrega os dados se não estiver a carregar e se o utilizador já pagou
+    if (loading || !user || !user.hasPaid) return;
+
     const fetchUserData = async () => {
-      if (!user?.email) return;
       try {
         const response = await fetch(`${backendUrl}/api/user/profile?email=${user.email}`);
         if (response.ok) {
@@ -70,7 +73,6 @@ export function Dashboard() {
           setAppointmentsMade(data.appointments_count || 0);
           setServiceDuration(data.service_duration || 30);
           
-          // Status da agenda interna
           setIsGoogleConnected(!!(data.googleAuth && data.googleAuth.refreshToken));
 
           if (data.working_hours) {
@@ -84,13 +86,21 @@ export function Dashboard() {
         console.error("Erro ao buscar dados do perfil:", error);
       }
     };
-    if (user && user.hasPaid) fetchUserData();
-  }, [user, backendUrl]);
+    
+    fetchUserData();
+  }, [user, loading, backendUrl]); // Dependências corrigidas
 
   useEffect(() => {
-    if (user && !user.hasPaid) navigate("/#precos");
-    if (!user) navigate("/login");
-  }, [user, navigate]);
+    // 🛑 FEATURE: A "Trava" de Redirecionamento. 
+    // O React SÓ pode redirecionar DEPOIS de o Supabase responder (loading === false)
+    if (!loading) {
+      if (!user) {
+        navigate("/login");
+      } else if (!user.hasPaid) {
+        navigate("/#precos");
+      }
+    }
+  }, [user, loading, navigate]);
 
   useEffect(() => {
     const checkDesktop = () => setIsDesktop(window.innerWidth >= 1024);
@@ -181,6 +191,16 @@ export function Dashboard() {
     } catch (error) { console.error(error); } finally { setIsSavingSettings(false); }
   };
 
+  // Se a página estiver a carregar os dados iniciais do utilizador, mostra uma tela branca/spinner
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-50">
+        <Loader2 className="w-10 h-10 animate-spin text-emerald-600" />
+      </div>
+    );
+  }
+
+  // Barreira de segurança: Se os dados carregaram mas ele não tem permissão, renderiza nulo (o redirecionamento tratará disso)
   if (!user || !user.hasPaid) return null;
 
   return (
@@ -326,9 +346,9 @@ export function Dashboard() {
 
                   <CardContent className="pt-8 space-y-8">
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                      <TurnoCard title="Manhã" icon={<Sun />} color="amber" active={workingHours[selectedDay]?.isTurno1Active} onToggle={(v) => updateDayField(selectedDay, "isTurno1Active", v)} start={workingHours[selectedDay]?.startTime} end={workingHours[selectedDay]?.endTime} onStart={(v) => updateDayField(selectedDay, "startTime", v)} onEnd={(v) => updateDayField(selectedDay, "endTime", v)} />
-                      <TurnoCard title="Tarde" icon={<Coffee />} color="emerald" active={workingHours[selectedDay]?.isTurno2Active} onToggle={(v) => updateDayField(selectedDay, "isTurno2Active", v)} start={workingHours[selectedDay]?.startTime2} end={workingHours[selectedDay]?.endTime2} onStart={(v) => updateDayField(selectedDay, "startTime2", v)} onEnd={(v) => updateDayField(selectedDay, "endTime2", v)} />
-                      <TurnoCard title="Noite" icon={<Moon />} color="indigo" active={workingHours[selectedDay]?.isTurno3Active} onToggle={(v) => updateDayField(selectedDay, "isTurno3Active", v)} start={workingHours[selectedDay]?.startTime3} end={workingHours[selectedDay]?.endTime3} onStart={(v) => updateDayField(selectedDay, "startTime3", v)} onEnd={(v) => updateDayField(selectedDay, "endTime3", v)} />
+                      <TurnoCard title="Manhã" icon={<Sun />} color="amber" active={workingHours[selectedDay]?.isTurno1Active} onToggle={(v: boolean) => updateDayField(selectedDay, "isTurno1Active", v)} start={workingHours[selectedDay]?.startTime} end={workingHours[selectedDay]?.endTime} onStart={(v: string) => updateDayField(selectedDay, "startTime", v)} onEnd={(v: string) => updateDayField(selectedDay, "endTime", v)} />
+                      <TurnoCard title="Tarde" icon={<Coffee />} color="emerald" active={workingHours[selectedDay]?.isTurno2Active} onToggle={(v: boolean) => updateDayField(selectedDay, "isTurno2Active", v)} start={workingHours[selectedDay]?.startTime2} end={workingHours[selectedDay]?.endTime2} onStart={(v: string) => updateDayField(selectedDay, "startTime2", v)} onEnd={(v: string) => updateDayField(selectedDay, "endTime2", v)} />
+                      <TurnoCard title="Noite" icon={<Moon />} color="indigo" active={workingHours[selectedDay]?.isTurno3Active} onToggle={(v: boolean) => updateDayField(selectedDay, "isTurno3Active", v)} start={workingHours[selectedDay]?.startTime3} end={workingHours[selectedDay]?.endTime3} onStart={(v: string) => updateDayField(selectedDay, "startTime3", v)} onEnd={(v: string) => updateDayField(selectedDay, "endTime3", v)} />
                     </div>
 
                     <div className="pt-6 border-t flex flex-col md:flex-row justify-between items-center gap-6">
