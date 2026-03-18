@@ -61,7 +61,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           globalProfileFetched = true;
           console.log("🔍 Verificando perfil no Backend...");
           
-          const response = await fetch(`${backendUrl}/api/user/profile?email=${authUser.email}`);
+          // FEATURE: ID injetado na URL para evitar o erro de 'not-null constraint' na criação de perfil
+          const response = await fetch(`${backendUrl}/api/user/profile?email=${authUser.email}&id=${authUser.id}`);
           
           if (response.ok) {
             const profileData = await response.json();
