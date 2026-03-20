@@ -74,7 +74,7 @@ export function Header() {
             whileTap={{ scale: 0.95 }}
             onClick={() => navigate("/")}
           >
-            <div className="w-32 h-32 flex items-center justify-center flex-shrink-0">
+            <div className="w-50 h-50 flex items-center justify-center flex-shrink-0">
               <img
                 src="/logo.png"
                 alt="Logo"
