@@ -1,4 +1,4 @@
-import { motion } from "motion/react";
+import { motion } from "framer-motion";
 
 export function Footer() {
   return (
@@ -15,17 +15,14 @@ export function Footer() {
             transition={{ delay: 0.1 }}
           >
             <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 flex items-center justify-center">
-                {/* ALERTA: A imagem agora é chamada diretamente da pasta public com o nome logokorven.png */}
+              <div className="w-50 h-50 flex items-center justify-center">
+                {/* ALERTA: A imagem agora é chamada diretamente da pasta public */}
                 <img 
-                  src="/logo.png"
-                  alt="WAG BOT Logo"
+                  src="/logo.png" 
+                  alt="Logo" 
                   className="w-full h-full object-contain"
                 />
               </div>
-              <span className="text-xl font-bold bg-gradient-to-r from-[#007BFF] to-[#6F42C1] bg-clip-text text-transparent">
-                WAG BOT
-              </span>
             </div>
             <p className="text-gray-600 text-sm leading-relaxed">
               Automatize seus agendamentos e recupere seu tempo. Simples,
@@ -91,7 +88,7 @@ export function Footer() {
           className="pt-8 border-t border-gray-200 flex flex-col md:flex-row items-center justify-center gap-6"
         >
           <p className="text-gray-500 text-sm">
-            © 2026 WAG BOT. Todos os direitos reservados.
+            (© 2026 — Korven Lab- Todos os direitos reservados)
           </p>
         </motion.div>
       </div>
