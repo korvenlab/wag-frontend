@@ -1,4 +1,4 @@
-import { motion, AnimatePresence } from "motion/react";
+import { motion, AnimatePresence } from "framer-motion";
 import { Menu, X, ChevronDown, Lock, LogOut, LayoutDashboard } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router";
@@ -8,7 +8,6 @@ export function Header() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const [isLogoHovered, setIsLogoHovered] = useState(false);
   const navigate = useNavigate();
   const { user, logout } = useAuth();
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -41,7 +40,7 @@ export function Header() {
 
   const handleDashboardClick = () => {
     if (!user?.hasPaid) {
-      return; 
+      return;
     }
     navigate("/dashboard");
     setIsDropdownOpen(false);
@@ -60,41 +59,28 @@ export function Header() {
       transition={{ duration: 0.6, ease: "easeOut" }}
       className="fixed top-0 left-0 right-0 z-50 px-4 pt-5"
     >
-      <div 
-        className={`max-w-[1200px] mx-auto h-16 rounded-[50px] bg-white/80 backdrop-blur-[12px] transition-all duration-300 ${
+      <div
+        className={`max-w-[1200px] mx-auto h-20 rounded-[50px] bg-white/80 backdrop-blur-[12px] transition-all duration-300 ${
           isScrolled
             ? "shadow-[0_4px_30px_rgba(0,0,0,0.08)]"
             : "shadow-[0_4px_30px_rgba(0,0,0,0.05)]"
         }`}
       >
         <div className="px-6 h-full flex items-center justify-between">
+          {/* Logo Limpa e 3x Maior */}
           <motion.div
-            className="flex items-center gap-3 cursor-pointer overflow-hidden flex-shrink-0"
+            className="flex items-center cursor-pointer flex-shrink-0"
             whileHover={{ scale: 1.025 }}
-            whileTap={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
             onClick={() => navigate("/")}
-            onMouseEnter={() => setIsLogoHovered(true)}
-            onMouseLeave={() => setIsLogoHovered(false)}
           >
-            <div className="w-11 h-11 flex items-center justify-center flex-shrink-0">
-              {/* ALERTA: A imagem agora é chamada diretamente da pasta public! */}
-              <img 
+            <div className="w-32 h-32 flex items-center justify-center flex-shrink-0">
+              <img
                 src="/logo.png"
-                alt="WAG BOT Logo"
+                alt="Logo"
                 className="w-full h-full object-contain"
               />
             </div>
-            <motion.span
-              className="font-bold bg-gradient-to-r from-[#007BFF] to-[#6F42C1] bg-clip-text text-transparent inline-block overflow-hidden"
-              animate={{
-                maxWidth: isLogoHovered ? "400px" : "90px",
-              }}
-              transition={{ duration: 0.5, ease: [0.4, 0, 0.2, 1] }}
-            >
-              <span className="whitespace-nowrap">
-                {isLogoHovered ? "Whatsapp + Agendamento + Google" : "WAG BOT"}
-              </span>
-            </motion.span>
           </motion.div>
 
           <nav className="hidden md:flex items-center gap-6 absolute left-1/2 -translate-x-1/2">
@@ -211,13 +197,13 @@ export function Header() {
               <MobileNavLink onClick={() => scrollToSection("faq")}>
                 FAQ
               </MobileNavLink>
-              
+
               {user ? (
                 <>
                   <div className="pt-4 border-t border-gray-200">
                     <p className="text-xs text-gray-500 mb-2">Conectado como</p>
                     <p className="text-sm font-semibold text-gray-900 truncate mb-4">{user.email}</p>
-                    
+
                     <button
                       onClick={handleDashboardClick}
                       disabled={!user.hasPaid}
@@ -231,7 +217,7 @@ export function Header() {
                       Dashboard
                       {!user.hasPaid && <Lock size={14} />}
                     </button>
-                    
+
                     {!user.hasPaid && (
                       <div className="px-4 py-2 mb-3 bg-amber-50 border border-amber-200 rounded-lg">
                         <p className="text-xs text-amber-800 font-medium">
@@ -239,7 +225,7 @@ export function Header() {
                         </p>
                       </div>
                     )}
-                    
+
                     <button
                       onClick={handleLogout}
                       className="w-full px-4 py-2.5 rounded-lg bg-red-50 text-red-600 font-semibold flex items-center justify-center gap-2"
@@ -250,7 +236,7 @@ export function Header() {
                   </div>
                 </>
               ) : (
-                <button 
+                <button
                   onClick={() => {
                     navigate("/login");
                     setIsMobileMenuOpen(false);
