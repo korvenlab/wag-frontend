@@ -67,7 +67,6 @@ export function Header() {
         }`}
       >
         <div className="px-6 h-full flex items-center justify-between">
-          {/* Logo Limpa e 3x Maior */}
           <motion.div
             className="flex items-center cursor-pointer flex-shrink-0"
             whileHover={{ scale: 1.025 }}
@@ -98,9 +97,9 @@ export function Header() {
               <div ref={dropdownRef} className="relative">
                 <motion.button
                   onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                  whileHover={{ scale: 1.05, boxShadow: "0 20px 30px rgba(0, 123, 255, 0.3)" }}
+                  whileHover={{ scale: 1.05, boxShadow: "0 15px 25px rgba(100, 179, 77, 0.3)" }}
                   whileTap={{ scale: 0.95 }}
-                  className="px-6 py-2.5 rounded-full bg-gradient-to-r from-[#007BFF] to-[#6F42C1] text-white font-semibold shadow-md hover:shadow-lg transition-shadow flex items-center gap-2"
+                  className="px-6 py-2.5 rounded-full bg-[#64b34d] text-white font-semibold shadow-md hover:shadow-lg transition-shadow flex items-center gap-2"
                 >
                   <span className="max-w-[150px] truncate">{user.email}</span>
                   <ChevronDown size={16} className={`transition-transform ${isDropdownOpen ? "rotate-180" : ""}`} />
@@ -159,10 +158,10 @@ export function Header() {
               </div>
             ) : (
               <motion.button
-                whileHover={{ scale: 1.05, boxShadow: "0 20px 30px rgba(0, 123, 255, 0.3)" }}
+                whileHover={{ scale: 1.05, boxShadow: "0 15px 25px rgba(100, 179, 77, 0.3)" }}
                 whileTap={{ scale: 0.95 }}
                 onClick={() => navigate("/login")}
-                className="px-6 py-2.5 rounded-full bg-gradient-to-r from-[#007BFF] to-[#6F42C1] text-white font-semibold shadow-md hover:shadow-lg transition-shadow"
+                className="px-6 py-2.5 rounded-full bg-[#64b34d] text-white font-semibold shadow-md hover:shadow-lg transition-shadow"
               >
                 Login
               </motion.button>
@@ -209,7 +208,7 @@ export function Header() {
                       disabled={!user.hasPaid}
                       className={`w-full px-4 py-2.5 rounded-lg mb-2 flex items-center justify-center gap-2 ${
                         user.hasPaid
-                          ? "bg-gradient-to-r from-[#007BFF] to-[#6F42C1] text-white"
+                          ? "bg-[#64b34d] text-white"
                           : "bg-gray-100 text-gray-400 cursor-not-allowed"
                       }`}
                     >
@@ -241,7 +240,7 @@ export function Header() {
                     navigate("/login");
                     setIsMobileMenuOpen(false);
                   }}
-                  className="px-6 py-2.5 rounded-full bg-gradient-to-r from-[#007BFF] to-[#6F42C1] text-white font-semibold shadow-md"
+                  className="px-6 py-2.5 rounded-full bg-[#64b34d] text-white font-semibold shadow-md"
                 >
                   Login
                 </button>
@@ -269,7 +268,7 @@ function NavLink({
     >
       {children}
       <motion.span
-        className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-[#007BFF] to-[#6F42C1] group-hover:w-full transition-all duration-300"
+        className="absolute -bottom-1 left-0 w-0 h-0.5 bg-[#64b34d] group-hover:w-full transition-all duration-300"
       />
     </motion.button>
   );
