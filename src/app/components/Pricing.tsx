@@ -43,7 +43,6 @@ export function Pricing() {
     setLoading(true);
 
     try {
-      // Chamada para o seu backend atualizado
       const response = await fetch(`${import.meta.env.VITE_API_URL}/api/stripe/create-checkout-session`, {
         method: "POST",
         headers: {
@@ -52,14 +51,12 @@ export function Pricing() {
         body: JSON.stringify({
           email: user.email,
           userId: user.id,
-          // O priceId agora é pego pelo backend via process.env.STRIPE_PRICE_ID
         }),
       });
 
       const data = await response.json();
 
       if (data.url) {
-        // Redireciona para o Checkout seguro do Stripe
         window.location.href = data.url;
       } else {
         console.error("Erro retornado pelo servidor:", data);
@@ -79,9 +76,9 @@ export function Pricing() {
       ref={ref}
       className="relative py-32 bg-gradient-to-b from-white via-gray-50 to-white overflow-hidden"
     >
-      {/* Efeitos de Fundo */}
+      {/* Efeitos de Fundo - Atualizado para Verde */}
       <div className="absolute inset-0">
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-gradient-to-r from-[#007BFF] to-[#6F42C1] rounded-full opacity-[0.02] blur-[150px]" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-[#64b34d] rounded-full opacity-[0.03] blur-[150px]" />
       </div>
 
       <div className="relative z-10 max-w-7xl mx-auto px-6">
@@ -96,16 +93,16 @@ export function Pricing() {
             initial={{ opacity: 0, scale: 0.9 }}
             animate={isInView ? { opacity: 1, scale: 1 } : {}}
             transition={{ delay: 0.2 }}
-            className="inline-block px-4 py-2 rounded-full bg-blue-50 border border-blue-100 mb-6"
+            className="inline-block px-4 py-2 rounded-full bg-green-50 border border-green-100 mb-6"
           >
-            <span className="text-sm text-[#007BFF] font-semibold">
+            <span className="text-sm text-[#64b34d] font-semibold">
               Oferta Especial
             </span>
           </motion.div>
 
-          <h2 className="text-4xl md:text-6xl font-bold mb-6 text-gray-900">
+          <h2 className="text-4xl md:text-6xl font-bold mb-6 text-gray-900 leading-tight">
             Investimento que se{" "}
-            <span className="bg-gradient-to-r from-[#007BFF] to-[#6F42C1] bg-clip-text text-transparent">
+            <span className="bg-gradient-to-r from-[#64b34d] to-[#4d8f3b] bg-clip-text text-transparent">
               Paga Sozinho
             </span>
           </h2>
@@ -135,15 +132,15 @@ export function Pricing() {
                 transition={{ duration: 2, repeat: Infinity }}
                 className="w-2 h-2 rounded-full bg-red-500"
               />
-              <span className="text-sm text-red-400 font-semibold">
+              <span className="text-sm text-red-500 font-semibold">
                 🔥 Oferta por Tempo Limitado - 40% OFF
               </span>
             </div>
           </motion.div>
 
           <div className="relative group">
-            {/* Sombra Suave */}
-            <div className="absolute -inset-4 bg-gradient-to-r from-blue-100 to-purple-100 rounded-3xl blur-2xl opacity-30" />
+            {/* Sombra Suave Verde */}
+            <div className="absolute -inset-4 bg-green-100/50 rounded-3xl blur-2xl opacity-30" />
 
             <div className="relative bg-white rounded-3xl border border-gray-200 overflow-hidden shadow-xl">
               <div className="relative p-10 md:p-12">
@@ -169,7 +166,7 @@ export function Pricing() {
                       className="flex items-baseline gap-2"
                     >
                       <span className="text-xl text-gray-600">R$</span>
-                      <span className="text-7xl font-bold bg-gradient-to-r from-[#007BFF] to-[#6F42C1] bg-clip-text text-transparent">
+                      <span className="text-7xl font-bold bg-gradient-to-r from-[#64b34d] to-[#4d8f3b] bg-clip-text text-transparent">
                         60
                       </span>
                       <span className="text-xl text-gray-600">/mês</span>
@@ -187,7 +184,7 @@ export function Pricing() {
                       transition={{ delay: 0.7 + index * 0.1 }}
                       className="flex items-center gap-3 group/item"
                     >
-                      <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-50 to-purple-50 flex items-center justify-center text-[#007BFF] flex-shrink-0 shadow-sm">
+                      <div className="w-10 h-10 rounded-lg bg-green-50 flex items-center justify-center text-[#64b34d] flex-shrink-0 shadow-sm">
                         {feature.icon}
                       </div>
                       <span className="text-gray-700 font-medium group-hover/item:text-gray-900 transition-all">
@@ -197,13 +194,13 @@ export function Pricing() {
                   ))}
                 </div>
 
-                {/* Botão de Checkout */}
+                {/* Botão de Checkout - Gradiente Verde */}
                 <motion.button
                   onClick={handleCheckout}
                   disabled={loading}
                   whileHover={loading ? {} : { scale: 1.02 }}
                   whileTap={loading ? {} : { scale: 0.98 }}
-                  className="relative w-full py-5 rounded-2xl bg-gradient-to-r from-[#007BFF] to-[#6F42C1] text-white font-bold text-xl shadow-lg transition-all overflow-hidden disabled:opacity-70 disabled:cursor-not-allowed"
+                  className="relative w-full py-5 rounded-2xl bg-gradient-to-r from-[#64b34d] to-[#4d8f3b] text-white font-bold text-xl shadow-lg shadow-green-100 transition-all overflow-hidden disabled:opacity-70 disabled:cursor-not-allowed"
                 >
                   <span className="relative z-10 flex items-center justify-center gap-2">
                     {loading && <Loader2 className="w-6 h-6 animate-spin" />}
