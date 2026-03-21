@@ -1,133 +1,118 @@
-import { motion, AnimatePresence } from "framer-motion"; // Mude para "motion/react" se preferir
-import { ArrowRight, Calendar, MessageCircle, Check, Sparkles } from "lucide-react";
+import { motion, useInView } from "framer-motion";
+import { MessageCircle, Calendar, CheckCircle2 } from "lucide-react";
+import { useRef } from "react";
 
-export const HeroSection = () => {
+// O "export" aqui DEVE ser exatamente assim para o App.tsx reconhecer
+export function HowItWorks() {
+  const ref = useRef(null);
+  const isInView = useInView(ref, { once: true, amount: 0.2 });
+
   return (
-    <section className="relative min-h-screen flex items-center justify-center pt-20 pb-10 px-6 bg-white overflow-hidden">
-      {/* Background Soft Glow */}
-      <div className="absolute top-[-5%] right-[-5%] w-[500px] h-[500px] bg-green-50 blur-[100px] rounded-full -z-10 opacity-60" />
-
-      <div className="w-full max-w-7xl mx-auto grid lg:grid-cols-2 gap-16 items-center">
-        
-        {/* LADO ESQUERDO: A MENSAGEM CLARA */}
-        <motion.div 
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8 }}
-          className="space-y-10"
+    <section
+      id="como-funciona"
+      ref={ref}
+      className="relative py-32 bg-white overflow-hidden"
+    >
+      {/* Glows de fundo orgânicos */}
+      <div className="absolute top-0 left-1/4 w-[500px] h-[500px] bg-green-50/50 blur-[120px] rounded-full -z-10" />
+      
+      <div className="relative z-10 max-w-7xl mx-auto px-6">
+        {/* Section Title */}
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          animate={isInView ? { opacity: 1, y: 0 } : {}}
+          className="text-center mb-24"
         >
-          <div className="space-y-6 text-left">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-green-50 border border-green-100">
-               <Sparkles size={14} className="text-[#64b34d]" />
-               <span className="text-[10px] font-black text-[#4d8f3b] uppercase tracking-[0.2em]">Tecnologia Simples</span>
-            </div>
-
-            <h1 className="text-6xl lg:text-[84px] font-black text-slate-900 tracking-tighter leading-[0.85]">
-              Recupere seu <br /> 
-              <span className="text-[#64b34d]">tempo de volta.</span>
-            </h1>
-
-            <p className="text-xl text-slate-500 max-w-lg leading-relaxed font-medium">
-              Enquanto você atende seus clientes ou descansa, o <strong className="text-slate-900">Wagoo</strong> responde o seu WhatsApp e marca os horários na sua agenda. <span className="text-[#64b34d] font-bold">Simples assim.</span>
-            </p>
-          </div>
-
-          <div className="flex flex-col sm:flex-row gap-6 items-center">
-            <button className="h-16 px-10 rounded-2xl bg-slate-900 text-white font-bold hover:bg-[#64b34d] transition-all shadow-2xl hover:shadow-green-100 flex items-center justify-center group">
-              Quero automatizar meu negócio
-              <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
-            </button>
-            
-            <div className="flex flex-col">
-               <span className="text-slate-900 font-black text-lg">R$60/mês</span>
-               <span className="text-xs text-slate-400 font-bold uppercase tracking-widest text-center sm:text-left">Sem taxas ocultas</span>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4 pt-4">
-             <div className="flex items-center gap-2 text-sm font-bold text-slate-700">
-                <Check size={18} className="text-[#64b34d]" strokeWidth={3} />
-                Funciona 24h por dia
-             </div>
-             <div className="flex items-center gap-2 text-sm font-bold text-slate-700">
-                <Check size={18} className="text-[#64b34d]" strokeWidth={3} />
-                Zero configuração difícil
-             </div>
-          </div>
+          <span className="px-4 py-1.5 rounded-full bg-green-100 text-[#4d8f3b] text-xs font-black tracking-widest uppercase inline-block mb-6">
+            Fluxo Inteligente
+          </span>
+          <h2 className="text-4xl md:text-6xl font-black text-slate-900 leading-tight tracking-tighter">
+            Três passos para sua <br />
+            <span className="text-[#64b34d]">liberdade total.</span>
+          </h2>
         </motion.div>
 
-        {/* LADO DIREITO: O VISUAL PREMIUM */}
-        <motion.div 
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 1 }}
-          className="relative w-full max-w-[550px] aspect-square flex items-center justify-center"
-        >
-          <div className="relative w-full bg-white rounded-[48px] shadow-[0_60px_100px_-20px_rgba(0,0,0,0.1)] border border-slate-50 overflow-hidden flex flex-col p-8 lg:p-12">
-            
-            <div className="flex items-center justify-between mb-10">
-               <div className="w-12 h-12 rounded-2xl bg-[#64b34d] flex items-center justify-center text-white shadow-lg shadow-green-100">
-                  <MessageCircle size={24} fill="currentColor" />
-               </div>
-               <div className="text-right">
-                  <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Status do Wagoo</p>
-                  <p className="text-sm font-black text-green-500 flex items-center justify-end gap-1.5">
-                     <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-                     Atendendo agora
-                  </p>
-               </div>
-            </div>
-
-            <div className="space-y-6 flex-1">
-               <div className="space-y-2">
-                  <p className="text-[10px] font-bold text-slate-400 uppercase ml-1">Cliente</p>
-                  <div className="bg-slate-50 p-4 rounded-3xl rounded-tl-none text-sm text-slate-600 font-medium border border-slate-100">
-                    "Oi! Você tem algum horário livre amanhã à tarde?"
-                  </div>
-               </div>
-
-               <motion.div 
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 1.5 }}
-                  className="space-y-2"
-               >
-                  <p className="text-[10px] font-bold text-[#64b34d] uppercase ml-1 text-right">Wagoo (Seu Assistente)</p>
-                  <div className="bg-[#64b34d] p-4 rounded-3xl rounded-tr-none text-sm text-white font-bold shadow-xl shadow-green-100">
-                    "Olá! Tenho às <span className="underline">15:30</span> disponível. Quer que eu reserve?"
-                  </div>
-               </motion.div>
-            </div>
-
-            <motion.div 
-               initial={{ opacity: 0 }}
-               animate={{ opacity: 1 }}
-               transition={{ delay: 2.5 }}
-               className="mt-10 pt-8 border-t border-slate-50 flex items-center justify-between"
-            >
-               <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center text-[#4285F4]">
-                     <Calendar size={20} />
-                  </div>
-                  <div className="text-left">
-                     <p className="text-xs font-black text-slate-900 leading-none">Agenda Atualizada</p>
-                     <p className="text-[10px] text-slate-400 font-bold uppercase mt-1">Google Calendar</p>
-                  </div>
-               </div>
-               <Check size={24} className="text-green-500" strokeWidth={4} />
-            </motion.div>
+        {/* Cards Grid */}
+        <div className="relative grid md:grid-cols-3 gap-12">
+          
+          {/* Linhas Pontilhadas (Apenas Desktop) */}
+          <div className="hidden md:block absolute top-1/4 left-0 w-full h-0.5 -z-10">
+            <svg width="100%" height="2" fill="none" className="opacity-20">
+              <line x1="20%" y1="1" x2="80%" y2="1" stroke="#64b34d" strokeWidth="2" strokeDasharray="8 8" />
+            </svg>
           </div>
 
-          <motion.div 
-            animate={{ y: [0, -10, 0] }}
-            transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
-            className="absolute -right-4 top-10 bg-slate-900 text-white p-6 rounded-[32px] shadow-2xl z-30"
-          >
-             <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Seu novo foco</p>
-             <p className="text-xl font-black text-white">Crescer seu negócio 🚀</p>
-          </motion.div>
+          <StepCard
+            delay={0.2}
+            icon={<MessageCircle size={32} />}
+            step="01"
+            title="O cliente chama"
+            description="Ele envia uma mensagem natural no WhatsApp. O Wagoo entende o pedido instantaneamente."
+            isInView={isInView}
+          />
+
+          <StepCard
+            delay={0.4}
+            icon={<Calendar size={32} />}
+            step="02"
+            title="O Wagoo organiza"
+            description="O bot consulta sua agenda real e oferece apenas os horários que você definiu como livres."
+            isInView={isInView}
+          />
+
+          <StepCard
+            delay={0.6}
+            icon={<CheckCircle2 size={32} />}
+            step="03"
+            title="Tudo pronto"
+            description="Agendamento feito e sincronizado. Você só precisa abrir a porta e faturar."
+            isInView={isInView}
+          />
+        </div>
+
+        {/* Bottom CTA */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={isInView ? { opacity: 1 } : {}}
+          transition={{ delay: 1 }}
+          className="text-center mt-20"
+        >
+          <button className="px-8 py-4 rounded-2xl bg-slate-900 text-white font-bold hover:bg-[#64b34d] transition-all shadow-xl shadow-slate-200">
+            Ver demonstração completa
+          </button>
         </motion.div>
       </div>
     </section>
   );
-};
+}
+
+// Componente interno para os cards
+function StepCard({ icon, step, title, description, delay, isInView }: any) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 40 }}
+      animate={isInView ? { opacity: 1, y: 0 } : {}}
+      transition={{ duration: 0.8, delay }}
+      className="relative group bg-white p-10 rounded-[40px] shadow-[0_20px_50px_rgba(0,0,0,0.04)] hover:shadow-[0_40px_80px_rgba(0,0,0,0.08)] transition-all duration-500 border border-slate-50"
+    >
+      <div className="absolute top-8 right-10 text-4xl font-black text-slate-100 group-hover:text-green-50 transition-colors">
+        {step}
+      </div>
+
+      <div className="w-20 h-20 rounded-[28px] bg-green-50 flex items-center justify-center text-[#64b34d] mb-8 group-hover:scale-110 group-hover:bg-[#64b34d] group-hover:text-white transition-all duration-500 shadow-inner">
+        {icon}
+      </div>
+
+      <div className="space-y-4">
+        <h3 className="text-2xl font-black text-slate-900 tracking-tight">
+          {title}
+        </h3>
+        <p className="text-slate-500 leading-relaxed font-medium">
+          {description}
+        </p>
+      </div>
+
+      <div className="absolute bottom-0 left-10 right-10 h-1 bg-gradient-to-r from-transparent via-green-100 to-transparent scale-x-0 group-hover:scale-x-100 transition-transform duration-700" />
+    </motion.div>
+  );
+}
