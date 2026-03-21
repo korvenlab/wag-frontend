@@ -23,11 +23,6 @@ export function FAQ() {
         "Não! O setup leva apenas 2 minutos e é totalmente guiado. Você conecta seu WhatsApp e autoriza o Google Calendar. Nosso assistente inteligente cuida de todo o resto para você.",
     },
     {
-      question: "Posso personalizar as mensagens do bot?",
-      answer:
-        "Sim! Você tem controle total sobre o tom de voz e as respostas do seu assistente. Pode configurar como ele saúda seus clientes e como confirma os horários agendados.",
-    },
-    {
       question: "O que acontece se eu cancelar?",
       answer:
         "Você pode cancelar a qualquer momento sem burocracia. Não há multas ou contratos de fidelidade. Você paga apenas pelo mês que utilizar.",
