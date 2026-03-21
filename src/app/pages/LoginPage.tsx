@@ -8,9 +8,7 @@ export function LoginPage() {
   const [status, setStatus] = useState("Verificando sessão...");
 
   useEffect(() => {
-    // Função separada e agressiva para garantir a sincronização
     const syncSessionWithBackend = async (session: any) => {
-      // Se não houver token do Google, ignoramos e esperamos o utilizador clicar no botão
       if (!session?.provider_token || !session?.user) {
         setStatus("Aguardando login com Google...");
         return;
@@ -47,7 +45,6 @@ export function LoginPage() {
       }
     };
 
-    // 1. Tenta sincronizar imediatamente com a sessão que já está guardada no navegador
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) {
         console.log("Sessão detetada no carregamento!");
@@ -55,11 +52,9 @@ export function LoginPage() {
       }
     });
 
-    // 2. Fica à escuta de qualquer mudança (Novo Login, Restauro de Sessão, etc)
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       console.log(`[EVENTO SUPABASE]: ${event}`);
       
-      // Captura qualquer evento que signifique "O utilizador está logado"
       if (event === "SIGNED_IN" || event === "INITIAL_SESSION" || event === "TOKEN_REFRESHED") {
         if (session) {
           syncSessionWithBackend(session);
@@ -85,20 +80,32 @@ export function LoginPage() {
   return (
     <div className="min-h-screen bg-white flex flex-col items-center justify-center p-6">
       <motion.div 
-        initial={{ opacity: 0, scale: 0.9 }}
-        animate={{ opacity: 1, scale: 1 }}
-        className="text-center space-y-8 max-w-sm w-full"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        className="text-center space-y-10 max-w-sm w-full"
       >
-        <img src="/logo.png" className="w-24 h-24 mx-auto" alt="Logo" />
-        <h1 className="text-4xl font-extrabold tracking-tight">WAG BOT</h1>
+        {/* Logo centralizada e com proporção preservada */}
+        <div className="flex justify-center">
+          <img 
+            src="/logo.png" 
+            className="w-32 h-auto object-contain" 
+            alt="Wag Logo" 
+          />
+        </div>
+
+        <div className="space-y-2">
+          <h1 className="text-4xl font-black tracking-tighter text-gray-900">WAG BOT</h1>
+          <p className="text-gray-400 text-sm uppercase tracking-widest font-semibold">Sua assistente inteligente</p>
+        </div>
         
-        <div className="p-4 bg-gray-50 rounded-2xl border border-gray-100">
-          <p className="text-sm font-medium text-gray-600">{status}</p>
+        <div className="p-5 bg-gray-50 rounded-3xl border border-gray-100">
+          <p className="text-sm font-medium text-gray-500">{status}</p>
         </div>
 
         <button
           onClick={handleGoogleLogin}
-          className="w-full py-4 bg-blue-600 text-white rounded-2xl font-bold shadow-lg shadow-blue-200 hover:bg-blue-700 active:scale-95 transition-all"
+          className="w-full py-4 bg-blue-600 text-white rounded-2xl font-bold shadow-xl shadow-blue-100 hover:bg-blue-700 active:scale-[0.98] transition-all flex items-center justify-center gap-3"
         >
           Entrar com Google
         </button>
