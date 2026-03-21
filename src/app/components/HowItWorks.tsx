@@ -14,7 +14,7 @@ export function HowItWorks() {
     >
       {/* Background Effects */}
       <div className="absolute inset-0">
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-[#007BFF] rounded-full opacity-[0.02] blur-[150px]" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-[#64b34d] rounded-full opacity-[0.03] blur-[150px]" />
       </div>
 
       <div className="relative z-10 max-w-7xl mx-auto px-6">
@@ -29,16 +29,16 @@ export function HowItWorks() {
             initial={{ opacity: 0, scale: 0.9 }}
             animate={isInView ? { opacity: 1, scale: 1 } : {}}
             transition={{ delay: 0.2 }}
-            className="inline-block px-4 py-2 rounded-full bg-blue-50 border border-blue-100 mb-6"
+            className="inline-block px-4 py-2 rounded-full bg-green-50 border border-green-100 mb-6"
           >
-            <span className="text-sm text-[#007BFF] font-semibold">
+            <span className="text-sm text-[#64b34d] font-semibold">
               Processo Automatizado
             </span>
           </motion.div>
 
-          <h2 className="text-4xl md:text-6xl font-bold mb-6 text-gray-900">
+          <h2 className="text-4xl md:text-6xl font-bold mb-6 text-gray-900 leading-tight">
             Seu Cliente Agenda em{" "}
-            <span className="bg-gradient-to-r from-[#007BFF] to-[#6F42C1] bg-clip-text text-transparent">
+            <span className="text-[#64b34d]">
               Segundos
             </span>
             ,<br />
@@ -90,9 +90,9 @@ export function HowItWorks() {
             Economize até 10 horas por semana com automação inteligente
           </p>
           <motion.button
-            whileHover={{ scale: 1.05, boxShadow: "0 10px 30px rgba(0, 0, 0, 0.1)" }}
+            whileHover={{ scale: 1.05, boxShadow: "0 10px 30px rgba(100, 179, 77, 0.15)" }}
             whileTap={{ scale: 0.95 }}
-            className="px-8 py-4 rounded-full bg-white border border-gray-300 text-gray-900 font-semibold hover:bg-gray-50 transition-all shadow-sm"
+            className="px-8 py-4 rounded-full bg-white border border-gray-300 text-gray-900 font-semibold hover:border-[#64b34d] hover:text-[#64b34d] transition-all shadow-sm"
           >
             Ver Todos os Recursos
           </motion.button>
@@ -156,13 +156,13 @@ function TiltCard({
       }}
       className="group relative"
     >
-      {/* Card Glow Effect */}
-      <div className="absolute -inset-0.5 bg-gradient-to-r from-[#007BFF] to-[#6F42C1] rounded-3xl opacity-0 group-hover:opacity-50 blur-xl transition-opacity duration-500" />
+      {/* Card Glow Effect - Agora Verde */}
+      <div className="absolute -inset-0.5 bg-[#64b34d] rounded-3xl opacity-0 group-hover:opacity-20 blur-xl transition-opacity duration-500" />
 
       {/* Card Content */}
-      <div className="relative h-full bg-white border border-gray-200 rounded-3xl p-8 hover:border-gray-300 hover:shadow-xl transition-all duration-300">
+      <div className="relative h-full bg-white border border-gray-200 rounded-3xl p-8 hover:border-[#64b34d]/50 hover:shadow-xl transition-all duration-300">
         {/* Step Number */}
-        <div className="absolute -top-4 -right-4 w-12 h-12 rounded-full bg-gradient-to-br from-[#007BFF] to-[#6F42C1] flex items-center justify-center text-white font-bold text-lg shadow-lg">
+        <div className="absolute -top-4 -right-4 w-12 h-12 rounded-full bg-gradient-to-br from-[#64b34d] to-[#4d8f3b] flex items-center justify-center text-white font-bold text-lg shadow-lg shadow-green-100">
           {step}
         </div>
 
@@ -170,7 +170,7 @@ function TiltCard({
         <motion.div
           whileHover={{ scale: 1.1, rotate: 5 }}
           transition={{ type: "spring", stiffness: 300 }}
-          className="w-20 h-20 rounded-2xl bg-gradient-to-br from-blue-50 to-purple-50 flex items-center justify-center mb-6 text-[#007BFF] shadow-sm"
+          className="w-20 h-20 rounded-2xl bg-green-50 flex items-center justify-center mb-6 text-[#64b34d] shadow-sm"
         >
           {icon}
         </motion.div>
@@ -210,12 +210,12 @@ function Step({
       className="group relative"
     >
       {/* Card Glow Effect */}
-      <div className="absolute -inset-0.5 bg-gradient-to-r from-[#007BFF] to-[#6F42C1] rounded-3xl opacity-0 group-hover:opacity-50 blur-xl transition-opacity duration-500" />
+      <div className="absolute -inset-0.5 bg-[#64b34d] rounded-3xl opacity-0 group-hover:opacity-20 blur-xl transition-opacity duration-500" />
 
       {/* Card Content */}
-      <div className="relative h-full bg-white border border-gray-200 rounded-3xl p-8 hover:border-gray-300 hover:shadow-xl transition-all duration-300">
+      <div className="relative h-full bg-white border border-gray-200 rounded-3xl p-8 hover:border-[#64b34d]/50 hover:shadow-xl transition-all duration-300">
         {/* Step Number */}
-        <div className="absolute -top-4 -right-4 w-12 h-12 rounded-full bg-gradient-to-br from-[#007BFF] to-[#6F42C1] flex items-center justify-center text-white font-bold text-lg shadow-lg">
+        <div className="absolute -top-4 -right-4 w-12 h-12 rounded-full bg-gradient-to-br from-[#64b34d] to-[#4d8f3b] flex items-center justify-center text-white font-bold text-lg shadow-lg shadow-green-100">
           {step}
         </div>
 
@@ -223,7 +223,7 @@ function Step({
         <motion.div
           whileHover={{ scale: 1.1, rotate: 5 }}
           transition={{ type: "spring", stiffness: 300 }}
-          className="w-20 h-20 rounded-2xl bg-gradient-to-br from-blue-50 to-purple-50 flex items-center justify-center mb-6 text-[#007BFF] shadow-sm"
+          className="w-20 h-20 rounded-2xl bg-green-50 flex items-center justify-center mb-6 text-[#64b34d] shadow-sm"
         >
           <Calendar className="w-12 h-12" />
         </motion.div>
