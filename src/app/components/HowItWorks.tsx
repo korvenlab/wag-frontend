@@ -70,19 +70,6 @@ export function HowItWorks() {
             isInView={isInView}
           />
         </div>
-
-        {/* Bottom CTA */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={isInView ? { opacity: 1 } : {}}
-          transition={{ delay: 1 }}
-          className="text-center mt-24"
-        >
-          <p className="text-slate-400 mb-8 font-bold uppercase tracking-widest text-xs">Economize até 10 horas por semana</p>
-          <button className="px-10 py-5 rounded-[24px] bg-slate-900 text-white font-bold hover:bg-[#64b34d] transition-all shadow-2xl shadow-slate-200 active:scale-95">
-            Ver Todos os Recursos
-          </button>
-        </motion.div>
       </div>
     </section>
   );
@@ -114,24 +101,20 @@ function StepCard({ icon, step, title, description, delay, isInView }: any) {
       }}
       className="relative group"
     >
-      {/* Sombras em camadas para destaque no fundo branco */}
       <div className="relative bg-white p-10 lg:p-12 rounded-[48px] border border-slate-100/50 
         shadow-[0_10px_30px_-10px_rgba(0,0,0,0.05),0_30px_60px_-15px_rgba(0,0,0,0.08)] 
         group-hover:shadow-[0_40px_100px_-20px_rgba(100,179,77,0.15)] 
         transition-all duration-500 h-full flex flex-col items-start"
       >
-        {/* Step Number - Mais Clean */}
         <div className="absolute top-10 right-12 text-5xl font-black text-slate-50 group-hover:text-green-50/50 transition-colors pointer-events-none">
           {step}
         </div>
 
-        {/* Ícone com Glassmorphism suave */}
         <div className="w-20 h-20 rounded-[30px] bg-green-50 flex items-center justify-center text-[#64b34d] mb-10 
           group-hover:bg-[#64b34d] group-hover:text-white transition-all duration-500 shadow-inner">
           {icon}
         </div>
 
-        {/* Conteúdo */}
         <div className="space-y-4">
           <h3 className="text-2xl font-black text-slate-900 tracking-tighter">
             {title}
@@ -141,7 +124,6 @@ function StepCard({ icon, step, title, description, delay, isInView }: any) {
           </p>
         </div>
 
-        {/* Linha decorativa de progresso no hover */}
         <div className="absolute bottom-10 left-12 w-12 h-1.5 bg-green-100 rounded-full overflow-hidden">
           <div className="w-0 group-hover:w-full h-full bg-[#64b34d] transition-all duration-700" />
         </div>
