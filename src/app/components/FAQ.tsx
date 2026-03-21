@@ -15,7 +15,7 @@ export function FAQ() {
     {
       question: "Como funciona a integração com o Google Calendar?",
       answer:
-        "A integração é automática e segura. Após conectar sua conta do Google, o Wagoo acessa seu calendário em tempo real para verificar disponibilidade e criar agendamentos. Tudo sincroniza instantaneamente.",
+        "A integração é automática e segura. Após conectar sua conta do Google, o Wagoo acessa seu calendário em tempo real para verificar sua disponibilidade e criar agendamentos. Tudo sincroniza instantaneamente.",
     },
     {
       question: "Preciso ter conhecimentos técnicos para configurar?",
@@ -28,9 +28,9 @@ export function FAQ() {
         "Você pode cancelar a qualquer momento sem burocracia. Não há multas ou contratos de fidelidade. Você paga apenas pelo mês que utilizar.",
     },
     {
-      question: "Funciona para múltiplos atendentes ou apenas para mim?",
+      question: "O Wagoo é exclusivo para a minha agenda?",
       answer:
-        "O Wagoo suporta múltiplos atendentes! Você pode conectar vários calendários e o bot identifica automaticamente quem está disponível em cada horário. Perfeito para clínicas e escritórios.",
+        "Sim! O Wagoo funciona como seu assistente pessoal dedicado, gerenciando uma agenda por assinatura. Ele é perfeito para profissionais autônomos e donos de negócio que precisam automatizar seus próprios horários.",
     },
     {
       question: "Meus dados e os dos meus clientes estão seguros?",
