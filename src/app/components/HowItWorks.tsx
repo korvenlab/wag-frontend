@@ -1,6 +1,5 @@
-import { motion } from "motion/react";
+import { motion, AnimatePresence } from "framer-motion"; // Mude para "motion/react" se preferir
 import { ArrowRight, Calendar, MessageCircle, Check, Sparkles } from "lucide-react";
-import { Button } from "./ui/button";
 
 export const HeroSection = () => {
   return (
@@ -34,10 +33,10 @@ export const HeroSection = () => {
           </div>
 
           <div className="flex flex-col sm:flex-row gap-6 items-center">
-            <Button className="h-16 px-10 rounded-2xl bg-slate-900 text-white font-bold hover:bg-[#64b34d] transition-all shadow-2xl hover:shadow-green-100 group">
+            <button className="h-16 px-10 rounded-2xl bg-slate-900 text-white font-bold hover:bg-[#64b34d] transition-all shadow-2xl hover:shadow-green-100 flex items-center justify-center group">
               Quero automatizar meu negócio
               <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
-            </Button>
+            </button>
             
             <div className="flex flex-col">
                <span className="text-slate-900 font-black text-lg">R$60/mês</span>
@@ -45,7 +44,6 @@ export const HeroSection = () => {
             </div>
           </div>
 
-          {/* Benefícios "Pé no Chão" */}
           <div className="grid grid-cols-2 gap-4 pt-4">
              <div className="flex items-center gap-2 text-sm font-bold text-slate-700">
                 <Check size={18} className="text-[#64b34d]" strokeWidth={3} />
@@ -58,14 +56,13 @@ export const HeroSection = () => {
           </div>
         </motion.div>
 
-        {/* LADO DIREITO: O VISUAL "QUASE REAL" */}
+        {/* LADO DIREITO: O VISUAL PREMIUM */}
         <motion.div 
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 1 }}
           className="relative w-full max-w-[550px] aspect-square flex items-center justify-center"
         >
-          {/* Card Central Estilo Glass */}
           <div className="relative w-full bg-white rounded-[48px] shadow-[0_60px_100px_-20px_rgba(0,0,0,0.1)] border border-slate-50 overflow-hidden flex flex-col p-8 lg:p-12">
             
             <div className="flex items-center justify-between mb-10">
@@ -82,7 +79,6 @@ export const HeroSection = () => {
             </div>
 
             <div className="space-y-6 flex-1">
-               {/* Simulação de conversa ultra limpa */}
                <div className="space-y-2">
                   <p className="text-[10px] font-bold text-slate-400 uppercase ml-1">Cliente</p>
                   <div className="bg-slate-50 p-4 rounded-3xl rounded-tl-none text-sm text-slate-600 font-medium border border-slate-100">
@@ -98,12 +94,11 @@ export const HeroSection = () => {
                >
                   <p className="text-[10px] font-bold text-[#64b34d] uppercase ml-1 text-right">Wagoo (Seu Assistente)</p>
                   <div className="bg-[#64b34d] p-4 rounded-3xl rounded-tr-none text-sm text-white font-bold shadow-xl shadow-green-100">
-                    "Olá! Tenho às <span className="underline">15:30</span> disponível. Quer que eu reserve para você?"
+                    "Olá! Tenho às <span className="underline">15:30</span> disponível. Quer que eu reserve?"
                   </div>
                </motion.div>
             </div>
 
-            {/* O "Grand Finale" na base do card */}
             <motion.div 
                initial={{ opacity: 0 }}
                animate={{ opacity: 1 }}
@@ -123,7 +118,6 @@ export const HeroSection = () => {
             </motion.div>
           </div>
 
-          {/* Badge de "Liberdade" flutuante */}
           <motion.div 
             animate={{ y: [0, -10, 0] }}
             transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
@@ -133,7 +127,6 @@ export const HeroSection = () => {
              <p className="text-xl font-black text-white">Crescer seu negócio 🚀</p>
           </motion.div>
         </motion.div>
-
       </div>
     </section>
   );
