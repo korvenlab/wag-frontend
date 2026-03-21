@@ -8,40 +8,39 @@ export function HowItWorks() {
 
   return (
     <section
-      id="como-funciona" // ID para o scroll do Header funcionar
+      id="como-funciona"
       ref={ref}
       className="relative py-32 bg-white overflow-hidden"
     >
-      {/* Luzes de fundo orgânicas */}
-      <div className="absolute top-0 left-1/4 w-[500px] h-[500px] bg-green-50/50 blur-[120px] rounded-full -z-10" />
+      {/* Luzes de fundo para quebrar o "branco total" */}
+      <div className="absolute top-0 left-1/4 w-[600px] h-[600px] bg-green-50/40 blur-[140px] rounded-full -z-10" />
+      <div className="absolute bottom-0 right-1/4 w-[400px] h-[400px] bg-blue-50/20 blur-[120px] rounded-full -z-10" />
       
       <div className="relative z-10 max-w-7xl mx-auto px-6">
-        {/* Cabeçalho da Seção */}
+        {/* Section Title */}
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={isInView ? { opacity: 1, y: 0 } : {}}
-          className="text-center mb-24"
+          className="text-center mb-28"
         >
           <span className="px-4 py-1.5 rounded-full bg-green-100 text-[#4d8f3b] text-xs font-black tracking-widest uppercase inline-block mb-6">
             Fluxo Inteligente
           </span>
-          <h2 className="text-4xl md:text-6xl font-black text-slate-900 leading-tight tracking-tighter">
+          <h2 className="text-5xl md:text-7xl font-black text-slate-900 leading-[0.9] tracking-tighter">
             Seu Cliente Agenda em <span className="text-[#64b34d]">Segundos</span>,<br />
             Sem Você Fazer Nada
           </h2>
-          <p className="text-xl text-slate-500 max-w-3xl mx-auto mt-6">
+          <p className="text-xl text-slate-500 max-w-2xl mx-auto mt-8 font-medium leading-relaxed">
             Uma experiência perfeita que transforma mensagens em agendamentos confirmados automaticamente.
           </p>
         </motion.div>
 
-        {/* Grid de Cards com Linhas Conectoras */}
-        <div className="relative grid md:grid-cols-3 gap-12">
+        {/* Cards Grid */}
+        <div className="relative grid md:grid-cols-3 gap-10 lg:gap-14">
           
-          {/* Linhas Pontilhadas (Apenas Desktop) */}
-          <div className="hidden md:block absolute top-1/4 left-0 w-full h-0.5 -z-10">
-            <svg width="100%" height="2" fill="none" className="opacity-20">
-              <line x1="20%" y1="1" x2="80%" y2="1" stroke="#64b34d" strokeWidth="2" strokeDasharray="8 8" />
-            </svg>
+          {/* Linha Conectora Minimalista */}
+          <div className="hidden md:block absolute top-1/3 left-0 w-full h-0.5 -z-10">
+            <div className="w-[80%] mx-auto border-t-2 border-dashed border-slate-100" />
           </div>
 
           <StepCard
@@ -57,8 +56,8 @@ export function HowItWorks() {
             delay={0.4}
             icon={<Calendar size={32} />}
             step="02"
-            title="Bot Consulta o Calendar"
-            description="O WAG BOT acessa seu Google Calendar em tempo real e identifica todos os horários disponíveis."
+            title="Wagoo Consulta o Calendar"
+            description="O Wagoo acessa seu Google Calendar em tempo real e identifica todos os horários disponíveis."
             isInView={isInView}
           />
 
@@ -72,15 +71,15 @@ export function HowItWorks() {
           />
         </div>
 
-        {/* Rodapé da Seção */}
+        {/* Bottom CTA */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={isInView ? { opacity: 1 } : {}}
           transition={{ delay: 1 }}
-          className="text-center mt-20"
+          className="text-center mt-24"
         >
-          <p className="text-gray-500 mb-8 font-medium">Economize até 10 horas por semana com automação inteligente</p>
-          <button className="px-8 py-4 rounded-2xl bg-slate-900 text-white font-bold hover:bg-[#64b34d] transition-all shadow-xl shadow-slate-200">
+          <p className="text-slate-400 mb-8 font-bold uppercase tracking-widest text-xs">Economize até 10 horas por semana</p>
+          <button className="px-10 py-5 rounded-[24px] bg-slate-900 text-white font-bold hover:bg-[#64b34d] transition-all shadow-2xl shadow-slate-200 active:scale-95">
             Ver Todos os Recursos
           </button>
         </motion.div>
@@ -89,7 +88,6 @@ export function HowItWorks() {
   );
 }
 
-// Componente de Card com Efeito Tilt (Inclinação)
 function StepCard({ icon, step, title, description, delay, isInView }: any) {
   const [rotateX, setRotateX] = useState(0);
   const [rotateY, setRotateY] = useState(0);
@@ -97,18 +95,10 @@ function StepCard({ icon, step, title, description, delay, isInView }: any) {
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
     const card = e.currentTarget;
     const rect = card.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
     const centerX = rect.width / 2;
     const centerY = rect.height / 2;
-
-    setRotateX(((y - centerY) / centerY) * -8);
-    setRotateY(((x - centerX) / centerX) * 8);
-  };
-
-  const handleMouseLeave = () => {
-    setRotateX(0);
-    setRotateY(0);
+    setRotateX(((e.clientY - rect.top - centerY) / centerY) * -6);
+    setRotateY(((e.clientX - rect.left - centerX) / centerX) * 6);
   };
 
   return (
@@ -117,35 +107,45 @@ function StepCard({ icon, step, title, description, delay, isInView }: any) {
       animate={isInView ? { opacity: 1, y: 0 } : {}}
       transition={{ duration: 0.8, delay }}
       onMouseMove={handleMouseMove}
-      onMouseLeave={handleMouseLeave}
+      onMouseLeave={() => { setRotateX(0); setRotateY(0); }}
       style={{
         transform: `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg)`,
         transition: "transform 0.1s ease-out",
       }}
-      className="relative group bg-white p-10 rounded-[40px] shadow-[0_20px_50px_rgba(0,0,0,0.03)] hover:shadow-[0_40px_80px_rgba(0,0,0,0.08)] transition-all duration-500 border border-slate-50"
+      className="relative group"
     >
-      {/* Número do Passo */}
-      <div className="absolute top-8 right-10 text-4xl font-black text-slate-100 group-hover:text-green-50 transition-colors">
-        {step}
-      </div>
+      {/* Sombras em camadas para destaque no fundo branco */}
+      <div className="relative bg-white p-10 lg:p-12 rounded-[48px] border border-slate-100/50 
+        shadow-[0_10px_30px_-10px_rgba(0,0,0,0.05),0_30px_60px_-15px_rgba(0,0,0,0.08)] 
+        group-hover:shadow-[0_40px_100px_-20px_rgba(100,179,77,0.15)] 
+        transition-all duration-500 h-full flex flex-col items-start"
+      >
+        {/* Step Number - Mais Clean */}
+        <div className="absolute top-10 right-12 text-5xl font-black text-slate-50 group-hover:text-green-50/50 transition-colors pointer-events-none">
+          {step}
+        </div>
 
-      {/* Ícone */}
-      <div className="w-20 h-20 rounded-[28px] bg-green-50 flex items-center justify-center text-[#64b34d] mb-8 group-hover:scale-110 group-hover:bg-[#64b34d] group-hover:text-white transition-all duration-500 shadow-inner">
-        {icon}
-      </div>
+        {/* Ícone com Glassmorphism suave */}
+        <div className="w-20 h-20 rounded-[30px] bg-green-50 flex items-center justify-center text-[#64b34d] mb-10 
+          group-hover:bg-[#64b34d] group-hover:text-white transition-all duration-500 shadow-inner">
+          {icon}
+        </div>
 
-      {/* Texto */}
-      <div className="space-y-4">
-        <h3 className="text-2xl font-black text-slate-900 tracking-tight">
-          {title}
-        </h3>
-        <p className="text-slate-500 leading-relaxed font-medium">
-          {description}
-        </p>
-      </div>
+        {/* Conteúdo */}
+        <div className="space-y-4">
+          <h3 className="text-2xl font-black text-slate-900 tracking-tighter">
+            {title}
+          </h3>
+          <p className="text-slate-500 leading-relaxed font-medium text-[16px]">
+            {description}
+          </p>
+        </div>
 
-      {/* Detalhe de acento no fundo */}
-      <div className="absolute bottom-0 left-10 right-10 h-1 bg-gradient-to-r from-transparent via-green-100 to-transparent scale-x-0 group-hover:scale-x-100 transition-transform duration-700" />
+        {/* Linha decorativa de progresso no hover */}
+        <div className="absolute bottom-10 left-12 w-12 h-1.5 bg-green-100 rounded-full overflow-hidden">
+          <div className="w-0 group-hover:w-full h-full bg-[#64b34d] transition-all duration-700" />
+        </div>
+      </div>
     </motion.div>
   );
 }
