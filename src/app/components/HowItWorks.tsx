@@ -1,6 +1,6 @@
 import { motion, useInView } from "motion/react";
 import { MessageCircle, Calendar, CheckCircle2 } from "lucide-react";
-import { useRef, useState } from "react";
+import { useRef } from "react";
 
 export function HowItWorks() {
   const ref = useRef(null);
@@ -10,232 +10,111 @@ export function HowItWorks() {
     <section
       id="como-funciona"
       ref={ref}
-      className="relative py-32 bg-gradient-to-b from-gray-50 to-white overflow-hidden"
+      className="relative py-32 bg-white overflow-hidden"
     >
-      {/* Background Effects */}
-      <div className="absolute inset-0">
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-[#64b34d] rounded-full opacity-[0.03] blur-[150px]" />
-      </div>
-
+      {/* Glows de fundo orgânicos */}
+      <div className="absolute top-0 left-1/4 w-[500px] h-[500px] bg-green-50/50 blur-[120px] rounded-full -z-10" />
+      
       <div className="relative z-10 max-w-7xl mx-auto px-6">
         {/* Section Title */}
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={isInView ? { opacity: 1, y: 0 } : {}}
-          transition={{ duration: 0.6 }}
-          className="text-center mb-20"
+          className="text-center mb-24"
         >
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={isInView ? { opacity: 1, scale: 1 } : {}}
-            transition={{ delay: 0.2 }}
-            className="inline-block px-4 py-2 rounded-full bg-green-50 border border-green-100 mb-6"
-          >
-            <span className="text-sm text-[#64b34d] font-semibold">
-              Processo Automatizado
-            </span>
-          </motion.div>
-
-          <h2 className="text-4xl md:text-6xl font-bold mb-6 text-gray-900 leading-tight">
-            Seu Cliente Agenda em{" "}
-            <span className="text-[#64b34d]">
-              Segundos
-            </span>
-            ,<br />
-            Sem Você Fazer Nada
+          <span className="px-4 py-1.5 rounded-full bg-green-100 text-[#4d8f3b] text-xs font-black tracking-widest uppercase inline-block mb-6">
+            Fluxo Inteligente
+          </span>
+          <h2 className="text-4xl md:text-6xl font-black text-slate-900 leading-tight tracking-tighter">
+            Três passos para sua <br />
+            <span className="text-[#64b34d]">liberdade total.</span>
           </h2>
-
-          <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-            Uma experiência perfeita que transforma mensagens em agendamentos
-            confirmados automaticamente
-          </p>
         </motion.div>
 
-        {/* Cards Grid */}
-        <div className="grid md:grid-cols-3 gap-8">
-          <TiltCard
+        {/* Cards Grid com Linhas Conectoras */}
+        <div className="relative grid md:grid-cols-3 gap-12">
+          
+          {/* Linhas Pontilhadas (Apenas Desktop) */}
+          <div className="hidden md:block absolute top-1/4 left-0 w-full h-0.5 -z-10">
+            <svg width="100%" height="2" fill="none" className="opacity-20">
+              <line x1="20%" y1="1" x2="80%" y2="1" stroke="#64b34d" strokeWidth="2" strokeDasharray="8 8" />
+            </svg>
+          </div>
+
+          <StepCard
             delay={0.2}
-            icon={<MessageCircle className="w-12 h-12" />}
-            step="1"
-            title="Cliente Manda Mensagem"
-            description="Seu cliente envia uma mensagem simples no WhatsApp solicitando um agendamento. Natural e familiar."
+            icon={<MessageCircle size={32} />}
+            step="01"
+            title="O cliente chama"
+            description="Ele envia uma mensagem natural no WhatsApp. O Wagoo entende o pedido instantaneamente."
             isInView={isInView}
           />
 
-          <Step
-            step="2"
-            title="Bot Consulta o Calendar"
-            description="O WAG BOT acessa seu Google Calendar em tempo real e identifica todos os horários disponíveis."
+          <StepCard
+            delay={0.4}
+            icon={<Calendar size={32} />}
+            step="02"
+            title="O Wagoo organiza"
+            description="O bot consulta sua agenda real e oferece apenas os horários que você definiu como livres."
             isInView={isInView}
           />
 
-          <TiltCard
+          <StepCard
             delay={0.6}
-            icon={<CheckCircle2 className="w-12 h-12" />}
-            step="3"
-            title="Confirmado e Sincronizado"
-            description="O horário é confirmado instantaneamente e sincronizado no Google Calendar. Seu cliente e você recebem confirmação."
+            icon={<CheckCircle2 size={32} />}
+            step="03"
+            title="Tudo pronto"
+            description="Agendamento feito e sincronizado. Você só precisa abrir a porta e faturar."
             isInView={isInView}
           />
         </div>
 
         {/* Bottom CTA */}
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={isInView ? { opacity: 1, y: 0 } : {}}
-          transition={{ delay: 0.8 }}
-          className="text-center mt-16"
+          initial={{ opacity: 0 }}
+          animate={isInView ? { opacity: 1 } : {}}
+          transition={{ delay: 1 }}
+          className="text-center mt-20"
         >
-          <p className="text-gray-600 mb-6">
-            Economize até 10 horas por semana com automação inteligente
-          </p>
-          <motion.button
-            whileHover={{ scale: 1.05, boxShadow: "0 10px 30px rgba(100, 179, 77, 0.15)" }}
-            whileTap={{ scale: 0.95 }}
-            className="px-8 py-4 rounded-full bg-white border border-gray-300 text-gray-900 font-semibold hover:border-[#64b34d] hover:text-[#64b34d] transition-all shadow-sm"
-          >
-            Ver Todos os Recursos
-          </motion.button>
+          <button className="px-8 py-4 rounded-2xl bg-slate-900 text-white font-bold hover:bg-[#64b34d] transition-all shadow-xl shadow-slate-200">
+            Ver demonstração completa
+          </button>
         </motion.div>
       </div>
     </section>
   );
 }
 
-interface TiltCardProps {
-  icon: React.ReactNode;
-  step: string;
-  title: string;
-  description: string;
-  delay: number;
-  isInView: boolean;
-}
-
-function TiltCard({
-  icon,
-  step,
-  title,
-  description,
-  delay,
-  isInView,
-}: TiltCardProps) {
-  const [rotateX, setRotateX] = useState(0);
-  const [rotateY, setRotateY] = useState(0);
-
-  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    const card = e.currentTarget;
-    const rect = card.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-
-    const centerX = rect.width / 2;
-    const centerY = rect.height / 2;
-
-    const rotateXValue = ((y - centerY) / centerY) * -10;
-    const rotateYValue = ((x - centerX) / centerX) * 10;
-
-    setRotateX(rotateXValue);
-    setRotateY(rotateYValue);
-  };
-
-  const handleMouseLeave = () => {
-    setRotateX(0);
-    setRotateY(0);
-  };
-
+function StepCard({ icon, step, title, description, delay, isInView }: any) {
   return (
     <motion.div
-      initial={{ opacity: 0, y: 50 }}
+      initial={{ opacity: 0, y: 40 }}
       animate={isInView ? { opacity: 1, y: 0 } : {}}
-      transition={{ duration: 0.6, delay }}
-      onMouseMove={handleMouseMove}
-      onMouseLeave={handleMouseLeave}
-      style={{
-        transform: `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg)`,
-        transition: "transform 0.1s ease-out",
-      }}
-      className="group relative"
+      transition={{ duration: 0.8, delay }}
+      className="relative group bg-white p-10 rounded-[40px] shadow-[0_20px_50px_rgba(0,0,0,0.04)] hover:shadow-[0_40px_80px_rgba(0,0,0,0.08)] transition-all duration-500 border border-slate-50"
     >
-      {/* Card Glow Effect - Agora Verde */}
-      <div className="absolute -inset-0.5 bg-[#64b34d] rounded-3xl opacity-0 group-hover:opacity-20 blur-xl transition-opacity duration-500" />
+      {/* Step Number Badge */}
+      <div className="absolute top-8 right-10 text-4xl font-black text-slate-100 group-hover:text-green-50 transition-colors">
+        {step}
+      </div>
 
-      {/* Card Content */}
-      <div className="relative h-full bg-white border border-gray-200 rounded-3xl p-8 hover:border-[#64b34d]/50 hover:shadow-xl transition-all duration-300">
-        {/* Step Number */}
-        <div className="absolute -top-4 -right-4 w-12 h-12 rounded-full bg-gradient-to-br from-[#64b34d] to-[#4d8f3b] flex items-center justify-center text-white font-bold text-lg shadow-lg shadow-green-100">
-          {step}
-        </div>
+      {/* Icon Container */}
+      <div className="w-20 h-20 rounded-[28px] bg-green-50 flex items-center justify-center text-[#64b34d] mb-8 group-hover:scale-110 group-hover:bg-[#64b34d] group-hover:text-white transition-all duration-500 shadow-inner">
+        {icon}
+      </div>
 
-        {/* Icon */}
-        <motion.div
-          whileHover={{ scale: 1.1, rotate: 5 }}
-          transition={{ type: "spring", stiffness: 300 }}
-          className="w-20 h-20 rounded-2xl bg-green-50 flex items-center justify-center mb-6 text-[#64b34d] shadow-sm"
-        >
-          {icon}
-        </motion.div>
-
-        {/* Title */}
-        <h3 className="text-2xl font-bold mb-4 text-gray-900">
+      {/* Content */}
+      <div className="space-y-4">
+        <h3 className="text-2xl font-black text-slate-900 tracking-tight">
           {title}
         </h3>
-
-        {/* Description */}
-        <p className="text-gray-600 leading-relaxed">{description}</p>
+        <p className="text-slate-500 leading-relaxed font-medium">
+          {description}
+        </p>
       </div>
-    </motion.div>
-  );
-}
 
-interface StepProps {
-  step: string;
-  title: string;
-  description: string;
-  delay?: number;
-  isInView: boolean;
-}
-
-function Step({
-  step,
-  title,
-  description,
-  delay = 0.4,
-  isInView,
-}: StepProps) {
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 50 }}
-      animate={isInView ? { opacity: 1, y: 0 } : {}}
-      transition={{ duration: 0.6, delay }}
-      className="group relative"
-    >
-      {/* Card Glow Effect */}
-      <div className="absolute -inset-0.5 bg-[#64b34d] rounded-3xl opacity-0 group-hover:opacity-20 blur-xl transition-opacity duration-500" />
-
-      {/* Card Content */}
-      <div className="relative h-full bg-white border border-gray-200 rounded-3xl p-8 hover:border-[#64b34d]/50 hover:shadow-xl transition-all duration-300">
-        {/* Step Number */}
-        <div className="absolute -top-4 -right-4 w-12 h-12 rounded-full bg-gradient-to-br from-[#64b34d] to-[#4d8f3b] flex items-center justify-center text-white font-bold text-lg shadow-lg shadow-green-100">
-          {step}
-        </div>
-
-        {/* Icon */}
-        <motion.div
-          whileHover={{ scale: 1.1, rotate: 5 }}
-          transition={{ type: "spring", stiffness: 300 }}
-          className="w-20 h-20 rounded-2xl bg-green-50 flex items-center justify-center mb-6 text-[#64b34d] shadow-sm"
-        >
-          <Calendar className="w-12 h-12" />
-        </motion.div>
-
-        {/* Title */}
-        <h3 className="text-2xl font-bold mb-4 text-gray-900">
-          {title}
-        </h3>
-
-        {/* Description */}
-        <p className="text-gray-600 leading-relaxed">{description}</p>
-      </div>
+      {/* Bottom Accent Decor */}
+      <div className="absolute bottom-0 left-10 right-10 h-1 bg-gradient-to-r from-transparent via-green-100 to-transparent scale-x-0 group-hover:scale-x-100 transition-transform duration-700" />
     </motion.div>
   );
 }
