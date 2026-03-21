@@ -11,7 +11,7 @@ export const HeroSection = () => {
 
       <div className="w-full max-w-7xl mx-auto grid lg:grid-cols-2 gap-12 items-center">
         
-        {/* LADO ESQUERDO: TEXTO (O que você aprovou) */}
+        {/* LADO ESQUERDO: TEXTO */}
         <motion.div 
           initial={{ opacity: 0, x: -30 }}
           animate={{ opacity: 1, x: 0 }}
@@ -46,45 +46,44 @@ export const HeroSection = () => {
 
         {/* LADO DIREITO: O "IPAD" FLUTUANTE PREMIUM */}
         <motion.div 
-          initial={{ opacity: 0, y: 40, rotateY: -10 }}
-          animate={{ opacity: 1, y: 0, rotateY: 0 }}
+          initial={{ opacity: 0, y: 40 }}
+          animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 1, ease: "easeOut" }}
           className="relative w-full max-w-[550px] aspect-[4/3] perspective-1000"
         >
           {/* Corpo do Tablet / Dashboard */}
-          <div className="relative w-full h-full bg-white rounded-[40px] shadow-[0_50px_100px_-20px_rgba(0,0,0,0.15)] border border-slate-100 overflow-hidden flex flex-col">
+          <div className="relative w-full h-full bg-white rounded-[40px] shadow-[0_50px_100px_-20px_rgba(0,0,0,0.12)] border border-slate-100 overflow-hidden flex flex-col">
             
-            {/* Header do App Fake */}
+            {/* Header do App */}
             <div className="h-14 border-b border-slate-50 flex items-center px-6 justify-between bg-slate-50/50">
                <div className="flex gap-1.5">
                   <div className="w-2.5 h-2.5 rounded-full bg-slate-200" />
                   <div className="w-2.5 h-2.5 rounded-full bg-slate-200" />
-                  <div className="w-2.5 h-2.5 rounded-full bg-slate-200" />
                </div>
-               <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Wagoo Dashboard</div>
+               <div className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Wagoo</div>
             </div>
 
             {/* Conteúdo Splitted */}
             <div className="flex-1 grid grid-cols-2">
                
-               {/* Coluna Chat (WhatsApp) */}
-               <div className="p-6 border-r border-slate-50 space-y-4">
-                  <div className="flex items-center gap-2 mb-4">
-                     <div className="w-8 h-8 rounded-full bg-[#64b34d] flex items-center justify-center text-white">
+               {/* Coluna Chat (Whatsapp) */}
+               <div className="p-8 border-r border-slate-50 space-y-4">
+                  <div className="flex items-center gap-2 mb-6">
+                     <div className="w-8 h-8 rounded-full bg-[#64b34d] flex items-center justify-center text-white shadow-lg shadow-green-100">
                         <MessageCircle size={14} fill="currentColor" />
                      </div>
-                     <span className="text-xs font-bold text-slate-900">Live Chat</span>
+                     <span className="text-xs font-bold text-slate-900 uppercase tracking-tighter">Whatsapp</span>
                   </div>
                   
-                  <div className="space-y-3">
-                     <div className="bg-slate-100 p-3 rounded-2xl rounded-tl-none text-[11px] text-slate-600 animate-pulse">
+                  <div className="space-y-4">
+                     <div className="bg-slate-100 p-3.5 rounded-2xl rounded-tl-none text-[11px] text-slate-600 animate-pulse">
                         "Pode ser amanhã às 14h?"
                      </div>
                      <motion.div 
                         initial={{ opacity: 0, x: -10 }}
                         animate={{ opacity: 1, x: 0 }}
                         transition={{ delay: 1 }}
-                        className="bg-[#64b34d] p-3 rounded-2xl rounded-tr-none text-[11px] text-white font-medium"
+                        className="bg-[#64b34d] p-3.5 rounded-2xl rounded-tr-none text-[11px] text-white font-bold shadow-md shadow-green-100"
                       >
                         "Claro! Horário reservado."
                      </motion.div>
@@ -92,22 +91,22 @@ export const HeroSection = () => {
                </div>
 
                {/* Coluna Calendário (Google) */}
-               <div className="p-6 bg-slate-50/30 flex flex-col justify-center items-center text-center">
+               <div className="p-8 bg-slate-50/30 flex flex-col justify-center items-center text-center">
                   <motion.div 
                     initial={{ scale: 0.8, opacity: 0 }}
                     animate={{ scale: 1, opacity: 1 }}
                     transition={{ delay: 1.5 }}
-                    className="w-full bg-white p-5 rounded-3xl shadow-xl shadow-blue-100/50 border border-blue-50"
+                    className="w-full bg-white p-6 rounded-[32px] shadow-2xl shadow-blue-100/50 border border-blue-50"
                   >
-                     <div className="w-10 h-10 rounded-xl bg-[#4285F4] flex items-center justify-center text-white mx-auto mb-3 shadow-lg shadow-blue-200">
-                        <Calendar size={20} />
+                     <div className="w-12 h-12 rounded-2xl bg-[#4285F4] flex items-center justify-center text-white mx-auto mb-4 shadow-lg shadow-blue-200">
+                        <Calendar size={22} />
                      </div>
-                     <p className="text-[10px] font-black text-blue-500 uppercase mb-1">Novo Agendamento</p>
-                     <p className="text-sm font-bold text-slate-900">Maria Silva</p>
-                     <p className="text-[10px] text-slate-400 font-medium">Terça • 14:00 - 15:00</p>
+                     <p className="text-[10px] font-black text-blue-500 uppercase mb-1 tracking-widest">Agendado</p>
+                     <p className="text-sm font-black text-slate-900">Maria Silva</p>
+                     <p className="text-[10px] text-slate-400 font-bold">Terça • 14:00</p>
                      
-                     <div className="mt-4 flex items-center justify-center gap-1.5 text-[#64b34d] text-[10px] font-bold">
-                        <Check size={12} strokeWidth={3} />
+                     <div className="mt-5 flex items-center justify-center gap-1.5 text-[#64b34d] text-[10px] font-black uppercase">
+                        <Check size={12} strokeWidth={4} />
                         Sincronizado
                      </div>
                   </motion.div>
@@ -115,15 +114,15 @@ export const HeroSection = () => {
             </div>
           </div>
 
-          {/* Badge Flutuante de Valor (Fora do Tablet) */}
+          {/* Badge Flutuante de Valor */}
           <motion.div 
             animate={{ y: [0, -10, 0] }}
             transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-            className="absolute -right-6 -bottom-6 bg-slate-900 text-white p-5 rounded-[28px] shadow-2xl flex items-center gap-4 z-40"
+            className="absolute -right-6 -bottom-6 bg-slate-900 text-white p-6 rounded-[32px] shadow-2xl flex items-center gap-4 z-40"
           >
              <div className="text-left">
-                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">Economia Mensal</p>
-                <p className="text-xl font-black text-green-400">+40 Horas</p>
+                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Resultado</p>
+                <p className="text-2xl font-black text-green-400 leading-none">+40h / mês</p>
              </div>
           </motion.div>
 
