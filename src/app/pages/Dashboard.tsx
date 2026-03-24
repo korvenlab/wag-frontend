@@ -194,13 +194,13 @@ export function Dashboard() {
 
       {/* Mobile Header */}
       <div className="lg:hidden fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-md border-b px-6 py-4 flex items-center justify-between">
-        <img src="/logo.png" alt="Wagoo Logo" className="w-8 h-8 object-contain" />
+        <img src="/logo.png" alt="Wagoo Logo" className="w-10 h-10 object-contain" />
         <Button variant="ghost" size="icon" className="rounded-full" onClick={() => setIsSidebarOpen(!isSidebarOpen)}>
           {isSidebarOpen ? <X /> : <Menu />}
         </Button>
       </div>
 
-      {/* Sidebar - Texto WAGOO e Dashboard Pro removidos como solicitado */}
+      {/* Sidebar - Logo ampliada e centralizada */}
       <AnimatePresence>
         {(isSidebarOpen || isDesktop) && (
           <motion.aside 
@@ -209,11 +209,11 @@ export function Dashboard() {
             exit={{ x: -300 }} 
             className="fixed top-0 left-0 h-screen w-72 bg-white border-r border-slate-100 z-40 flex flex-col shadow-2xl lg:shadow-none"
           >
-            <div className="p-10 flex justify-center">
-              <img src="/logo.png" alt="Wagoo Logo" className="w-16 h-16 object-contain" />
+            <div className="pt-12 pb-8 flex justify-center">
+              <img src="/logo.png" alt="Wagoo Logo" className="w-24 h-24 object-contain" />
             </div>
 
-            <nav className="flex-1 px-6 space-y-1">
+            <nav className="flex-1 px-6 space-y-2">
               <NavItem icon={<LayoutDashboard size={20} />} label="Visão Geral" active={activeSection === "overview"} onClick={() => { setActiveSection("overview"); setIsSidebarOpen(false); }} />
               <NavItem icon={<BarChart3 size={20} />} label="Analytics" active={activeSection === "analytics"} onClick={() => { setActiveSection("analytics"); setIsSidebarOpen(false); }} />
               <NavItem icon={<Clock size={20} />} label="Horários" active={activeSection === "hours"} onClick={() => { setActiveSection("hours"); setIsSidebarOpen(false); }} />
@@ -233,21 +233,21 @@ export function Dashboard() {
         )}
       </AnimatePresence>
 
-      <main className="lg:ml-72 pt-24 lg:pt-0 p-6 lg:p-10">
-        <div className="max-w-6xl mx-auto space-y-8">
+      <main className="lg:ml-72 p-6 lg:p-10">
+        <div className="max-w-5xl mx-auto">
           
-          {/* Boas Vindas - Maoszinha removida */}
-          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div className="space-y-1">
-              <h2 className="text-3xl font-black text-slate-900 tracking-tight">
+          {/* Seção de Boas Vindas - mt-16 para descer o texto */}
+          <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} className="mt-16 lg:mt-24 mb-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+            <div className="space-y-2">
+              <h2 className="text-4xl font-black text-slate-900 tracking-tight">
                 Olá, {storeName ? storeName.split(' ')[0] : 'Admin'}
               </h2>
-              <p className="text-slate-500 font-medium text-base">Sua assistente está pronta para agendar.</p>
+              <p className="text-slate-500 font-medium text-lg leading-relaxed">Sua assistente está pronta para agendar.</p>
             </div>
             
             {isGoogleConnected && (
-              <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white border border-slate-100 shadow-sm text-emerald-600 text-xs font-bold uppercase tracking-wider">
-                <div className="w-2 h-2 rounded-full bg-emerald-500" />
+              <div className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white border border-slate-100 shadow-sm text-emerald-600 text-xs font-bold uppercase tracking-widest">
+                <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
                 Google Calendar Sincronizado
               </div>
             )}
@@ -257,37 +257,37 @@ export function Dashboard() {
             {activeSection === "overview" && (
               <>
                 <div className="lg:col-span-2">
-                  <Card className="rounded-[32px] border-none shadow-[0_20px_40px_-10px_rgba(0,0,0,0.03)] bg-white overflow-hidden">
+                  <Card className="rounded-[32px] border-none shadow-[0_30px_60px_-15px_rgba(0,0,0,0.04)] bg-white overflow-hidden">
                     <CardHeader className="pb-2 pt-8 px-8 border-b border-slate-50">
-                       <CardTitle className="text-lg font-black flex items-center gap-2 tracking-tight">
-                         <Phone size={18} className="text-[#64b34d]" />
+                       <CardTitle className="text-base font-black flex items-center gap-2 tracking-tight uppercase">
+                         <Phone size={16} className="text-[#64b34d]" />
                          Conexão WhatsApp
                        </CardTitle>
                     </CardHeader>
-                    <CardContent className="p-8 flex flex-col sm:flex-row items-center gap-8">
+                    <CardContent className="p-8 flex flex-col sm:flex-row items-center gap-10">
                       <div className="relative w-48 h-48 bg-white border border-slate-100 rounded-3xl flex items-center justify-center shadow-inner overflow-hidden flex-shrink-0">
                         {isLoadingQR ? <Loader2 className="animate-spin text-[#64b34d]" /> : 
                          isWhatsAppConnected ? (
                            <div className="text-center">
-                             <Check className="text-[#64b34d] w-10 h-10 mx-auto" strokeWidth={3} />
-                             <span className="text-[#64b34d] font-bold text-xs uppercase block mt-2">Conectado</span>
+                             <Check className="text-[#64b34d] w-12 h-12 mx-auto" strokeWidth={3} />
+                             <span className="text-[#64b34d] font-bold text-[10px] uppercase block mt-3 tracking-widest">Ativo</span>
                            </div>
                          ) :
                          qrCode ? <img src={qrCode} className="w-full h-full p-3" /> : <QrCode className="text-slate-100 w-12 h-12" />}
                       </div>
                       
-                      <div className="space-y-4 text-center sm:text-left">
+                      <div className="space-y-5 text-center sm:text-left">
                         <div className="space-y-1">
-                          <h4 className="font-bold text-slate-900 text-base">Status da Conexão</h4>
-                          <p className="text-slate-500 text-sm font-medium">
+                          <h4 className="font-bold text-slate-900 text-lg">Status da Conexão</h4>
+                          <p className="text-slate-500 text-sm font-medium leading-relaxed max-w-xs">
                             {isWhatsAppConnected 
-                              ? "O Wagoo está operando e agendando seus clientes." 
-                              : "Escaneie o QR Code para ativar a automação."}
+                              ? "Tudo pronto. O Wagoo está automatizando suas conversas agora mesmo." 
+                              : "Conecte seu WhatsApp para que a IA comece a agendar seus horários."}
                           </p>
                         </div>
                         
-                        <div className="flex flex-wrap gap-2 justify-center sm:justify-start">
-                          <Button onClick={handleGenerateQR} disabled={isLoadingQR || isWhatsAppConnected} className="rounded-xl h-11 px-6 bg-slate-900 text-white font-bold text-sm hover:bg-[#64b34d]">
+                        <div className="flex flex-wrap gap-2 justify-center sm:justify-start pt-2">
+                          <Button onClick={handleGenerateQR} disabled={isLoadingQR || isWhatsAppConnected} className="rounded-xl h-11 px-6 bg-slate-900 text-white font-bold text-sm hover:bg-[#64b34d] transition-colors">
                             Gerar Novo QR
                           </Button>
                           {isWhatsAppConnected && (
@@ -297,10 +297,12 @@ export function Dashboard() {
                           )}
                         </div>
                         {showConfirmDisconnect && (
-                          <div className="bg-red-50 p-3 rounded-xl border border-red-100 flex items-center gap-3">
-                            <span className="text-xs font-bold text-red-700">Confirmar?</span>
-                            <Button size="sm" className="bg-red-600 text-white" onClick={handleDisconnectWhatsApp} disabled={isDisconnecting}>Sim</Button>
-                            <Button size="sm" variant="ghost" className="text-slate-500" onClick={() => setShowConfirmDisconnect(false)}>Não</Button>
+                          <div className="bg-red-50 p-4 rounded-xl border border-red-100 flex items-center gap-4 mt-2">
+                            <span className="text-xs font-bold text-red-700">Tem certeza?</span>
+                            <div className="flex gap-2">
+                              <Button size="sm" className="bg-red-600 text-white px-4" onClick={handleDisconnectWhatsApp} disabled={isDisconnecting}>Sim</Button>
+                              <Button size="sm" variant="ghost" className="text-slate-500" onClick={() => setShowConfirmDisconnect(false)}>Não</Button>
+                            </div>
                           </div>
                         )}
                       </div>
@@ -309,17 +311,16 @@ export function Dashboard() {
                 </div>
 
                 <div className="space-y-6">
-                  {/* Card IA */}
-                  <Card className="rounded-[32px] border-none shadow-[0_20px_40px_-10px_rgba(0,0,0,0.03)] bg-white p-6">
-                    <div className="flex items-center justify-between mb-4">
-                      <div className="w-10 h-10 rounded-xl bg-slate-900 flex items-center justify-center text-white">
-                        <Bot size={20} />
+                  <Card className="rounded-[32px] border-none shadow-[0_30px_60px_-15px_rgba(0,0,0,0.04)] bg-white p-7">
+                    <div className="flex items-center justify-between mb-6">
+                      <div className="w-12 h-12 rounded-2xl bg-slate-900 flex items-center justify-center text-white">
+                        <Bot size={22} />
                       </div>
                       <Switch checked={isAIEnabled} onCheckedChange={handleToggleAI} disabled={isSavingAI} className="data-[state=checked]:bg-[#64b34d]" />
                     </div>
-                    <h3 className="font-bold text-base text-slate-900">Cérebro da IA</h3>
-                    <p className="text-slate-500 text-xs font-medium">
-                      {isAIEnabled ? "Ativa e agendando clientes." : "IA pausada."}
+                    <h3 className="font-black text-lg text-slate-900 tracking-tight">Cérebro da IA</h3>
+                    <p className="text-slate-500 text-sm font-medium mt-1">
+                      {isAIEnabled ? "Ativa e respondendo." : "A IA está pausada."}
                     </p>
                   </Card>
                 </div>
@@ -328,24 +329,24 @@ export function Dashboard() {
 
             {activeSection === "hours" && (
               <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="lg:col-span-3">
-                <Card className="rounded-[32px] border-none shadow-[0_30px_60px_-15px_rgba(0,0,0,0.04)] bg-white">
-                  <div className="p-8 flex flex-col sm:flex-row justify-between items-center gap-4 border-b border-slate-50">
+                <Card className="rounded-[40px] border-none shadow-[0_40px_80px_-20px_rgba(0,0,0,0.05)] bg-white">
+                  <div className="p-10 flex flex-col sm:flex-row justify-between items-center gap-4 border-b border-slate-50">
                     <div className="text-center sm:text-left">
-                      <CardTitle className="text-xl font-black text-slate-900">Configurar Horários</CardTitle>
-                      <CardDescription className="text-sm">Defina os turnos de atendimento da sua loja.</CardDescription>
+                      <CardTitle className="text-2xl font-black text-slate-900 tracking-tighter">Horários da Loja</CardTitle>
+                      <CardDescription className="text-base font-medium">Gerencie sua disponibilidade semanal.</CardDescription>
                     </div>
-                    <Button variant="outline" onClick={copyToAllDays} className="rounded-xl border-slate-100 text-xs font-bold hover:bg-slate-50 gap-2">
-                      <Copy size={14} /> Replicar Semana
+                    <Button variant="outline" onClick={copyToAllDays} className="rounded-xl border-slate-100 text-xs font-bold hover:bg-slate-50 gap-2 h-11 px-5">
+                      <Copy size={14} /> Replicar para todos os dias
                     </Button>
                   </div>
 
-                  <div className="bg-slate-50/30 p-3 flex overflow-x-auto gap-2 no-scrollbar border-b border-slate-50">
+                  <div className="bg-slate-50/50 p-4 flex overflow-x-auto gap-2 no-scrollbar border-b border-slate-50">
                     {DAYS_OF_WEEK.map(day => (
                       <button 
                         key={day} 
                         onClick={() => setSelectedDay(day)} 
-                        className={`px-5 py-2.5 rounded-xl text-[11px] font-black uppercase tracking-wider transition-all whitespace-nowrap ${
-                          selectedDay === day ? "bg-slate-900 text-white shadow-md" : "bg-white text-slate-400 border border-slate-50"
+                        className={`px-6 py-3 rounded-2xl text-[11px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${
+                          selectedDay === day ? "bg-slate-900 text-white shadow-xl" : "bg-white text-slate-400 border border-slate-100"
                         }`}
                       >
                         {day}
@@ -353,29 +354,28 @@ export function Dashboard() {
                     ))}
                   </div>
 
-                  <CardContent className="p-8 space-y-8">
-                    {/* Grid responsiva corrigida para telas menores */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-                      <TurnoCard title="Manhã" icon={<Sun size={18} />} active={workingHours[selectedDay]?.isTurno1Active} onToggle={(v: boolean) => updateDayField(selectedDay, "isTurno1Active", v)} start={workingHours[selectedDay]?.startTime} end={workingHours[selectedDay]?.endTime} onStart={(v: string) => updateDayField(selectedDay, "startTime", v)} onEnd={(v: string) => updateDayField(selectedDay, "endTime", v)} />
-                      <TurnoCard title="Tarde" icon={<Coffee size={18} />} active={workingHours[selectedDay]?.isTurno2Active} onToggle={(v: boolean) => updateDayField(selectedDay, "isTurno2Active", v)} start={workingHours[selectedDay]?.startTime2} end={workingHours[selectedDay]?.endTime2} onStart={(v: string) => updateDayField(selectedDay, "startTime2", v)} onEnd={(v: string) => updateDayField(selectedDay, "endTime2", v)} />
-                      <TurnoCard title="Noite" icon={<Moon size={18} />} active={workingHours[selectedDay]?.isTurno3Active} onToggle={(v: boolean) => updateDayField(selectedDay, "isTurno3Active", v)} start={workingHours[selectedDay]?.startTime3} end={workingHours[selectedDay]?.endTime3} onStart={(v: string) => updateDayField(selectedDay, "startTime3", v)} onEnd={(v: string) => updateDayField(selectedDay, "endTime3", v)} />
+                  <CardContent className="p-10 space-y-10">
+                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
+                      <TurnoCard title="Manhã" icon={<Sun size={20} />} active={workingHours[selectedDay]?.isTurno1Active} onToggle={(v: boolean) => updateDayField(selectedDay, "isTurno1Active", v)} start={workingHours[selectedDay]?.startTime} end={workingHours[selectedDay]?.endTime} onStart={(v: string) => updateDayField(selectedDay, "startTime", v)} onEnd={(v: string) => updateDayField(selectedDay, "endTime", v)} />
+                      <TurnoCard title="Tarde" icon={<Coffee size={20} />} active={workingHours[selectedDay]?.isTurno2Active} onToggle={(v: boolean) => updateDayField(selectedDay, "isTurno2Active", v)} start={workingHours[selectedDay]?.startTime2} end={workingHours[selectedDay]?.endTime2} onStart={(v: string) => updateDayField(selectedDay, "startTime2", v)} onEnd={(v: string) => updateDayField(selectedDay, "endTime2", v)} />
+                      <TurnoCard title="Noite" icon={<Moon size={20} />} active={workingHours[selectedDay]?.isTurno3Active} onToggle={(v: boolean) => updateDayField(selectedDay, "isTurno3Active", v)} start={workingHours[selectedDay]?.startTime3} end={workingHours[selectedDay]?.endTime3} onStart={(v: string) => updateDayField(selectedDay, "startTime3", v)} onEnd={(v: string) => updateDayField(selectedDay, "endTime3", v)} />
                     </div>
 
-                    <div className="pt-8 flex flex-col md:flex-row justify-between items-center gap-6">
-                      <div className="flex items-center gap-4 bg-slate-50 px-4 py-3 rounded-2xl">
-                        <Label className="text-xs font-black text-slate-900 uppercase">Duração do Serviço:</Label>
-                        <div className="flex items-center gap-2">
-                          <Input type="number" value={serviceDuration} onChange={(e) => setServiceDuration(Number(e.target.value))} className="w-16 bg-white border-none rounded-lg font-bold h-8 text-center" />
-                          <span className="text-[10px] font-bold text-slate-400 uppercase">Minutos</span>
+                    <div className="pt-10 flex flex-col md:flex-row justify-between items-center gap-8">
+                      <div className="flex items-center gap-5 bg-slate-50 px-6 py-4 rounded-[28px] border border-slate-100">
+                        <Label className="text-sm font-black text-slate-900 uppercase tracking-tighter">Tempo de Serviço:</Label>
+                        <div className="flex items-center gap-3">
+                          <Input type="number" value={serviceDuration} onChange={(e) => setServiceDuration(Number(e.target.value))} className="w-20 bg-white border-none rounded-xl font-bold h-10 text-center text-lg" />
+                          <span className="text-xs font-black text-slate-400 uppercase tracking-widest">Min</span>
                         </div>
                       </div>
                       
                       <div className="relative w-full md:w-auto">
-                        <Button onClick={handleSaveHours} disabled={isSavingHours} className="w-full md:w-60 h-12 rounded-xl bg-[#64b34d] hover:bg-[#4d8f3b] text-white font-black text-sm shadow-lg shadow-green-100">
-                          {isSavingHours ? <Loader2 className="animate-spin" /> : "Salvar Alterações"}
+                        <Button onClick={handleSaveHours} disabled={isSavingHours} className="w-full md:w-64 h-14 rounded-2xl bg-[#64b34d] hover:bg-[#4d8f3b] text-white font-black text-base shadow-2xl shadow-green-100/50">
+                          {isSavingHours ? <Loader2 className="animate-spin" /> : "Salvar Agenda"}
                         </Button>
                         {showHoursSuccess && (
-                          <p className="absolute -bottom-6 left-0 right-0 text-center text-emerald-600 text-[10px] font-black uppercase">✓ Salvo</p>
+                          <p className="absolute -bottom-8 left-0 right-0 text-center text-emerald-600 text-[10px] font-black uppercase tracking-widest">✓ Agenda Atualizada</p>
                         )}
                       </div>
                     </div>
@@ -386,28 +386,28 @@ export function Dashboard() {
 
             {activeSection === "analytics" && (
               <>
-                <AnalyticsCard icon={<MessageSquare size={20} className="text-emerald-500" />} title="Mensagens" value={messagesAnswered} />
-                <AnalyticsCard icon={<CalendarCheck size={20} className="text-emerald-600" />} title="Agendamentos" value={appointmentsMade} />
-                <AnalyticsCard icon={<Zap size={20} className="text-amber-500" />} title="Horas Ganhas" value={`${(appointmentsMade * 5 / 60).toFixed(1)}h`} />
+                <AnalyticsCard icon={<MessageSquare size={22} className="text-emerald-500" />} title="Conversas" value={messagesAnswered} />
+                <AnalyticsCard icon={<CalendarCheck size={22} className="text-emerald-600" />} title="Agendados" value={appointmentsMade} />
+                <AnalyticsCard icon={<Zap size={22} className="text-amber-500" />} title="Tempo Ganho" value={`${(appointmentsMade * 5 / 60).toFixed(1)}h`} />
               </>
             )}
 
             {activeSection === "settings" && (
               <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="lg:col-span-3">
-                <Card className="rounded-[32px] border-none shadow-xl bg-white p-8">
-                  <div className="mb-8">
-                    <h3 className="text-xl font-black text-slate-900">Perfil Comercial</h3>
-                    <p className="text-slate-500 text-sm">Atualize os dados básicos da sua loja.</p>
+                <Card className="rounded-[40px] border-none shadow-2xl bg-white p-10">
+                  <div className="mb-10">
+                    <h3 className="text-2xl font-black text-slate-900 tracking-tighter">Configurações do Perfil</h3>
+                    <p className="text-slate-500 font-medium mt-1 text-base">Personalize o nome da sua loja no sistema.</p>
                   </div>
-                  <div className="space-y-6 max-w-md">
-                    <div className="space-y-2">
-                      <Label className="text-xs font-black uppercase tracking-widest text-slate-400">Nome da Empresa</Label>
-                      <Input value={storeName} onChange={(e) => setStoreName(e.target.value)} className="h-12 px-4 rounded-xl bg-slate-50 border-none font-medium" />
+                  <div className="space-y-8 max-w-lg">
+                    <div className="space-y-3">
+                      <Label className="text-xs font-black uppercase tracking-widest text-slate-400 ml-1">Nome de Exibição</Label>
+                      <Input value={storeName} onChange={(e) => setStoreName(e.target.value)} className="h-14 px-6 rounded-2xl bg-slate-50 border-none font-bold text-lg" />
                     </div>
-                    <Button onClick={handleSaveSettings} disabled={isSavingSettings} className="w-full h-12 rounded-xl bg-slate-900 text-white font-bold">
-                      {isSavingSettings ? <Loader2 className="animate-spin" /> : "Salvar"}
+                    <Button onClick={handleSaveSettings} disabled={isSavingSettings} className="w-full h-14 rounded-2xl bg-slate-900 text-white font-black text-base transition-all hover:bg-slate-800">
+                      {isSavingSettings ? <Loader2 className="animate-spin" /> : "Salvar Alterações"}
                     </Button>
-                    {showSettingsSuccess && <p className="text-emerald-600 text-xs font-black text-center">✓ Atualizado</p>}
+                    {showSettingsSuccess && <p className="text-emerald-600 text-xs font-black text-center uppercase tracking-widest">✓ Perfil Atualizado</p>}
                   </div>
                 </Card>
               </motion.div>
@@ -421,35 +421,39 @@ export function Dashboard() {
 
 function NavItem({ icon, label, active, onClick }: any) {
   return (
-    <button onClick={onClick} className={`w-full flex items-center justify-between px-4 py-3.5 rounded-xl transition-all ${
-      active ? "bg-slate-50 text-slate-900" : "text-slate-400 hover:text-slate-600"
+    <button onClick={onClick} className={`w-full flex items-center justify-between px-5 py-4 rounded-2xl transition-all ${
+      active ? "bg-slate-50 text-slate-900 shadow-sm" : "text-slate-400 hover:text-slate-700 hover:bg-slate-50/50"
     }`}>
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-4">
         <span className={active ? "text-[#64b34d]" : "text-slate-300"}>{icon}</span>
-        <span className="text-sm font-bold">{label}</span>
+        <span className="text-sm font-bold tracking-tight">{label}</span>
       </div>
-      {active && <ChevronRight size={14} className="text-slate-200" />}
+      {active && <ChevronRight size={14} className="text-slate-300" />}
     </button>
   );
 }
 
 function TurnoCard({ title, icon, active, onToggle, start, end, onStart, onEnd }: any) {
   return (
-    <div className={`p-6 rounded-3xl border transition-all ${
-      active ? "bg-white border-[#64b34d]/30 shadow-sm" : "bg-slate-50/50 border-transparent opacity-60"
+    <div className={`p-8 rounded-[32px] border-2 transition-all duration-300 ${
+      active ? "bg-white border-[#64b34d]/20 shadow-lg shadow-green-100/20" : "bg-slate-50/50 border-transparent opacity-60"
     }`}>
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center gap-2">
-          <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${active ? "bg-green-50 text-[#64b34d]" : "bg-slate-100"}`}>
+      <div className="flex items-center justify-between mb-8">
+        <div className="flex items-center gap-3">
+          <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${active ? "bg-green-50 text-[#64b34d]" : "bg-slate-100 text-slate-400"}`}>
             {icon}
           </div>
-          <span className="font-bold text-slate-900 text-sm">{title}</span>
+          <span className="font-black text-slate-900 text-base tracking-tight">{title}</span>
         </div>
-        <Switch checked={active} onCheckedChange={onToggle} className="scale-90 data-[state=checked]:bg-[#64b34d]" />
+        <Switch checked={active} onCheckedChange={onToggle} className="data-[state=checked]:bg-[#64b34d]" />
       </div>
-      <div className="grid grid-cols-2 gap-2">
-        <Input type="time" value={start} onChange={(e) => onStart(e.target.value)} disabled={!active} className="h-10 bg-slate-50 border-none rounded-lg font-bold text-center text-xs" />
-        <Input type="time" value={end} onChange={(e) => onEnd(e.target.value)} disabled={!active} className="h-10 bg-slate-50 border-none rounded-lg font-bold text-center text-xs" />
+      <div className="grid grid-cols-2 gap-3">
+        <div className="space-y-1.5">
+          <Input type="time" value={start} onChange={(e) => onStart(e.target.value)} disabled={!active} className="h-11 bg-slate-50 border-none rounded-xl font-black text-center text-sm" />
+        </div>
+        <div className="space-y-1.5">
+          <Input type="time" value={end} onChange={(e) => onEnd(e.target.value)} disabled={!active} className="h-11 bg-slate-50 border-none rounded-xl font-black text-center text-sm" />
+        </div>
       </div>
     </div>
   );
@@ -457,13 +461,13 @@ function TurnoCard({ title, icon, active, onToggle, start, end, onStart, onEnd }
 
 function AnalyticsCard({ icon, title, value }: any) {
   return (
-    <Card className="rounded-[32px] border-none shadow-sm bg-white p-6 h-full flex flex-col justify-between">
-      <div className="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center mb-4">
+    <Card className="rounded-[40px] border-none shadow-[0_20px_40px_-10px_rgba(0,0,0,0.03)] bg-white p-8 h-full flex flex-col justify-between transition-transform hover:translate-y-[-5px]">
+      <div className="w-12 h-12 rounded-2xl bg-slate-50 flex items-center justify-center mb-6">
         {icon}
       </div>
       <div>
-        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{title}</p>
-        <p className="text-3xl font-black text-slate-900 tracking-tight">{value}</p>
+        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">{title}</p>
+        <p className="text-4xl font-black text-slate-900 tracking-tighter leading-none">{value}</p>
       </div>
     </Card>
   );
