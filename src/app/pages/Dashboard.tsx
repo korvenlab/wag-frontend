@@ -63,7 +63,8 @@ export function Dashboard() {
           setIsAIEnabled(data.is_ai_enabled ?? true);
           setIsWhatsAppConnected(!!data.whatsapp_session);
           setMessagesAnswered(data.messages_answered || 0);
-          setAppointmentsMade(data.appointments_count || 0);
+          // Correção: Mapeando para a coluna correta do seu banco
+          setAppointmentsMade(data.appointments_made || 0);
           setServiceDuration(data.service_duration || 30);
           setIsGoogleConnected(!!(data.googleAuth && data.googleAuth.refreshToken));
 
@@ -137,7 +138,8 @@ export function Dashboard() {
       await fetch(`${backendUrl}/api/settings/ai`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: user?.email, aiEnabled: checked }),
+        // Enviando a chave correta is_ai_enabled para o backend
+        body: JSON.stringify({ email: user?.email, is_ai_enabled: checked }),
       });
     } catch (error) { setIsAIEnabled(!checked); } finally { setIsSavingAI(false); }
   };
@@ -158,7 +160,11 @@ export function Dashboard() {
       await fetch(`${backendUrl}/api/settings/hours`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: user?.email, workingHours, serviceDuration }),
+        body: JSON.stringify({ 
+          email: user?.email, 
+          workingHours: workingHours, 
+          serviceDuration: serviceDuration 
+        }),
       });
       setShowHoursSuccess(true);
       setTimeout(() => setShowHoursSuccess(false), 3000);
@@ -171,7 +177,7 @@ export function Dashboard() {
       await fetch(`${backendUrl}/api/settings/store`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: user?.email, storeName }),
+        body: JSON.stringify({ email: user?.email, storeName: storeName }),
       });
       setShowSettingsSuccess(true);
       setTimeout(() => setShowSettingsSuccess(false), 3000);
@@ -200,7 +206,6 @@ export function Dashboard() {
         </Button>
       </div>
 
-      {/* Sidebar - Logo centralizada e ampliada */}
       <AnimatePresence>
         {(isSidebarOpen || isDesktop) && (
           <motion.aside 
@@ -209,8 +214,7 @@ export function Dashboard() {
             exit={{ x: -300 }} 
             className="fixed top-0 left-0 h-screen w-72 bg-white border-r border-slate-100 z-40 flex flex-col shadow-2xl lg:shadow-none"
           >
-            {/* Logo container centralizado */}
-            <div className="w-full pt-16 pb-10 flex flex-col items-center justify-center">
+            <div className="pt-16 pb-10 flex flex-col items-center justify-center">
               <img src="/logo.png" alt="Wagoo Logo" className="w-32 h-32 object-contain" />
             </div>
 
@@ -237,7 +241,6 @@ export function Dashboard() {
       <main className="lg:ml-72 p-6 lg:p-10">
         <div className="max-w-5xl mx-auto">
           
-          {/* Seção de Boas Vindas descida significativamente */}
           <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} className="mt-20 lg:mt-32 mb-12 flex flex-col md:flex-row md:items-end justify-between gap-6">
             <div className="space-y-3">
               <h2 className="text-4xl font-black text-slate-900 tracking-tight leading-tight">
@@ -446,7 +449,7 @@ function TurnoCard({ title, icon, active, onToggle, start, end, onStart, onEnd }
           </div>
           <span className="font-black text-slate-900 text-base tracking-tight">{title}</span>
         </div>
-        <Switch checked={active} onCheckedChange={onToggle} className="data-[state=checked]:bg-[#64b34d]" />
+        <Switch checked={active} onToggle={onToggle} className="data-[state=checked]:bg-[#64b34d]" />
       </div>
       <div className="grid grid-cols-2 gap-3">
         <div className="space-y-1.5">
