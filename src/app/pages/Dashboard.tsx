@@ -1,9 +1,9 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  Calendar, LayoutDashboard, Clock, Settings, LogOut, Menu, X, QrCode,
-  Bot, Phone, CheckCircle2, BarChart3, MessageSquare,
-  CalendarCheck, Zap, Loader2, Check, Timer, Coffee, Moon, Sun, Copy, AlertTriangle, ChevronRight
+  LayoutDashboard, Clock, Settings, LogOut, Menu, X, QrCode,
+  Bot, Phone, BarChart3, MessageSquare,
+  CalendarCheck, Zap, Loader2, Check, Coffee, Moon, Sun, Copy, ChevronRight
 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/card";
 import { Button } from "../components/ui/button";
@@ -63,12 +63,11 @@ export function Dashboard() {
           setIsAIEnabled(data.is_ai_enabled ?? true);
           setIsWhatsAppConnected(!!data.whatsapp_session);
           setMessagesAnswered(data.messages_answered || 0);
-          // Correção: Mapeando para a coluna correta do seu banco
           setAppointmentsMade(data.appointments_made || 0);
           setServiceDuration(data.service_duration || 30);
           setIsGoogleConnected(!!(data.googleAuth && data.googleAuth.refreshToken));
 
-          if (data.working_hours) {
+          if (data.working_hours && Object.keys(data.working_hours).length > 0) {
             setWorkingHours(data.working_hours);
           } else {
             const initialSchedule = DAYS_OF_WEEK.reduce((acc, day) => ({ ...acc, [day]: { ...INITIAL_DAY_CONFIG } }), {});
@@ -138,26 +137,35 @@ export function Dashboard() {
       await fetch(`${backendUrl}/api/settings/ai`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        // Enviando a chave correta is_ai_enabled para o backend
         body: JSON.stringify({ email: user?.email, is_ai_enabled: checked }),
       });
-    } catch (error) { setIsAIEnabled(!checked); } finally { setIsSavingAI(false); }
+    } catch (error) { 
+      setIsAIEnabled(!checked); 
+    } finally { 
+      setIsSavingAI(false); 
+    }
   };
 
   const updateDayField = (day: string, field: string, value: any) => {
-    setWorkingHours(prev => ({ ...prev, [day]: { ...prev[day], [field]: value } }));
+    setWorkingHours(prev => ({
+      ...prev,
+      [day]: { ...prev[day], [field]: value }
+    }));
   };
 
   const copyToAllDays = () => {
-    const currentConfig = workingHours[selectedDay];
-    const newSchedule = DAYS_OF_WEEK.reduce((acc, day) => ({ ...acc, [day]: { ...currentConfig } }), {});
+    const currentConfig = { ...workingHours[selectedDay] };
+    const newSchedule = DAYS_OF_WEEK.reduce((acc, day) => ({
+      ...acc,
+      [day]: { ...currentConfig }
+    }), {});
     setWorkingHours(newSchedule);
   };
 
   const handleSaveHours = async () => {
     setIsSavingHours(true);
     try {
-      await fetch(`${backendUrl}/api/settings/hours`, {
+      const response = await fetch(`${backendUrl}/api/settings/hours`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ 
@@ -166,22 +174,34 @@ export function Dashboard() {
           serviceDuration: serviceDuration 
         }),
       });
-      setShowHoursSuccess(true);
-      setTimeout(() => setShowHoursSuccess(false), 3000);
-    } catch (error) { console.error(error); } finally { setIsSavingHours(false); }
+      if (response.ok) {
+        setShowHoursSuccess(true);
+        setTimeout(() => setShowHoursSuccess(false), 3000);
+      }
+    } catch (error) { 
+      console.error(error); 
+    } finally { 
+      setIsSavingHours(false); 
+    }
   };
 
   const handleSaveSettings = async () => {
     setIsSavingSettings(true);
     try {
-      await fetch(`${backendUrl}/api/settings/store`, {
+      const response = await fetch(`${backendUrl}/api/settings/store`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: user?.email, storeName: storeName }),
       });
-      setShowSettingsSuccess(true);
-      setTimeout(() => setShowSettingsSuccess(false), 3000);
-    } catch (error) { console.error(error); } finally { setIsSavingSettings(false); }
+      if (response.ok) {
+        setShowSettingsSuccess(true);
+        setTimeout(() => setShowSettingsSuccess(false), 3000);
+      }
+    } catch (error) { 
+      console.error(error); 
+    } finally { 
+      setIsSavingSettings(false); 
+    }
   };
 
   if (loading) {
@@ -277,7 +297,7 @@ export function Dashboard() {
                              <span className="text-[#64b34d] font-black text-[10px] uppercase block mt-3 tracking-[0.2em]">Ativo</span>
                            </div>
                          ) :
-                         qrCode ? <img src={qrCode} className="w-full h-full p-3" /> : <QrCode className="text-slate-100 w-12 h-12" />}
+                         qrCode ? <img src={qrCode} className="w-full h-full p-3" alt="QR Code" /> : <QrCode className="text-slate-100 w-12 h-12" />}
                       </div>
                       
                       <div className="space-y-5 text-center sm:text-left flex-1">
@@ -360,9 +380,36 @@ export function Dashboard() {
 
                   <CardContent className="p-10 space-y-10">
                     <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
-                      <TurnoCard title="Manhã" icon={<Sun size={20} />} active={workingHours[selectedDay]?.isTurno1Active} onToggle={(v: boolean) => updateDayField(selectedDay, "isTurno1Active", v)} start={workingHours[selectedDay]?.startTime} end={workingHours[selectedDay]?.endTime} onStart={(v: string) => updateDayField(selectedDay, "startTime", v)} onEnd={(v: string) => updateDayField(selectedDay, "endTime", v)} />
-                      <TurnoCard title="Tarde" icon={<Coffee size={20} />} active={workingHours[selectedDay]?.isTurno2Active} onToggle={(v: boolean) => updateDayField(selectedDay, "isTurno2Active", v)} start={workingHours[selectedDay]?.startTime2} end={workingHours[selectedDay]?.endTime2} onStart={(v: string) => updateDayField(selectedDay, "startTime2", v)} onEnd={(v: string) => updateDayField(selectedDay, "endTime2", v)} />
-                      <TurnoCard title="Noite" icon={<Moon size={20} />} active={workingHours[selectedDay]?.isTurno3Active} onToggle={(v: boolean) => updateDayField(selectedDay, "isTurno3Active", v)} start={workingHours[selectedDay]?.startTime3} end={workingHours[selectedDay]?.endTime3} onStart={(v: string) => updateDayField(selectedDay, "startTime3", v)} onEnd={(v: string) => updateDayField(selectedDay, "endTime3", v)} />
+                      <TurnoCard 
+                        title="Manhã" 
+                        icon={<Sun size={20} />} 
+                        active={workingHours[selectedDay]?.isTurno1Active || false} 
+                        onToggle={(v: boolean) => updateDayField(selectedDay, "isTurno1Active", v)} 
+                        start={workingHours[selectedDay]?.startTime || "08:00"} 
+                        end={workingHours[selectedDay]?.endTime || "12:00"} 
+                        onStart={(v: string) => updateDayField(selectedDay, "startTime", v)} 
+                        onEnd={(v: string) => updateDayField(selectedDay, "endTime", v)} 
+                      />
+                      <TurnoCard 
+                        title="Tarde" 
+                        icon={<Coffee size={20} />} 
+                        active={workingHours[selectedDay]?.isTurno2Active || false} 
+                        onToggle={(v: boolean) => updateDayField(selectedDay, "isTurno2Active", v)} 
+                        start={workingHours[selectedDay]?.startTime2 || "14:00"} 
+                        end={workingHours[selectedDay]?.endTime2 || "18:00"} 
+                        onStart={(v: string) => updateDayField(selectedDay, "startTime2", v)} 
+                        onEnd={(v: string) => updateDayField(selectedDay, "endTime2", v)} 
+                      />
+                      <TurnoCard 
+                        title="Noite" 
+                        icon={<Moon size={20} />} 
+                        active={workingHours[selectedDay]?.isTurno3Active || false} 
+                        onToggle={(v: boolean) => updateDayField(selectedDay, "isTurno3Active", v)} 
+                        start={workingHours[selectedDay]?.startTime3 || "19:00"} 
+                        end={workingHours[selectedDay]?.endTime3 || "22:00"} 
+                        onStart={(v: string) => updateDayField(selectedDay, "startTime3", v)} 
+                        onEnd={(v: string) => updateDayField(selectedDay, "endTime3", v)} 
+                      />
                     </div>
 
                     <div className="pt-10 flex flex-col md:flex-row justify-between items-center gap-8">
@@ -449,7 +496,7 @@ function TurnoCard({ title, icon, active, onToggle, start, end, onStart, onEnd }
           </div>
           <span className="font-black text-slate-900 text-base tracking-tight">{title}</span>
         </div>
-        <Switch checked={active} onToggle={onToggle} className="data-[state=checked]:bg-[#64b34d]" />
+        <Switch checked={active} onCheckedChange={onToggle} className="data-[state=checked]:bg-[#64b34d]" />
       </div>
       <div className="grid grid-cols-2 gap-3">
         <div className="space-y-1.5">
