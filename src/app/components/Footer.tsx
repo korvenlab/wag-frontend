@@ -40,7 +40,7 @@ export function Footer() {
             <h4 className="text-gray-900 font-bold uppercase tracking-wider text-xs mb-6">Legal</h4>
             <ul className="flex flex-wrap justify-center gap-x-8 gap-y-3">
               <FooterLink onClick={() => navigate("/termos")}>Termos de Uso</FooterLink>
-              <FooterLink onClick={() => navigate("/privacidade")}>Privacidade</FooterLink>
+              <FooterLink onClick={() => navigate("/privacidade")}>Política de Privacidade</FooterLink>
               <FooterLink onClick={() => navigate("/privacidade")}>LGPD</FooterLink>
               <FooterLink onClick={() => navigate("/privacidade")}>Cookies</FooterLink>
             </ul>
