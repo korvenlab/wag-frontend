@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Link } from "react-router";
+import { useNavigate } from "react-router";
 
 export function Footer() {
   return (
@@ -49,36 +49,44 @@ export function Footer() {
 
 
           {/* Legal */}
-          <motion.div
-  initial={{ opacity: 0, y: 20 }}
-  whileInView={{ opacity: 1, y: 0 }}
-  viewport={{ once: true }}
-  transition={{ delay: 0.4 }}
->
-  <h4 className="text-gray-900 font-semibold mb-4">Legal</h4>
-  <ul className="space-y-3">
-    <li>
-      <Link to="/termos">
-        <FooterLink>Termos de Uso</FooterLink>
-      </Link>
-    </li>
-    <li>
-      <Link to="/privacidade">
-        <FooterLink>Privacidade</FooterLink>
-      </Link>
-    </li>
-    <li>
-      <Link to="/privacidade">
-        <FooterLink>LGPD</FooterLink>
-      </Link>
-    </li>
-    <li>
-      <Link to="/privacidade">
-        <FooterLink>Cookies</FooterLink>
-      </Link>
-    </li>
-  </ul>
-</motion.div>
+
+          export const Footer = () => {
+  const navigate = useNavigate(); // Inicialize o hook
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true }}
+      transition={{ delay: 0.4 }}
+    >
+      <h4 className="text-gray-900 font-semibold mb-4">Legal</h4>
+      <ul className="space-y-3">
+        <li>
+          <FooterLink onClick={() => navigate("/termos")}>
+            Termos de Uso
+          </FooterLink>
+        </li>
+        <li>
+          <FooterLink onClick={() => navigate("/privacidade")}>
+            Privacidade
+          </FooterLink>
+        </li>
+        <li>
+          <FooterLink onClick={() => navigate("/privacidade")}>
+            LGPD
+          </FooterLink>
+        </li>
+        <li>
+          <FooterLink onClick={() => navigate("/privacidade")}>
+            Cookies
+          </FooterLink>
+        </li>
+      </ul>
+    </motion.div>
+  );
+};
+          
 
         {/* Bottom Bar */}
         <motion.div
