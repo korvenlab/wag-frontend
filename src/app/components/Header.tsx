@@ -1,6 +1,6 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { Menu, X, ChevronDown, Lock, LogOut, LayoutDashboard } from "lucide-react";
-import { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router";
 import { useAuth } from "../context/AuthContext";
 
@@ -44,11 +44,13 @@ export function Header() {
     }
     navigate("/dashboard");
     setIsDropdownOpen(false);
+    setIsMobileMenuOpen(false);
   };
 
   const handleLogout = () => {
     logout();
     setIsDropdownOpen(false);
+    setIsMobileMenuOpen(false);
     navigate("/");
   };
 
@@ -73,7 +75,7 @@ export function Header() {
             whileTap={{ scale: 0.95 }}
             onClick={() => navigate("/")}
           >
-            <div className="w-50 h-50 flex items-center justify-center flex-shrink-0">
+            <div className="w-40 h-12 flex items-center justify-center flex-shrink-0">
               <img
                 src="/logo.png"
                 alt="Logo"
@@ -284,7 +286,7 @@ function MobileNavLink({
   return (
     <button
       onClick={onClick}
-      className="text-gray-600 hover:text-gray-900 transition-colors text-left py-2"
+      className="text-gray-600 hover:text-gray-900 transition-colors text-left py-2 font-medium"
     >
       {children}
     </button>
