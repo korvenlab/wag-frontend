@@ -8,40 +8,37 @@ export function Footer() {
     <footer className="relative bg-gradient-to-b from-gray-50 to-white border-t border-gray-200">
       {/* Footer Content */}
       <div className="max-w-7xl mx-auto px-6 py-16">
-        {/* Footer Links - Grid Ajustado para 2 Colunas no Desktop */}
-        <div className="grid md:grid-cols-2 gap-12 mb-16">
-          {/* Logo & Description */}
+        <div className="flex flex-col items-center text-center">
+          
+          {/* Logo Principal Wagoobot */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ delay: 0.1 }}
+            className="mb-8"
           >
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-48 flex items-center justify-center">
-                <img 
-                  src="/logo.png" 
-                  alt="Wagoobot Logo" 
-                  className="w-full h-full object-contain"
-                />
-              </div>
-            </div>
-            <p className="text-gray-600 text-sm leading-relaxed max-w-sm">
+            <img 
+              src="/logo.png" 
+              alt="Wagoobot Logo" 
+              className="h-12 mx-auto object-contain mb-4"
+            />
+            <p className="text-gray-600 text-sm leading-relaxed max-w-md mx-auto">
               Automatize seus agendamentos e recupere seu tempo. Simples,
               rápido e profissional. O Wagoo transforma conversas de WhatsApp em clientes agendados.
             </p>
           </motion.div>
 
-          {/* Legal - Botões com direcionamento */}
+          {/* Legal - Centralizado */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            transition={{ delay: 0.4 }}
-            className="md:text-right"
+            transition={{ delay: 0.2 }}
+            className="mb-12"
           >
-            <h4 className="text-gray-900 font-semibold mb-4">Legal</h4>
-            <ul className="space-y-3 flex flex-col md:items-end">
+            <h4 className="text-gray-900 font-bold uppercase tracking-wider text-xs mb-6">Legal</h4>
+            <ul className="flex flex-wrap justify-center gap-x-8 gap-y-3">
               <FooterLink onClick={() => navigate("/termos")}>Termos de Uso</FooterLink>
               <FooterLink onClick={() => navigate("/privacidade")}>Privacidade</FooterLink>
               <FooterLink onClick={() => navigate("/privacidade")}>LGPD</FooterLink>
@@ -50,42 +47,49 @@ export function Footer() {
           </motion.div>
         </div>
 
-        {/* Bottom Bar com Logo Korven Lab */}
+        {/* Bottom Bar */}
         <motion.div
           initial={{ opacity: 0 }}
           whileInView={{ opacity: 1 }}
           viewport={{ once: true }}
-          transition={{ delay: 0.5 }}
-          className="pt-8 border-t border-gray-200 flex flex-col md:flex-row items-center justify-between gap-6"
+          transition={{ delay: 0.3 }}
+          className="pt-8 border-t border-gray-200 flex flex-col items-center gap-8"
         >
-          <div className="flex items-center gap-2">
-            <span className="text-gray-500 text-sm">Desenvolvido por</span>
-            <img 
-              src="/logokorven.png" 
-              alt="Korven Lab Logo" 
-              className="h-6 object-contain grayscale hover:grayscale-0 transition-all"
-            />
+          {/* Korven Lab Branding */}
+          <div className="flex flex-col items-center gap-3">
+            <span className="text-gray-400 text-xs font-medium uppercase tracking-widest">Desenvolvido por</span>
+            <a 
+              href="https://korvenlab.com" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="transition-transform hover:scale-105 active:scale-95"
+            >
+              <img 
+                src="/logokorven.png" 
+                alt="Korven Lab" 
+                className="h-8 object-contain grayscale opacity-70 hover:grayscale-0 hover:opacity-100 transition-all"
+              />
+            </a>
           </div>
           
-          <p className="text-gray-500 text-sm">
+          <p className="text-gray-400 text-xs">
             © 2026 — Korven Lab — Todos os direitos reservados
           </p>
         </motion.div>
       </div>
 
-      {/* Bottom Gradient */}
+      {/* Bottom Gradient Line */}
       <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-[#007BFF] via-[#6F42C1] to-[#007BFF]" />
     </footer>
   );
 }
 
-// Sub-componente de link ajustado para ser um botão de navegação
 function FooterLink({ children, onClick }: { children: React.ReactNode; onClick: () => void }) {
   return (
     <li>
       <button
         onClick={onClick}
-        className="text-gray-600 hover:text-blue-600 transition-colors text-sm font-medium bg-transparent border-none p-0 cursor-pointer"
+        className="text-gray-500 hover:text-blue-600 transition-colors text-sm font-medium bg-transparent border-none p-0 cursor-pointer"
       >
         {children}
       </button>
