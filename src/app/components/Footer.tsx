@@ -1,16 +1,14 @@
 import { motion } from "framer-motion";
-import { useNavigate } from "react-router";
+import { Link } from "react-router";
 
 export function Footer() {
-  const navigate = useNavigate();
-
   return (
     <footer className="relative bg-gradient-to-b from-gray-50 to-white border-t border-gray-200">
       {/* Footer Content */}
       <div className="max-w-7xl mx-auto px-6 py-16">
         <div className="flex flex-col items-center text-center">
           
-          {/* Logo Principal Wagoobot */}
+          {/* Logo Principal Wagoo */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -20,7 +18,7 @@ export function Footer() {
           >
             <img 
               src="/logo.png" 
-              alt="Wagoobot Logo" 
+              alt="Wagoo Logo" 
               className="h-12 mx-auto object-contain mb-4"
             />
             <p className="text-gray-600 text-sm leading-relaxed max-w-md mx-auto">
@@ -29,7 +27,7 @@ export function Footer() {
             </p>
           </motion.div>
 
-          {/* Legal - Centralizado */}
+          {/* Legal - Centralizado com tags <a> reais para o Google Crawler */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -39,10 +37,10 @@ export function Footer() {
           >
             <h4 className="text-gray-900 font-bold uppercase tracking-wider text-xs mb-6">Legal</h4>
             <ul className="flex flex-wrap justify-center gap-x-8 gap-y-3">
-              <FooterLink onClick={() => navigate("/termos")}>Termos de Uso</FooterLink>
-              <FooterLink onClick={() => navigate("/privacidade")}>Política de Privacidade</FooterLink>
-              <FooterLink onClick={() => navigate("/privacidade")}>LGPD</FooterLink>
-              <FooterLink onClick={() => navigate("/privacidade")}>Cookies</FooterLink>
+              <FooterLink to="/termos">Termos de Uso</FooterLink>
+              <FooterLink to="/privacidade">Política de Privacidade</FooterLink>
+              <FooterLink to="/privacidade">LGPD</FooterLink>
+              <FooterLink to="/privacidade">Cookies</FooterLink>
             </ul>
           </motion.div>
         </div>
@@ -84,15 +82,16 @@ export function Footer() {
   );
 }
 
-function FooterLink({ children, onClick }: { children: React.ReactNode; onClick: () => void }) {
+// Componente FooterLink atualizado para usar a tag Link (<a>)
+function FooterLink({ children, to }: { children: React.ReactNode; to: string }) {
   return (
     <li>
-      <button
-        onClick={onClick}
-        className="text-gray-500 hover:text-blue-600 transition-colors text-sm font-medium bg-transparent border-none p-0 cursor-pointer"
+      <Link
+        to={to}
+        className="text-gray-500 hover:text-blue-600 transition-colors text-sm font-medium decoration-none"
       >
         {children}
-      </button>
+      </Link>
     </li>
   );
 }
