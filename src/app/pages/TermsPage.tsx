@@ -10,18 +10,25 @@ export const TermsPage = () => {
       color: '#374151',
       lineHeight: '1.7'
     }}>
+      {/* Header Centralizado com Logo Clicável */}
       <header style={{ textAlign: 'center', marginBottom: '50px', borderBottom: '1px solid #e5e7eb', paddingBottom: '30px' }}>
-        <img 
-          src="/logo.png" 
-          alt="Logo Wagoo" 
-          style={{ height: '50px', marginBottom: '20px' }} 
-        />
+        <a 
+          href="https://wagoobot.com" 
+          style={{ display: 'inline-block', textDecoration: 'none' }}
+          title="Ir para Home"
+        >
+          <img 
+            src="/logo.png" 
+            alt="Logo Wagoo" 
+            style={{ height: '60px', marginBottom: '20px', cursor: 'pointer' }} 
+          />
+        </a>
         <h1 style={{ color: '#111827', fontSize: '2.25rem', margin: '0' }}>Termos de Serviço</h1>
         <p style={{ color: '#6b7280', marginTop: '10px' }}>Wagoo • Um produto Korven Lab</p>
       </header>
 
       <section>
-        <p>Última atualização: 31 de Março de 2026</p>
+        <p style={{ fontWeight: '500' }}>Última atualização: 31 de Março de 2026</p>
         
         <p>
           Bem-vindo ao <strong>Wagoo</strong>. Ao acessar ou utilizar nosso serviço, você concorda em cumprir e estar vinculado aos seguintes Termos de Serviço operados pela <strong>Korven Lab</strong>.
@@ -38,7 +45,7 @@ export const TermsPage = () => {
         </p>
 
         <h2 style={{ color: '#111827', marginTop: '40px' }}>3. Assinaturas e Pagamentos</h2>
-        <ul>
+        <ul style={{ paddingLeft: '20px' }}>
           <li><strong>Plano Pro:</strong> O valor da assinatura é de R$ 60,00 por mês.</li>
           <li><strong>Processamento:</strong> Todos os pagamentos são processados de forma segura via <strong>Stripe</strong>.</li>
           <li><strong>Renovação:</strong> A assinatura é renovada automaticamente a cada 30 dias.</li>
@@ -54,12 +61,12 @@ export const TermsPage = () => {
         <h2 style={{ color: '#111827', marginTop: '40px' }}>5. Responsabilidades do Usuário</h2>
         <p>
           O usuário é responsável por:
-          <ul style={{ marginTop: '10px' }}>
-            <li>Manter a segurança de suas credenciais de acesso.</li>
-            <li>Garantir que as informações de horários em sua agenda estejam corretas.</li>
-            <li>Cumprir as políticas anti-spam do WhatsApp/Meta.</li>
-          </ul>
         </p>
+        <ul style={{ marginTop: '10px', paddingLeft: '20px' }}>
+          <li>Manter a segurança de suas credenciais de acesso.</li>
+          <li>Garantir que as informações de horários em sua agenda estejam corretas.</li>
+          <li>Cumprir as políticas anti-spam do WhatsApp/Meta.</li>
+        </ul>
 
         <h2 style={{ color: '#111827', marginTop: '40px' }}>6. Limitação de Responsabilidade</h2>
         <p>
