@@ -1,7 +1,7 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { Menu, X, ChevronDown, Lock, LogOut, LayoutDashboard } from "lucide-react";
 import React, { useState, useEffect, useRef } from "react";
-import { useNavigate } from "react-router";
+import { useNavigate, useLocation } from "react-router";
 import { useAuth } from "../context/AuthContext";
 
 export function Header() {
@@ -9,6 +9,7 @@ export function Header() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
   const { user, logout } = useAuth();
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -36,6 +37,16 @@ export function Header() {
       element.scrollIntoView({ behavior: "smooth" });
       setIsMobileMenuOpen(false);
     }
+  };
+
+  // Função para rolar até o topo ou navegar para a home
+  const handleLogoClick = () => {
+    if (location.pathname === "/") {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    } else {
+      navigate("/");
+    }
+    setIsMobileMenuOpen(false);
   };
 
   const handleDashboardClick = () => {
@@ -73,7 +84,7 @@ export function Header() {
             className="flex items-center cursor-pointer flex-shrink-0"
             whileHover={{ scale: 1.025 }}
             whileTap={{ scale: 0.95 }}
-            onClick={() => navigate("/")}
+            onClick={handleLogoClick}
           >
             <div className="w-40 h-12 flex items-center justify-center flex-shrink-0">
               <img
