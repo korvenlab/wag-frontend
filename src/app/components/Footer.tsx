@@ -2,12 +2,14 @@ import { motion } from "framer-motion";
 import { useNavigate } from "react-router";
 
 export function Footer() {
+  const navigate = useNavigate();
+
   return (
     <footer className="relative bg-gradient-to-b from-gray-50 to-white border-t border-gray-200">
       {/* Footer Content */}
       <div className="max-w-7xl mx-auto px-6 py-16">
-        {/* Footer Links */}
-        <div className="grid md:grid-cols-4 gap-12 mb-16">
+        {/* Footer Links - Grid Ajustado para 2 Colunas no Desktop */}
+        <div className="grid md:grid-cols-2 gap-12 mb-16">
           {/* Logo & Description */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -16,88 +18,57 @@ export function Footer() {
             transition={{ delay: 0.1 }}
           >
             <div className="flex items-center gap-3 mb-4">
-              <div className="w-50 h-50 flex items-center justify-center">
-                {/* ALERTA: A imagem agora é chamada diretamente da pasta public */}
+              <div className="w-48 flex items-center justify-center">
                 <img 
                   src="/logo.png" 
-                  alt="Logo" 
+                  alt="Wagoobot Logo" 
                   className="w-full h-full object-contain"
                 />
               </div>
             </div>
-            <p className="text-gray-600 text-sm leading-relaxed">
+            <p className="text-gray-600 text-sm leading-relaxed max-w-sm">
               Automatize seus agendamentos e recupere seu tempo. Simples,
-              rápido e profissional.
+              rápido e profissional. O Wagoo transforma conversas de WhatsApp em clientes agendados.
             </p>
           </motion.div>
 
-          {/* Product */}
+          {/* Legal - Botões com direcionamento */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            transition={{ delay: 0.2 }}
+            transition={{ delay: 0.4 }}
+            className="md:text-right"
           >
-            <h4 className="text-gray-900 font-semibold mb-4">Produto</h4>
-            <ul className="space-y-3">
-              <FooterLink>Recursos</FooterLink>
-              <FooterLink>Preços</FooterLink>
-              <FooterLink>Integrações</FooterLink>
-              <FooterLink>Atualizações</FooterLink>
+            <h4 className="text-gray-900 font-semibold mb-4">Legal</h4>
+            <ul className="space-y-3 flex flex-col md:items-end">
+              <FooterLink onClick={() => navigate("/termos")}>Termos de Uso</FooterLink>
+              <FooterLink onClick={() => navigate("/privacidade")}>Privacidade</FooterLink>
+              <FooterLink onClick={() => navigate("/privacidade")}>LGPD</FooterLink>
+              <FooterLink onClick={() => navigate("/privacidade")}>Cookies</FooterLink>
             </ul>
           </motion.div>
+        </div>
 
-
-          {/* Legal */}
-
-          export const Footer = () => {
-  const navigate = useNavigate(); // Inicialize o hook
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }}
-      transition={{ delay: 0.4 }}
-    >
-      <h4 className="text-gray-900 font-semibold mb-4">Legal</h4>
-      <ul className="space-y-3">
-        <li>
-          <FooterLink onClick={() => navigate("/termos")}>
-            Termos de Uso
-          </FooterLink>
-        </li>
-        <li>
-          <FooterLink onClick={() => navigate("/privacidade")}>
-            Privacidade
-          </FooterLink>
-        </li>
-        <li>
-          <FooterLink onClick={() => navigate("/privacidade")}>
-            LGPD
-          </FooterLink>
-        </li>
-        <li>
-          <FooterLink onClick={() => navigate("/privacidade")}>
-            Cookies
-          </FooterLink>
-        </li>
-      </ul>
-    </motion.div>
-  );
-};
-          
-
-        {/* Bottom Bar */}
+        {/* Bottom Bar com Logo Korven Lab */}
         <motion.div
           initial={{ opacity: 0 }}
           whileInView={{ opacity: 1 }}
           viewport={{ once: true }}
           transition={{ delay: 0.5 }}
-          className="pt-8 border-t border-gray-200 flex flex-col md:flex-row items-center justify-center gap-6"
+          className="pt-8 border-t border-gray-200 flex flex-col md:flex-row items-center justify-between gap-6"
         >
+          <div className="flex items-center gap-2">
+            <span className="text-gray-500 text-sm">Desenvolvido por</span>
+            <img 
+              src="/logokorven.png" 
+              alt="Korven Lab Logo" 
+              className="h-6 object-contain grayscale hover:grayscale-0 transition-all"
+            />
+          </div>
+          
           <p className="text-gray-500 text-sm">
-            (© 2026 — Korven Lab- Todos os direitos reservados)
+            © 2026 — Korven Lab — Todos os direitos reservados
           </p>
         </motion.div>
       </div>
@@ -108,15 +79,16 @@ export function Footer() {
   );
 }
 
-function FooterLink({ children }: { children: React.ReactNode }) {
+// Sub-componente de link ajustado para ser um botão de navegação
+function FooterLink({ children, onClick }: { children: React.ReactNode; onClick: () => void }) {
   return (
     <li>
-      <a
-        href="#"
-        className="text-gray-600 hover:text-gray-900 transition-colors text-sm"
+      <button
+        onClick={onClick}
+        className="text-gray-600 hover:text-blue-600 transition-colors text-sm font-medium bg-transparent border-none p-0 cursor-pointer"
       >
         {children}
-      </a>
+      </button>
     </li>
   );
 }
