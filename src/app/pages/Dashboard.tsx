@@ -13,6 +13,7 @@ import { Label } from "../components/ui/label";
 import { useAuth } from "../context/AuthContext";
 import { useNavigate } from "react-router";
 import { FeedbackFab } from "../components/FeedbackFab";
+import { supabase } from "../lib/supabase";
 
 const DAYS_OF_WEEK = ["Segunda-feira", "Terça-feira", "Quarta-feira", "Quinta-feira", "Sexta-feira", "Sábado", "Domingo"];
 
@@ -57,7 +58,18 @@ export function Dashboard() {
 
     const fetchUserData = async () => {
       try {
-        const response = await fetch(`${backendUrl}/api/user/profile?email=${user.email}`);
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
+        const token = session?.access_token;
+        if (!token) return;
+
+        const response = await fetch(`${backendUrl}/api/user/profile`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            Accept: "application/json",
+          },
+        });
         if (response.ok) {
           const data = await response.json();
           setStoreName(data.store_name || "");

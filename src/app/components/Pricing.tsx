@@ -2,12 +2,7 @@ import { motion, useInView } from "framer-motion";
 import { Check, Zap, Shield, Headphones, BarChart, Loader2, Sparkles } from "lucide-react";
 import { useRef, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { createClient } from "@supabase/supabase-js";
-
-const supabase = createClient(
-  import.meta.env.VITE_SUPABASE_URL,
-  import.meta.env.VITE_SUPABASE_ANON_KEY
-);
+import { supabase } from "../lib/supabase";
 
 export function Pricing() {
   const ref = useRef(null);
@@ -36,9 +31,25 @@ export function Pricing() {
     if (!user) return navigate("/login");
     setLoading(true);
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/stripe/create-checkout-session`, {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      const token = session?.access_token;
+      if (!token) {
+        navigate("/login");
+        return;
+      }
+
+      const apiBase =
+        import.meta.env.VITE_API_URL?.replace(/\/+$/, "") ||
+        "https://wag-backend.onrender.com";
+
+      const response = await fetch(`${apiBase}/api/stripe/create-checkout-session`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
         body: JSON.stringify({ email: user.email, userId: user.id }),
       });
       const data = await response.json();
