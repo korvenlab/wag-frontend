@@ -12,6 +12,7 @@ import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
 import { useAuth } from "../context/AuthContext";
 import { useNavigate } from "react-router";
+import { FeedbackFab } from "../components/FeedbackFab";
 
 const DAYS_OF_WEEK = ["Segunda-feira", "Terça-feira", "Quarta-feira", "Quinta-feira", "Sexta-feira", "Sábado", "Domingo"];
 
@@ -466,6 +467,8 @@ export function Dashboard() {
           </div>
         </div>
       </main>
+
+      <FeedbackFab />
     </div>
   );
 }
