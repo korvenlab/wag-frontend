@@ -73,7 +73,7 @@ export function Header() {
       className="fixed top-0 left-0 right-0 z-50 px-4 pt-5"
     >
       <div
-        className={`max-w-[1200px] mx-auto h-20 rounded-[50px] bg-white/80 backdrop-blur-[12px] transition-all duration-300 ${
+        className={`max-w-[1200px] mx-auto h-20 rounded-[50px] bg-white/80 backdrop-blur-[12px] border border-slate-200 transition-all duration-300 ${
           isScrolled
             ? "shadow-[0_4px_30px_rgba(0,0,0,0.08)]"
             : "shadow-[0_4px_30px_rgba(0,0,0,0.05)]"

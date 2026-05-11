@@ -88,7 +88,7 @@ function FooterLink({ children, to }: { children: React.ReactNode; to: string })
     <li>
       <Link
         to={to}
-        className="text-gray-500 hover:text-blue-600 transition-colors text-sm font-medium decoration-none"
+        className="text-gray-500 hover:text-blue-600 transition-colors text-sm font-medium decoration-none rounded-lg border border-slate-200 px-4 py-2 hover:bg-slate-50"
       >
         {children}
       </Link>

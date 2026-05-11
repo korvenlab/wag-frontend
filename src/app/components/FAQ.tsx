@@ -62,7 +62,7 @@ export function FAQ() {
             initial={{ opacity: 0, scale: 0.9 }}
             animate={isInView ? { opacity: 1, scale: 1 } : {}}
             transition={{ delay: 0.2 }}
-            className="inline-block px-4 py-2 rounded-full bg-green-50 border border-green-100 mb-6"
+            className="inline-block px-4 py-2 rounded-full bg-green-50 border border-slate-200 mb-6"
           >
             <span className="text-sm text-[#64b34d] font-bold uppercase tracking-widest">
               Dúvidas Comuns
@@ -94,7 +94,7 @@ export function FAQ() {
               >
                 <AccordionItem
                   value={`item-${index}`}
-                  className="bg-white border border-slate-100 rounded-2xl px-6 hover:border-green-200 hover:shadow-[0_20px_40px_rgba(100,179,77,0.05)] transition-all overflow-hidden data-[state=open]:border-green-100 data-[state=open]:bg-green-50/30"
+                  className="bg-white border border-slate-200 rounded-2xl px-6 hover:border-slate-300 hover:shadow-[0_20px_40px_rgba(100,179,77,0.05)] transition-all overflow-hidden data-[state=open]:border-slate-300 data-[state=open]:bg-green-50/30"
                 >
                   <AccordionTrigger className="text-left text-slate-900 hover:no-underline py-6 [&[data-state=open]]:text-[#64b34d]">
                     <span className="text-lg font-bold pr-4 leading-tight">
@@ -123,7 +123,7 @@ export function FAQ() {
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
-            className="px-8 py-4 rounded-2xl bg-slate-900 text-white font-bold shadow-lg hover:bg-[#64b34d] transition-all"
+            className="px-8 py-4 rounded-2xl bg-slate-900 text-white font-bold shadow-lg hover:bg-[#64b34d] transition-all border border-slate-700"
           >
             Falar com o Suporte
           </motion.button>

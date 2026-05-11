@@ -284,9 +284,15 @@
   animation: spin-slow 2s linear infinite;
 }
 
-/* Smooth scrolling */
+/* Smooth scrolling (desliga com “reduzir movimento” no SO) */
 html {
   scroll-behavior: smooth;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
 }
 
 /* Floating Animation - WhatsApp Card (sobe primeiro) */

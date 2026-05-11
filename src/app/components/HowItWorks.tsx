@@ -23,7 +23,7 @@ export function HowItWorks() {
           animate={isInView ? { opacity: 1, y: 0 } : {}}
           className="text-center mb-28"
         >
-          <span className="px-4 py-1.5 rounded-full bg-green-100 text-[#4d8f3b] text-xs font-black tracking-widest uppercase inline-block mb-6">
+          <span className="px-4 py-1.5 rounded-full bg-green-100 text-[#4d8f3b] text-xs font-black tracking-widest uppercase inline-block mb-6 border border-slate-200">
             Fluxo Inteligente
           </span>
           <h2 className="text-5xl md:text-7xl font-black text-slate-900 leading-[0.9] tracking-tighter">
@@ -101,7 +101,7 @@ function StepCard({ icon, step, title, description, delay, isInView }: any) {
       }}
       className="relative group"
     >
-      <div className="relative bg-white p-10 lg:p-12 rounded-[48px] border border-slate-100/50 
+      <div className="relative bg-white p-10 lg:p-12 rounded-[48px] border border-slate-200 
         shadow-[0_10px_30px_-10px_rgba(0,0,0,0.05),0_30px_60px_-15px_rgba(0,0,0,0.08)] 
         group-hover:shadow-[0_40px_100px_-20px_rgba(100,179,77,0.15)] 
         transition-all duration-500 h-full flex flex-col items-start"
@@ -111,7 +111,7 @@ function StepCard({ icon, step, title, description, delay, isInView }: any) {
         </div>
 
         <div className="w-20 h-20 rounded-[30px] bg-green-50 flex items-center justify-center text-[#64b34d] mb-10 
-          group-hover:bg-[#64b34d] group-hover:text-white transition-all duration-500 shadow-inner">
+          group-hover:bg-[#64b34d] group-hover:text-white transition-all duration-500 shadow-inner border border-slate-200">
           {icon}
         </div>
 
