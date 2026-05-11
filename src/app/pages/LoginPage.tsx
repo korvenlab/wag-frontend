@@ -1,13 +1,29 @@
 import { motion } from "motion/react";
-import { useNavigate } from "react-router";
+import { useNavigate, useSearchParams } from "react-router";
 import { useEffect, useState, useRef } from "react";
 import { supabase } from "../lib/supabase"; 
 import { ArrowLeft } from "lucide-react"; // Importe um ícone para o botão
 
+const WAGOO_PROMO_STORAGE_KEY = "wagoo_promo_code";
+
 export function LoginPage() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [status, setStatus] = useState("Verificando sessão...");
+  const [promoActive, setPromoActive] = useState(false);
   const syncProcessed = useRef(false);
+
+  const apiBase = import.meta.env.VITE_API_URL?.replace(/\/+$/, "") || "https://wag-backend.onrender.com";
+
+  useEffect(() => {
+    const promo =
+      searchParams.get("wagoo_promo")?.trim().toLowerCase() ||
+      searchParams.get("promo")?.trim().toLowerCase();
+    if (promo) {
+      sessionStorage.setItem(WAGOO_PROMO_STORAGE_KEY, promo);
+    }
+    setPromoActive(!!sessionStorage.getItem(WAGOO_PROMO_STORAGE_KEY));
+  }, [searchParams]);
 
   useEffect(() => {
     const syncSessionWithBackend = async (session: any, retries = 3) => {
@@ -18,7 +34,7 @@ export function LoginPage() {
         return;
       }
 
-      const BACKEND_URL = "https://wag-backend.onrender.com/api/auth/sync";
+      const BACKEND_URL = `${apiBase}/api/auth/sync`;
 
       for (let i = 0; i < retries; i++) {
         try {
@@ -62,7 +78,7 @@ export function LoginPage() {
     });
 
     return () => subscription.unsubscribe();
-  }, [navigate]);
+  }, [navigate, apiBase]);
 
   const handleGoogleLogin = async () => {
     setStatus("Redirecionando para o Google...");
@@ -103,6 +119,12 @@ export function LoginPage() {
           />
         </div>
         
+        {promoActive ? (
+          <div className="p-3 rounded-2xl border border-emerald-200 bg-emerald-50 text-emerald-900 text-xs font-semibold text-center leading-relaxed">
+            Link promocional ativo: após o Google liberar o acesso, você ganha o período de cortesia no Wagoo (resgate automático).
+          </div>
+        ) : null}
+
         <div className="p-4 bg-gray-50 rounded-2xl border border-gray-100 min-h-[60px] flex items-center justify-center">
           <p className="text-sm font-medium text-gray-600">{status}</p>
         </div>

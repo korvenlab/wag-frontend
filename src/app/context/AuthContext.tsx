@@ -25,6 +25,31 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 let globalSyncedToken: string | null = null;
 
+const WAGOO_PROMO_STORAGE_KEY = "wagoo_promo_code";
+
+async function tryRedeemPendingPromo(accessToken: string, backendUrl: string): Promise<void> {
+  const code = sessionStorage.getItem(WAGOO_PROMO_STORAGE_KEY)?.trim().toLowerCase();
+  if (!code) return;
+  try {
+    const res = await fetch(`${backendUrl}/api/promo/redeem`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ code }),
+    });
+    if (res.ok || res.status === 404 || res.status === 409) {
+      sessionStorage.removeItem(WAGOO_PROMO_STORAGE_KEY);
+      return;
+    }
+    const body = await res.text();
+    console.warn("[wagoo promo] resgate não concluído:", res.status, body);
+  } catch (e) {
+    console.warn("[wagoo promo] resgate:", e);
+  }
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AppUser | null>(null);
   const [loading, setLoading] = useState(true);
@@ -53,8 +78,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return;
       }
 
-      const profileData = (await response.json()) as { has_paid?: boolean };
-      setUser({ ...authUser, hasPaid: !!profileData.has_paid });
+      const profileData = (await response.json()) as {
+        has_paid?: boolean;
+        has_access?: boolean;
+      };
+      const hasPaid =
+        typeof profileData.has_access === "boolean"
+          ? profileData.has_access
+          : !!profileData.has_paid;
+      setUser({ ...authUser, hasPaid });
     },
     [backendUrl],
   );
@@ -63,9 +95,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const {
       data: { session },
     } = await supabase.auth.getSession();
-    if (!session?.user) return;
+    if (!session?.user || !session.access_token) return;
+    await tryRedeemPendingPromo(session.access_token, backendUrl);
     await fetchProfileAndSetUser(session.user, session);
-  }, [fetchProfileAndSetUser]);
+  }, [fetchProfileAndSetUser, backendUrl]);
 
   useEffect(() => {
     const processUserSession = async (authUser: User, session: Session | null) => {
@@ -73,20 +106,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (session?.provider_token) {
           if (globalSyncedToken !== session.provider_token) {
             globalSyncedToken = session.provider_token;
-            fetch(`${backendUrl}/api/auth/sync`, {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                id: authUser.id,
-                email: authUser.email,
-                accessToken: session.provider_token,
-                refreshToken: session.provider_refresh_token,
-                expiresAt: session.expires_at,
-              }),
-            }).catch((err) => console.error("Erro no sync:", err));
+            try {
+              await fetch(`${backendUrl}/api/auth/sync`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  id: authUser.id,
+                  email: authUser.email,
+                  accessToken: session.provider_token,
+                  refreshToken: session.provider_refresh_token,
+                  expiresAt: session.expires_at,
+                }),
+              });
+            } catch (err) {
+              console.error("Erro no sync:", err);
+            }
           }
         }
 
+        if (session.access_token) {
+          await tryRedeemPendingPromo(session.access_token, backendUrl);
+        }
         await fetchProfileAndSetUser(authUser, session);
       } catch (error) {
         console.error("❌ Erro ao carregar perfil:", error);
