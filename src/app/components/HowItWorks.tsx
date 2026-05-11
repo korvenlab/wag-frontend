@@ -102,9 +102,8 @@ function StepCard({ icon, step, title, description, delay, isInView }: any) {
       className="relative group"
     >
       <div className="relative bg-white p-10 lg:p-12 rounded-[48px] border border-slate-200 
-        shadow-[0_10px_30px_-10px_rgba(0,0,0,0.05),0_30px_60px_-15px_rgba(0,0,0,0.08)] 
-        group-hover:shadow-[0_40px_100px_-20px_rgba(100,179,77,0.15)] 
-        transition-all duration-500 h-full flex flex-col items-start"
+        shadow-wg-card group-hover:shadow-wg-card-hover 
+        transition-[box-shadow,transform] duration-500 h-full flex flex-col items-start"
       >
         <div className="absolute top-10 right-12 text-5xl font-black text-slate-50 group-hover:text-green-50/50 transition-colors pointer-events-none">
           {step}

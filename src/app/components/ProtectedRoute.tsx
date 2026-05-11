@@ -54,7 +54,7 @@ export function ProtectedRoute({ children, requirePayment = false }: ProtectedRo
           className="max-w-md w-full text-center space-y-8"
         >
           <div className="flex justify-center">
-            <div className="rounded-full bg-white p-6 shadow-xl shadow-slate-200/80 border border-slate-100">
+            <div className="rounded-full bg-white p-6 shadow-wg-card border border-slate-100">
               <Loader2 className="w-14 h-14 animate-spin text-[#64b34d]" strokeWidth={2.5} />
             </div>
           </div>
@@ -71,7 +71,7 @@ export function ProtectedRoute({ children, requirePayment = false }: ProtectedRo
             <button
               type="button"
               onClick={() => void refreshProfile()}
-              className="w-full py-4 rounded-2xl bg-[#64b34d] text-white font-black text-sm shadow-lg shadow-green-100 hover:bg-[#4d8f3b] transition-colors"
+              className="w-full py-4 rounded-2xl bg-[#64b34d] text-white font-black text-sm shadow-wg-green-cta hover:bg-[#4d8f3b] transition-[box-shadow,background-color]"
             >
               Já concluí no Stripe — atualizar agora
             </button>
@@ -102,7 +102,7 @@ export function ProtectedRoute({ children, requirePayment = false }: ProtectedRo
           animate={{ opacity: 1, y: 0 }}
           className="max-w-lg w-full"
         >
-          <div className="bg-white rounded-[32px] shadow-[0_24px_64px_-12px_rgba(0,0,0,0.12)] border border-slate-100 overflow-hidden">
+          <div className="bg-white rounded-[32px] shadow-wg-elevated border border-slate-100 overflow-hidden">
             <div className="bg-gradient-to-br from-[#64b34d] to-[#4d8f3b] px-8 py-10 text-white text-center">
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/15 text-[10px] font-black uppercase tracking-[0.2em] mb-4">
                 <Sparkles className="w-3.5 h-3.5" />
@@ -133,7 +133,7 @@ export function ProtectedRoute({ children, requirePayment = false }: ProtectedRo
                     document.getElementById("precos")?.scrollIntoView({ behavior: "smooth" });
                   }, 150);
                 }}
-                className="w-full py-4 rounded-2xl bg-slate-900 text-white font-black text-sm hover:bg-slate-800 transition-colors shadow-lg"
+                className="w-full py-4 rounded-2xl bg-slate-900 text-white font-black text-sm hover:bg-slate-800 transition-[box-shadow,background-color] shadow-wg-cta"
               >
                 Ver planos e ativar
               </button>

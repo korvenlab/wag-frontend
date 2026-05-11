@@ -315,23 +315,33 @@ html {
   }
 }
 
-/* Shadow Animation - Aumenta quando o card sobe */
+/* Shadow Animation - Aumenta quando o card sobe (tons slate, mais naturais) */
 @keyframes shadow-pulse-up {
   0%, 100% {
-    box-shadow: 0 20px 60px rgba(0,0,0,0.12), inset 0 1px 3px rgba(0,0,0,0.06);
+    box-shadow:
+      0 1px 2px rgb(15 23 42 / 0.05),
+      0 12px 28px -6px rgb(15 23 42 / 0.08),
+      inset 0 1px 2px rgb(255 255 255 / 0.6);
   }
   50% {
-    box-shadow: 0 30px 80px rgba(0,0,0,0.18), inset 0 1px 3px rgba(0,0,0,0.06);
+    box-shadow:
+      0 2px 4px rgb(15 23 42 / 0.06),
+      0 18px 40px -6px rgb(15 23 42 / 0.11),
+      inset 0 1px 2px rgb(255 255 255 / 0.6);
   }
 }
 
 /* Shadow Animation - Para o Calendar card */
 @keyframes shadow-pulse-down {
   0%, 100% {
-    box-shadow: 0 20px 60px rgba(0,0,0,0.12);
+    box-shadow:
+      0 1px 2px rgb(15 23 42 / 0.05),
+      0 12px 32px -8px rgb(15 23 42 / 0.09);
   }
   50% {
-    box-shadow: 0 30px 80px rgba(0,0,0,0.18);
+    box-shadow:
+      0 2px 6px rgb(15 23 42 / 0.06),
+      0 20px 48px -10px rgb(15 23 42 / 0.12);
   }
 }
 
@@ -389,4 +399,128 @@ html {
 /* Classe para aplicar animação no botão */
 .animate-float-button {
   animation: float-button 3s ease-in-out infinite;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Sombras Wagoo — camadas suaves (slate + toque de marca), menos “preto puro” */
+/* -------------------------------------------------------------------------- */
+
+.shadow-wg-card {
+  box-shadow:
+    0 1px 2px rgb(15 23 42 / 0.04),
+    0 4px 14px -2px rgb(15 23 42 / 0.06),
+    0 14px 36px -10px rgb(15 23 42 / 0.08);
+}
+
+.shadow-wg-card-hover {
+  box-shadow:
+    0 2px 6px rgb(15 23 42 / 0.05),
+    0 10px 26px -4px rgb(15 23 42 / 0.09),
+    0 22px 48px -12px rgb(100 179 77 / 0.14);
+}
+
+.shadow-wg-elevated {
+  box-shadow:
+    0 2px 4px rgb(15 23 42 / 0.04),
+    0 10px 28px -6px rgb(15 23 42 / 0.09),
+    0 28px 56px -14px rgb(15 23 42 / 0.1);
+}
+
+.shadow-wg-device {
+  box-shadow:
+    0 2px 4px rgb(15 23 42 / 0.04),
+    0 14px 36px -8px rgb(15 23 42 / 0.09),
+    0 40px 72px -18px rgb(15 23 42 / 0.11);
+}
+
+.shadow-wg-inner {
+  box-shadow:
+    0 1px 2px rgb(15 23 42 / 0.04),
+    0 8px 22px -6px rgb(15 23 42 / 0.08),
+    0 2px 8px -2px rgb(59 130 246 / 0.06);
+}
+
+.shadow-wg-header {
+  box-shadow:
+    0 1px 2px rgb(15 23 42 / 0.04),
+    0 6px 20px -4px rgb(15 23 42 / 0.07);
+}
+
+.shadow-wg-header-scrolled {
+  box-shadow:
+    0 2px 4px rgb(15 23 42 / 0.05),
+    0 10px 28px -6px rgb(15 23 42 / 0.1);
+}
+
+.shadow-wg-popover {
+  box-shadow:
+    0 4px 8px -2px rgb(15 23 42 / 0.06),
+    0 14px 28px -6px rgb(15 23 42 / 0.1),
+    0 28px 56px -12px rgb(15 23 42 / 0.08);
+}
+
+.shadow-wg-badge {
+  box-shadow:
+    0 4px 12px rgb(0 0 0 / 0.12),
+    0 16px 36px -8px rgb(0 0 0 / 0.18);
+}
+
+.shadow-wg-cta {
+  box-shadow:
+    0 2px 6px rgb(15 23 42 / 0.1),
+    0 10px 24px -4px rgb(15 23 42 / 0.14);
+}
+
+.shadow-wg-green-cta {
+  box-shadow:
+    0 2px 6px rgb(100 179 77 / 0.22),
+    0 10px 24px -4px rgb(77 143 59 / 0.2);
+}
+
+.shadow-wg-icon-green {
+  box-shadow:
+    0 1px 2px rgb(15 23 42 / 0.05),
+    0 4px 12px -2px rgb(100 179 77 / 0.18);
+}
+
+.shadow-wg-icon-blue {
+  box-shadow:
+    0 1px 2px rgb(15 23 42 / 0.05),
+    0 6px 16px -4px rgb(59 130 246 / 0.22);
+}
+
+.shadow-wg-bubble {
+  box-shadow:
+    0 1px 2px rgb(15 23 42 / 0.06),
+    0 4px 10px -2px rgb(77 143 59 / 0.2);
+}
+
+.shadow-wg-faq-hover {
+  box-shadow:
+    0 2px 6px rgb(15 23 42 / 0.04),
+    0 12px 28px -6px rgb(100 179 77 / 0.1);
+}
+
+.shadow-wg-analytics-hover {
+  box-shadow:
+    0 4px 8px rgb(15 23 42 / 0.05),
+    0 16px 36px -8px rgb(15 23 42 / 0.1);
+}
+
+.shadow-wg-turno {
+  box-shadow:
+    0 1px 2px rgb(15 23 42 / 0.04),
+    0 6px 16px -4px rgb(100 179 77 / 0.12);
+}
+
+.shadow-wg-subtle {
+  box-shadow:
+    0 1px 2px rgb(15 23 42 / 0.04),
+    0 2px 10px -2px rgb(15 23 42 / 0.06);
+}
+
+.shadow-wg-blue-cta {
+  box-shadow:
+    0 2px 6px rgb(37 99 235 / 0.22),
+    0 10px 22px -4px rgb(29 78 216 / 0.18);
 }

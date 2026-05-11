@@ -93,7 +93,7 @@ export function FeedbackFab() {
         <button
           type="button"
           aria-label="Ajuda e feedback"
-          className="fixed bottom-6 right-6 z-[100] flex h-14 w-14 items-center justify-center rounded-full border-2 border-[#64b34d]/30 bg-[#64b34d] text-white shadow-xl shadow-green-900/10 transition hover:bg-[#4d8f3b] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#64b34d] focus-visible:ring-offset-2"
+          className="fixed bottom-6 right-6 z-[100] flex h-14 w-14 items-center justify-center rounded-full border-2 border-[#64b34d]/30 bg-[#64b34d] text-white shadow-wg-green-cta transition-[box-shadow,background-color] hover:bg-[#4d8f3b] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#64b34d] focus-visible:ring-offset-2"
         >
           <CircleHelp className="h-7 w-7" strokeWidth={2} />
         </button>

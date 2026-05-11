@@ -70,7 +70,7 @@ export function SocialProof() {
                 whileHover={{ scale: 1.1 }}
                 className="relative group"
               >
-                <div className="px-8 py-4 rounded-xl bg-gray-50 border border-gray-200 hover:border-gray-300 hover:bg-white hover:shadow-lg transition-all">
+                <div className="px-8 py-4 rounded-xl bg-gray-50 border border-gray-200 shadow-wg-subtle hover:border-gray-300 hover:bg-white hover:shadow-wg-card transition-[box-shadow,background-color,border-color]">
                   <span className="text-xl font-bold text-gray-600 group-hover:text-gray-900 transition-colors">
                     {company}
                   </span>

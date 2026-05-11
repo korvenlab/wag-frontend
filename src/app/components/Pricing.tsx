@@ -114,11 +114,11 @@ export function Pricing() {
             className="relative"
           >
             {/* Badge de Oferta */}
-            <div className="absolute -top-4 left-1/2 -translate-x-1/2 z-20 bg-slate-900 text-white px-6 py-2.5 rounded-full text-xs font-black uppercase tracking-widest shadow-2xl border border-slate-600">
+            <div className="absolute -top-4 left-1/2 -translate-x-1/2 z-20 bg-slate-900 text-white px-6 py-2.5 rounded-full text-xs font-black uppercase tracking-widest shadow-wg-badge border border-slate-600">
               🔥 Oferta por Tempo Limitado
             </div>
 
-            <div className="relative bg-white rounded-[48px] p-8 md:p-12 border border-slate-200 shadow-[0_30px_70px_-10px_rgba(0,0,0,0.1),0_50px_100px_-15px_rgba(0,0,0,0.05)]">
+            <div className="relative bg-white rounded-[48px] p-8 md:p-12 border border-slate-200 shadow-wg-elevated">
               <div className="mb-8">
                 <h3 className="text-2xl font-black text-slate-900 mb-1">Plano Único Pro</h3>
                 <p className="text-slate-400 font-medium text-sm">Acesso total a todas as funções</p>
@@ -157,7 +157,7 @@ export function Pricing() {
                 disabled={loading}
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
-                className="w-full py-5 rounded-2xl bg-gradient-to-r from-[#64b34d] to-[#4d8f3b] text-white font-black text-lg shadow-xl shadow-green-100 transition-all flex items-center justify-center gap-3 disabled:opacity-70 border border-slate-200/40"
+                className="w-full py-5 rounded-2xl bg-gradient-to-r from-[#64b34d] to-[#4d8f3b] text-white font-black text-lg shadow-wg-green-cta transition-[box-shadow,transform] flex items-center justify-center gap-3 disabled:opacity-70 border border-slate-200/40"
               >
                 {loading ? <Loader2 className="animate-spin" /> : "Ativar minha atendente 24h"}
               </motion.button>

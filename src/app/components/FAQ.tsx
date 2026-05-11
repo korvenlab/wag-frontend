@@ -94,7 +94,7 @@ export function FAQ() {
               >
                 <AccordionItem
                   value={`item-${index}`}
-                  className="bg-white border border-slate-200 rounded-2xl px-6 hover:border-slate-300 hover:shadow-[0_20px_40px_rgba(100,179,77,0.05)] transition-all overflow-hidden data-[state=open]:border-slate-300 data-[state=open]:bg-green-50/30"
+                  className="bg-white border border-slate-200 rounded-2xl px-6 shadow-wg-subtle hover:border-slate-300 hover:shadow-wg-faq-hover transition-[box-shadow,border-color] overflow-hidden data-[state=open]:border-slate-300 data-[state=open]:bg-green-50/30 data-[state=open]:shadow-wg-card"
                 >
                   <AccordionTrigger className="text-left text-slate-900 hover:no-underline py-6 [&[data-state=open]]:text-[#64b34d]">
                     <span className="text-lg font-bold pr-4 leading-tight">
@@ -123,7 +123,7 @@ export function FAQ() {
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
-            className="px-8 py-4 rounded-2xl bg-slate-900 text-white font-bold shadow-lg hover:bg-[#64b34d] transition-all border border-slate-700"
+            className="px-8 py-4 rounded-2xl bg-slate-900 text-white font-bold shadow-wg-cta hover:bg-[#64b34d] transition-[box-shadow,background-color] border border-slate-700"
           >
             Falar com o Suporte
           </motion.button>

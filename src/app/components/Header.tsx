@@ -73,10 +73,8 @@ export function Header() {
       className="fixed top-0 left-0 right-0 z-50 px-4 pt-5"
     >
       <div
-        className={`max-w-[1200px] mx-auto h-20 rounded-[50px] bg-white/80 backdrop-blur-[12px] border border-slate-200 transition-all duration-300 ${
-          isScrolled
-            ? "shadow-[0_4px_30px_rgba(0,0,0,0.08)]"
-            : "shadow-[0_4px_30px_rgba(0,0,0,0.05)]"
+        className={`max-w-[1200px] mx-auto h-20 rounded-[50px] bg-white/80 backdrop-blur-[12px] border border-slate-200 transition-[box-shadow] duration-300 ${
+          isScrolled ? "shadow-wg-header-scrolled" : "shadow-wg-header"
         }`}
       >
         <div className="px-6 h-full flex items-center justify-between">
@@ -112,7 +110,7 @@ export function Header() {
                   onClick={() => setIsDropdownOpen(!isDropdownOpen)}
                   whileHover={{ scale: 1.05, boxShadow: "0 15px 25px rgba(100, 179, 77, 0.3)" }}
                   whileTap={{ scale: 0.95 }}
-                  className="px-6 py-2.5 rounded-full bg-gradient-to-r from-[#64b34d] to-[#4d8f3b] text-white font-semibold shadow-md hover:shadow-lg transition-shadow flex items-center gap-2"
+                  className="px-6 py-2.5 rounded-full bg-gradient-to-r from-[#64b34d] to-[#4d8f3b] text-white font-semibold shadow-wg-icon-green hover:shadow-wg-green-cta transition-[box-shadow] flex items-center gap-2"
                 >
                   <span className="max-w-[150px] truncate">{user.email}</span>
                   <ChevronDown size={16} className={`transition-transform ${isDropdownOpen ? "rotate-180" : ""}`} />
@@ -125,7 +123,7 @@ export function Header() {
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: -10 }}
                       transition={{ duration: 0.2 }}
-                      className="absolute right-0 top-full mt-2 w-56 bg-white rounded-2xl border border-gray-200 shadow-2xl overflow-hidden"
+                      className="absolute right-0 top-full mt-2 w-56 bg-white rounded-2xl border border-gray-200 shadow-wg-popover overflow-hidden"
                     >
                       <div className="px-4 py-3 border-b border-gray-100">
                         <p className="text-xs text-gray-500">Conectado como</p>
@@ -174,7 +172,7 @@ export function Header() {
                 whileHover={{ scale: 1.05, boxShadow: "0 15px 25px rgba(100, 179, 77, 0.3)" }}
                 whileTap={{ scale: 0.95 }}
                 onClick={() => navigate("/login")}
-                className="px-6 py-2.5 rounded-full bg-gradient-to-r from-[#64b34d] to-[#4d8f3b] text-white font-semibold shadow-md hover:shadow-lg transition-shadow"
+                className="px-6 py-2.5 rounded-full bg-gradient-to-r from-[#64b34d] to-[#4d8f3b] text-white font-semibold shadow-wg-icon-green hover:shadow-wg-green-cta transition-[box-shadow]"
               >
                 Login
               </motion.button>
@@ -197,7 +195,7 @@ export function Header() {
             animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
             transition={{ duration: 0.3, ease: "easeInOut" }}
-            className="md:hidden mt-3 mx-4 rounded-3xl bg-white/95 backdrop-blur-xl border border-gray-200 shadow-lg overflow-hidden"
+            className="md:hidden mt-3 mx-4 rounded-3xl bg-white/95 backdrop-blur-xl border border-gray-200 shadow-wg-popover overflow-hidden"
           >
             <div className="px-6 py-6 flex flex-col gap-4">
               <MobileNavLink onClick={() => scrollToSection("como-funciona")}>
@@ -253,7 +251,7 @@ export function Header() {
                     navigate("/login");
                     setIsMobileMenuOpen(false);
                   }}
-                  className="px-6 py-2.5 rounded-full bg-gradient-to-r from-[#64b34d] to-[#4d8f3b] text-white font-semibold shadow-md"
+                  className="px-6 py-2.5 rounded-full bg-gradient-to-r from-[#64b34d] to-[#4d8f3b] text-white font-semibold shadow-wg-icon-green"
                 >
                   Login
                 </button>

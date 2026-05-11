@@ -245,7 +245,7 @@ export function Dashboard() {
             initial={{ x: -300 }} 
             animate={{ x: 0 }} 
             exit={{ x: -300 }} 
-            className="fixed top-0 left-0 h-screen w-72 bg-white border-r border-slate-100 z-40 flex flex-col shadow-2xl lg:shadow-none"
+            className="fixed top-0 left-0 h-screen w-72 bg-white border-r border-slate-100 z-40 flex flex-col shadow-wg-popover lg:shadow-none"
           >
             <div className="pt-16 pb-10 flex flex-col items-center justify-center">
               <img src="/logo.png" alt="Wagoo Logo" className="w-32 h-32 object-contain" />
@@ -283,7 +283,7 @@ export function Dashboard() {
             </div>
             
             {isGoogleConnected && (
-              <div className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white border border-slate-100 shadow-sm text-emerald-600 text-[10px] font-black uppercase tracking-[0.1em]">
+              <div className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white border border-slate-100 shadow-wg-subtle text-emerald-600 text-[10px] font-black uppercase tracking-[0.1em]">
                 <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
                 Google Calendar Sincronizado
               </div>
@@ -294,7 +294,7 @@ export function Dashboard() {
             {activeSection === "overview" && (
               <>
                 <div className="lg:col-span-2">
-                  <Card className="rounded-[32px] border-none shadow-[0_30px_60px_-15px_rgba(0,0,0,0.04)] bg-white overflow-hidden">
+                  <Card className="rounded-[32px] border-none shadow-wg-elevated bg-white overflow-hidden">
                     <CardHeader className="pb-2 pt-8 px-8 border-b border-slate-50">
                        <CardTitle className="text-xs font-black flex items-center gap-2 tracking-[0.15em] uppercase text-slate-400">
                          <Phone size={14} className="text-[#64b34d]" />
@@ -348,9 +348,9 @@ export function Dashboard() {
                 </div>
 
                 <div className="space-y-6">
-                  <Card className="rounded-[32px] border-none shadow-[0_30px_60px_-15px_rgba(0,0,0,0.04)] bg-white p-7">
+                  <Card className="rounded-[32px] border-none shadow-wg-elevated bg-white p-7">
                     <div className="flex items-center justify-between mb-6">
-                      <div className="w-12 h-12 rounded-2xl bg-slate-900 flex items-center justify-center text-white shadow-lg">
+                      <div className="w-12 h-12 rounded-2xl bg-slate-900 flex items-center justify-center text-white shadow-wg-cta">
                         <Bot size={22} />
                       </div>
                       <Switch checked={isAIEnabled} onCheckedChange={handleToggleAI} disabled={isSavingAI} className="data-[state=checked]:bg-[#64b34d]" />
@@ -366,7 +366,7 @@ export function Dashboard() {
 
             {activeSection === "hours" && (
               <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="lg:col-span-3">
-                <Card className="rounded-[40px] border-none shadow-[0_40px_80px_-20px_rgba(0,0,0,0.05)] bg-white">
+                <Card className="rounded-[40px] border-none shadow-wg-elevated bg-white">
                   <div className="p-10 flex flex-col sm:flex-row justify-between items-center gap-4 border-b border-slate-50">
                     <div className="text-center sm:text-left">
                       <CardTitle className="text-2xl font-black text-slate-900 tracking-tighter">Horários da Loja</CardTitle>
@@ -383,7 +383,7 @@ export function Dashboard() {
                         key={day} 
                         onClick={() => setSelectedDay(day)} 
                         className={`px-6 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${
-                          selectedDay === day ? "bg-slate-900 text-white shadow-xl" : "bg-white text-slate-400 border border-slate-100"
+                          selectedDay === day ? "bg-slate-900 text-white shadow-wg-card" : "bg-white text-slate-400 border border-slate-100 shadow-wg-subtle"
                         }`}
                       >
                         {day}
@@ -435,7 +435,7 @@ export function Dashboard() {
                       </div>
                       
                       <div className="relative w-full md:w-auto">
-                        <Button onClick={handleSaveHours} disabled={isSavingHours} className="w-full md:w-64 h-14 rounded-2xl bg-[#64b34d] hover:bg-[#4d8f3b] text-white font-black text-base shadow-2xl shadow-green-100/50 transition-all">
+                        <Button onClick={handleSaveHours} disabled={isSavingHours} className="w-full md:w-64 h-14 rounded-2xl bg-[#64b34d] hover:bg-[#4d8f3b] text-white font-black text-base shadow-wg-green-cta transition-[box-shadow,background-color]">
                           {isSavingHours ? <Loader2 className="animate-spin" /> : "Salvar Configuração"}
                         </Button>
                         {showHoursSuccess && (
@@ -458,7 +458,7 @@ export function Dashboard() {
 
             {activeSection === "settings" && (
               <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="lg:col-span-3">
-                <Card className="rounded-[40px] border-none shadow-2xl bg-white p-10">
+                <Card className="rounded-[40px] border-none shadow-wg-elevated bg-white p-10">
                   <div className="mb-10">
                     <h3 className="text-2xl font-black text-slate-900 tracking-tighter">Configurações do Perfil</h3>
                     <p className="text-slate-500 font-medium mt-1 text-base leading-relaxed">Personalize o nome da sua loja no sistema para a IA se apresentar.</p>
@@ -488,7 +488,7 @@ export function Dashboard() {
 function NavItem({ icon, label, active, onClick }: any) {
   return (
     <button onClick={onClick} className={`w-full flex items-center justify-between px-5 py-4 rounded-2xl transition-all ${
-      active ? "bg-slate-50 text-slate-900 shadow-sm" : "text-slate-400 hover:text-slate-700 hover:bg-slate-50/50"
+      active ? "bg-slate-50 text-slate-900 shadow-wg-subtle" : "text-slate-400 hover:text-slate-700 hover:bg-slate-50/50"
     }`}>
       <div className="flex items-center gap-4">
         <span className={active ? "text-[#64b34d]" : "text-slate-300"}>{icon}</span>
@@ -502,7 +502,7 @@ function NavItem({ icon, label, active, onClick }: any) {
 function TurnoCard({ title, icon, active, onToggle, start, end, onStart, onEnd }: any) {
   return (
     <div className={`p-8 rounded-[32px] border-2 transition-all duration-300 ${
-      active ? "bg-white border-[#64b34d]/20 shadow-lg shadow-green-100/10" : "bg-slate-50/50 border-transparent opacity-60"
+      active ? "bg-white border-[#64b34d]/20 shadow-wg-turno" : "bg-slate-50/50 border-transparent opacity-60"
     }`}>
       <div className="flex items-center justify-between mb-8">
         <div className="flex items-center gap-3">
@@ -527,7 +527,7 @@ function TurnoCard({ title, icon, active, onToggle, start, end, onStart, onEnd }
 
 function AnalyticsCard({ icon, title, value }: any) {
   return (
-    <Card className="rounded-[40px] border-none shadow-[0_20px_40px_-10px_rgba(0,0,0,0.03)] bg-white p-8 h-full flex flex-col justify-between transition-all hover:translate-y-[-5px] hover:shadow-xl">
+    <Card className="rounded-[40px] border-none shadow-wg-card bg-white p-8 h-full flex flex-col justify-between transition-[box-shadow,transform] hover:translate-y-[-5px] hover:shadow-wg-analytics-hover">
       <div className="w-12 h-12 rounded-2xl bg-slate-50 flex items-center justify-center mb-6">
         {icon}
       </div>
