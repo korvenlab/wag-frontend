@@ -28,9 +28,14 @@ export function FAQ() {
         "Você pode cancelar a qualquer momento sem burocracia. Não há multas ou contratos de fidelidade. Você paga apenas pelo mês que utilizar.",
     },
     {
+      question: "Qual plano preciso contratar?",
+      answer:
+        "Na landing você vê apenas o Plano Pro (R$ 60/mês): WhatsApp conectado, Google Agenda sincronizado e IA confirmando horários na sua agenda principal. É o plano base para começar a usar o Wagoo.",
+    },
+    {
       question: "O Wagoo é exclusivo para a minha agenda?",
       answer:
-        "Sim! O Wagoo funciona como seu assistente pessoal dedicado, gerenciando uma agenda por assinatura. Ele é perfeito para profissionais autônomos e donos de negócio que precisam automatizar seus próprios horários.",
+        "Com o Plano Pro, o Wagoo gerencia sua agenda principal no Google Calendar — ideal para autônomos e negócios com um profissional por assinatura.",
     },
     {
       question: "Meus dados e os dos meus clientes estão seguros?",

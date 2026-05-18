@@ -1,5 +1,15 @@
 import { motion, useInView } from "framer-motion";
-import { Check, Zap, Shield, Headphones, BarChart, Loader2, Sparkles } from "lucide-react";
+import {
+  Check,
+  Zap,
+  Shield,
+  Headphones,
+  BarChart,
+  Loader2,
+  Sparkles,
+  MessageCircle,
+  Calendar,
+} from "lucide-react";
 import { useRef, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../lib/supabase";
@@ -20,11 +30,12 @@ export function Pricing() {
   }, []);
 
   const features = [
-    { icon: <Zap className="w-5 h-5" />, text: "Agendamentos Ilimitados" },
-    { icon: <Shield className="w-5 h-5" />, text: "Sincronização em Tempo Real" },
-    { icon: <Headphones className="w-5 h-5" />, text: "Suporte Prioritário 24/7" },
-    { icon: <BarChart className="w-5 h-5" />, text: "Relatórios e Análises" },
-    { icon: <Check className="w-5 h-5" />, text: "Personalização Completa" },
+    { icon: <MessageCircle className="w-5 h-5" />, text: "Atendimento automático no WhatsApp" },
+    { icon: <Calendar className="w-5 h-5" />, text: "Integração com Google Agenda" },
+    { icon: <Zap className="w-5 h-5" />, text: "Agendamentos ilimitados com IA" },
+    { icon: <Shield className="w-5 h-5" />, text: "Sincronização em tempo real" },
+    { icon: <BarChart className="w-5 h-5" />, text: "Painel com métricas de atendimento" },
+    { icon: <Headphones className="w-5 h-5" />, text: "Suporte prioritário" },
   ];
 
   const handleCheckout = async () => {
@@ -78,16 +89,17 @@ export function Pricing() {
           >
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-green-100 border border-slate-200">
               <Sparkles size={14} className="text-[#64b34d]" />
-              <span className="text-xs font-black text-[#4d8f3b] uppercase tracking-widest">Investimento Inteligente</span>
+              <span className="text-xs font-black text-[#4d8f3b] uppercase tracking-widest">Plano Pro</span>
             </div>
 
             <h2 className="text-5xl md:text-7xl font-black text-slate-900 leading-[0.9] tracking-tighter">
-              Sua nova atendente por <br />
-              <span className="text-[#64b34d]">R$ 2,00 por dia.</span>
+              Um plano. <br />
+              <span className="text-[#64b34d]">R$ 60 por mês.</span>
             </h2>
             
             <p className="text-xl text-slate-500 max-w-xl font-medium leading-relaxed">
-              Menos que o custo de um café para ter o Wagoo agendando seus clientes 24 horas por dia, 7 dias por semana, sem erros e sem pausas.
+              O Plano Pro inclui WhatsApp, Google Agenda e IA de agendamento — tudo o que você precisa
+              para transformar conversas em horários confirmados, 24 horas por dia.
             </p>
 
             <div className="flex flex-col gap-4">
@@ -106,7 +118,7 @@ export function Pricing() {
             </div>
           </motion.div>
 
-          {/* LADO DIREITO: CARD DE PREÇOS PREMIUM */}
+          {/* LADO DIREITO: CARD PLANO PRO */}
           <motion.div
             initial={{ opacity: 0, y: 50 }}
             animate={isInView ? { opacity: 1, y: 0 } : {}}
@@ -120,8 +132,10 @@ export function Pricing() {
 
             <div className="relative bg-white rounded-[48px] p-8 md:p-12 border border-slate-200 shadow-wg-elevated">
               <div className="mb-8">
-                <h3 className="text-2xl font-black text-slate-900 mb-1">Plano Único Pro</h3>
-                <p className="text-slate-400 font-medium text-sm">Acesso total a todas as funções</p>
+                <h3 className="text-2xl font-black text-slate-900 mb-1">Plano Pro</h3>
+                <p className="text-slate-400 font-medium text-sm">
+                  WhatsApp + Google Agenda + IA — assinatura mensal
+                </p>
               </div>
 
               <div className="mb-10 bg-slate-50/50 p-6 rounded-3xl border border-slate-200">

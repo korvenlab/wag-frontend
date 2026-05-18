@@ -106,7 +106,7 @@ export function ProtectedRoute({ children, requirePayment = false }: ProtectedRo
             <div className="bg-gradient-to-br from-[#64b34d] to-[#4d8f3b] px-8 py-10 text-white text-center">
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/15 text-[10px] font-black uppercase tracking-[0.2em] mb-4">
                 <Sparkles className="w-3.5 h-3.5" />
-                Plano Wagoo
+                Plano Pro
               </div>
               <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-white/20 flex items-center justify-center backdrop-blur-sm">
                 <Lock className="w-8 h-8 text-white" strokeWidth={2.5} />
@@ -121,7 +121,7 @@ export function ProtectedRoute({ children, requirePayment = false }: ProtectedRo
             <div className="p-8 space-y-6">
               <p className="text-slate-600 text-sm font-medium leading-relaxed text-center">
                 Você está logado como{" "}
-                <span className="font-bold text-slate-900">{user.email}</span>. Escolha um plano para
+                <span className="font-bold text-slate-900">{user.email}</span>. Ative o Plano Pro para
                 continuar ou saia e use outra conta.
               </p>
 
@@ -135,7 +135,7 @@ export function ProtectedRoute({ children, requirePayment = false }: ProtectedRo
                 }}
                 className="w-full py-4 rounded-2xl bg-slate-900 text-white font-black text-sm hover:bg-slate-800 transition-[box-shadow,background-color] shadow-wg-cta"
               >
-                Ver planos e ativar
+                Ver Plano Pro e ativar
               </button>
 
               <button
