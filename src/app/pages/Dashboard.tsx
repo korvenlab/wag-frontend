@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   LayoutDashboard, Clock, Settings, LogOut, Menu, X, QrCode,
-  Bot, Phone, BarChart3, MessageSquare,
+  Bot, Phone, BarChart3, MessageSquare, Users,
   CalendarCheck, Zap, Loader2, Check, Coffee, Moon, Sun, Copy, ChevronRight
 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/card";
@@ -255,6 +255,7 @@ export function Dashboard() {
               <NavItem icon={<LayoutDashboard size={20} />} label="Visão Geral" active={activeSection === "overview"} onClick={() => { setActiveSection("overview"); setIsSidebarOpen(false); }} />
               <NavItem icon={<BarChart3 size={20} />} label="Analytics" active={activeSection === "analytics"} onClick={() => { setActiveSection("analytics"); setIsSidebarOpen(false); }} />
               <NavItem icon={<Clock size={20} />} label="Horários" active={activeSection === "hours"} onClick={() => { setActiveSection("hours"); setIsSidebarOpen(false); }} />
+              <NavItem icon={<Users size={20} />} label="Equipe & Agendas" active={false} onClick={() => { navigate("/dashboard/equipe"); setIsSidebarOpen(false); }} />
               <NavItem icon={<Settings size={20} />} label="Configurações" active={activeSection === "settings"} onClick={() => { setActiveSection("settings"); setIsSidebarOpen(false); }} />
             </nav>
 

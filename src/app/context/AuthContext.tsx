@@ -11,6 +11,7 @@ import { User, Session } from "@supabase/supabase-js";
 
 export type AppUser = User & {
   hasPaid: boolean;
+  multiBarberPlan: boolean;
 };
 
 interface AuthContextType {
@@ -62,7 +63,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     async (authUser: User, session: Session | null) => {
       const token = session?.access_token;
       if (!token) {
-        setUser({ ...authUser, hasPaid: false });
+        setUser({ ...authUser, hasPaid: false, multiBarberPlan: false });
         return;
       }
 
@@ -74,19 +75,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
 
       if (!response.ok) {
-        setUser({ ...authUser, hasPaid: false });
+        setUser({ ...authUser, hasPaid: false, multiBarberPlan: false });
         return;
       }
 
       const profileData = (await response.json()) as {
         has_paid?: boolean;
         has_access?: boolean;
+        multi_barber_plan?: boolean;
       };
       const hasPaid =
         typeof profileData.has_access === "boolean"
           ? profileData.has_access
           : !!profileData.has_paid;
-      setUser({ ...authUser, hasPaid });
+      setUser({
+        ...authUser,
+        hasPaid,
+        multiBarberPlan: !!profileData.multi_barber_plan,
+      });
     },
     [backendUrl],
   );
@@ -130,7 +136,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         await fetchProfileAndSetUser(authUser, session);
       } catch (error) {
         console.error("❌ Erro ao carregar perfil:", error);
-        setUser({ ...authUser, hasPaid: false });
+        setUser({ ...authUser, hasPaid: false, multiBarberPlan: false });
       } finally {
         setLoading(false);
       }
