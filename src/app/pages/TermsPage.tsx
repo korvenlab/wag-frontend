@@ -46,7 +46,9 @@ export const TermsPage = () => {
 
         <h2 style={{ color: '#111827', marginTop: '40px' }}>3. Assinaturas e Pagamentos</h2>
         <ul style={{ paddingLeft: '20px' }}>
-          <li><strong>Plano Pro:</strong> O valor da assinatura é de R$ 60,00 por mês.</li>
+          <li><strong>Basic:</strong> R$ 59,00/mês — 1 usuário.</li>
+          <li><strong>Pro:</strong> R$ 149,00/mês — até 3 usuários.</li>
+          <li><strong>Pro+:</strong> R$ 259,00/mês — até 5 usuários.</li>
           <li><strong>Processamento:</strong> Todos os pagamentos são processados de forma segura via <strong>Stripe</strong>.</li>
           <li><strong>Renovação:</strong> A assinatura é renovada automaticamente a cada 30 dias.</li>
           <li><strong>Cancelamento:</strong> Pode ser solicitado a qualquer momento através do painel do usuário ou suporte, sem taxas de fidelidade.</li>

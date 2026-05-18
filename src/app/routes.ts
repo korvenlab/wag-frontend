@@ -4,6 +4,7 @@ import { LoginPage } from "./pages/LoginPage";
 import { Dashboard } from "./pages/Dashboard";
 import { ProtectedDashboard } from "./pages/ProtectedDashboard";
 import { ProtectedTeamPage } from "./pages/ProtectedTeamPage";
+import { ProtectedCalendarPage } from "./pages/ProtectedCalendarPage";
 import { PrivacyPage } from "./pages/PrivacyPage";
 import { TermsPage } from "./pages/TermsPage";
 
@@ -23,6 +24,10 @@ export const router = createBrowserRouter([
   {
     path: "/dashboard/equipe",
     Component: ProtectedTeamPage,
+  },
+  {
+    path: "/dashboard/calendario",
+    Component: ProtectedCalendarPage,
   },
   // Novas rotas para o Google Auth
   {

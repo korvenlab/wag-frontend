@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   LayoutDashboard, Clock, Settings, LogOut, Menu, X, QrCode,
-  Bot, Phone, BarChart3, MessageSquare, Users,
+  Bot, Phone, BarChart3, MessageSquare, Users, CalendarDays,
   CalendarCheck, Zap, Loader2, Check, Coffee, Moon, Sun, Copy, ChevronRight
 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/card";
@@ -11,9 +11,10 @@ import { Switch } from "../components/ui/switch";
 import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
 import { useAuth } from "../context/AuthContext";
-import { useNavigate } from "react-router";
+import { useNavigate, useLocation } from "react-router";
 import { FeedbackFab } from "../components/FeedbackFab";
 import { supabase } from "../lib/supabase";
+import { planLabel } from "../lib/wagooPlans";
 
 const DAYS_OF_WEEK = ["Segunda-feira", "Terça-feira", "Quarta-feira", "Quinta-feira", "Sexta-feira", "Sábado", "Domingo"];
 
@@ -51,6 +52,7 @@ export function Dashboard() {
 
   const { user, loading, logout } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const backendUrl = import.meta.env.VITE_API_URL || "https://wag-backend.onrender.com";
 
   useEffect(() => {
@@ -108,6 +110,13 @@ export function Dashboard() {
     window.addEventListener("resize", checkDesktop);
     return () => window.removeEventListener("resize", checkDesktop);
   }, []);
+
+  useEffect(() => {
+    const section = (location.state as { section?: string } | null)?.section;
+    if (section && ["overview", "analytics", "hours", "settings"].includes(section)) {
+      setActiveSection(section);
+    }
+  }, [location.state]);
 
   const handleLogout = () => { logout(); navigate("/login"); };
 
@@ -254,6 +263,7 @@ export function Dashboard() {
             <nav className="flex-1 px-6 space-y-2">
               <NavItem icon={<LayoutDashboard size={20} />} label="Visão Geral" active={activeSection === "overview"} onClick={() => { setActiveSection("overview"); setIsSidebarOpen(false); }} />
               <NavItem icon={<BarChart3 size={20} />} label="Analytics" active={activeSection === "analytics"} onClick={() => { setActiveSection("analytics"); setIsSidebarOpen(false); }} />
+              <NavItem icon={<CalendarDays size={20} />} label="Agenda" active={false} onClick={() => { navigate("/dashboard/calendario"); setIsSidebarOpen(false); }} />
               <NavItem icon={<Clock size={20} />} label="Horários" active={activeSection === "hours"} onClick={() => { setActiveSection("hours"); setIsSidebarOpen(false); }} />
               <NavItem icon={<Users size={20} />} label="Equipe & Agendas" active={false} onClick={() => { navigate("/dashboard/equipe"); setIsSidebarOpen(false); }} />
               <NavItem icon={<Settings size={20} />} label="Configurações" active={activeSection === "settings"} onClick={() => { setActiveSection("settings"); setIsSidebarOpen(false); }} />
@@ -281,6 +291,14 @@ export function Dashboard() {
                 Olá, {storeName ? storeName.split(' ')[0] : 'Admin'}
               </h2>
               <p className="text-slate-500 font-medium text-lg leading-relaxed">Sua assistente está pronta para agendar.</p>
+              {user.subscriptionTier ? (
+                <p className="text-sm font-bold text-slate-600">
+                  Plano {planLabel(user.subscriptionTier)}
+                  {user.maxTeamUsers > 0
+                    ? ` · até ${user.maxTeamUsers} profissional(is) na equipe`
+                    : ""}
+                </p>
+              ) : null}
             </div>
             
             {isGoogleConnected && (

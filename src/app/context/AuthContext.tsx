@@ -8,10 +8,14 @@ import {
 } from "react";
 import { supabase } from "../lib/supabase";
 import { User, Session } from "@supabase/supabase-js";
+import type { WagooPlanTier } from "../lib/wagooPlans";
 
 export type AppUser = User & {
   hasPaid: boolean;
   multiBarberPlan: boolean;
+  subscriptionTier: WagooPlanTier | null;
+  maxTeamUsers: number;
+  teamUsersUsed: number;
 };
 
 interface AuthContextType {
@@ -63,7 +67,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     async (authUser: User, session: Session | null) => {
       const token = session?.access_token;
       if (!token) {
-        setUser({ ...authUser, hasPaid: false, multiBarberPlan: false });
+        setUser({
+          ...authUser,
+          hasPaid: false,
+          multiBarberPlan: false,
+          subscriptionTier: null,
+          maxTeamUsers: 0,
+          teamUsersUsed: 0,
+        });
         return;
       }
 
@@ -75,7 +86,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
 
       if (!response.ok) {
-        setUser({ ...authUser, hasPaid: false, multiBarberPlan: false });
+        setUser({
+          ...authUser,
+          hasPaid: false,
+          multiBarberPlan: false,
+          subscriptionTier: null,
+          maxTeamUsers: 0,
+          teamUsersUsed: 0,
+        });
         return;
       }
 
@@ -83,15 +101,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         has_paid?: boolean;
         has_access?: boolean;
         multi_barber_plan?: boolean;
+        subscription_tier?: WagooPlanTier | null;
+        max_team_users?: number;
+        team_users_used?: number;
       };
       const hasPaid =
         typeof profileData.has_access === "boolean"
           ? profileData.has_access
           : !!profileData.has_paid;
+      const tier = profileData.subscription_tier ?? null;
       setUser({
         ...authUser,
         hasPaid,
-        multiBarberPlan: !!profileData.multi_barber_plan,
+        subscriptionTier: tier,
+        maxTeamUsers: profileData.max_team_users ?? 0,
+        teamUsersUsed: profileData.team_users_used ?? 0,
+        multiBarberPlan:
+          !!profileData.multi_barber_plan || tier === "pro" || tier === "pro_plus",
       });
     },
     [backendUrl],
@@ -136,7 +162,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         await fetchProfileAndSetUser(authUser, session);
       } catch (error) {
         console.error("❌ Erro ao carregar perfil:", error);
-        setUser({ ...authUser, hasPaid: false, multiBarberPlan: false });
+        setUser({
+          ...authUser,
+          hasPaid: false,
+          multiBarberPlan: false,
+          subscriptionTier: null,
+          maxTeamUsers: 0,
+          teamUsersUsed: 0,
+        });
       } finally {
         setLoading(false);
       }

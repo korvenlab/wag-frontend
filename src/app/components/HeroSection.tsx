@@ -99,7 +99,7 @@ export const HeroSection = () => {
               <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
             </Button>
             <div className="flex items-center gap-3 text-slate-600 font-bold rounded-2xl border border-slate-200 px-5 py-3 bg-white/90">
-               <span className="text-slate-900">Plano Pro · R$ 60/mês</span>
+               <span className="text-slate-900">A partir de R$ 59/mês</span>
                <span className="w-1.5 h-1.5 shrink-0 rounded-full bg-green-600" aria-hidden />
                <span>Setup em 2 min</span>
             </div>

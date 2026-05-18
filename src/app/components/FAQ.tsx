@@ -30,7 +30,7 @@ export function FAQ() {
     {
       question: "Qual plano preciso contratar?",
       answer:
-        "Na landing você vê apenas o Plano Pro (R$ 60/mês): WhatsApp conectado, Google Agenda sincronizado e IA confirmando horários na sua agenda principal. É o plano base para começar a usar o Wagoo.",
+        "Basic (R$ 59/mês, 1 usuário), Pro (R$ 149/mês, até 3 usuários) e Pro+ (R$ 259/mês, até 5 usuários). Todos incluem WhatsApp, Google Agenda e IA — escolha conforme o tamanho da sua equipe.",
     },
     {
       question: "O Wagoo é exclusivo para a minha agenda?",
