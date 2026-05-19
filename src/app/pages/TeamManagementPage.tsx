@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useState } from "react";
-import { motion } from "framer-motion";
 import {
   Users,
   Loader2,
@@ -37,10 +36,6 @@ export function TeamManagementPage() {
     "https://wag-backend.onrender.com";
 
   const [barbeiros, setBarbeiros] = useState<Barbeiro[]>([]);
-  const [subscriptionTier, setSubscriptionTier] = useState<WagooPlanTier | null>(null);
-  const [maxTeamUsers, setMaxTeamUsers] = useState(0);
-  const [teamUsersUsed, setTeamUsersUsed] = useState(0);
-  const [canAddTeamMember, setCanAddTeamMember] = useState(false);
   const [loadingTeam, setLoadingTeam] = useState(true);
   const [nome, setNome] = useState("");
   const [email, setEmail] = useState("");
@@ -71,10 +66,6 @@ export function TeamManagementPage() {
       }
       const data = await res.json();
       setBarbeiros(data.barbeiros ?? []);
-      setSubscriptionTier(data.subscription_tier ?? null);
-      setMaxTeamUsers(data.max_team_users ?? 0);
-      setTeamUsersUsed(data.team_users_used ?? 0);
-      setCanAddTeamMember(!!data.can_add_team_member);
     } catch {
       setError("Erro de conexão com o servidor.");
     } finally {
@@ -164,7 +155,7 @@ export function TeamManagementPage() {
   };
 
   const handleToggle = async (b: Barbeiro, ativo: boolean) => {
-    if (!subscriptionTier) return;
+    if (!user?.subscriptionTier) return;
     try {
       const token = await getToken();
       const res = await fetch(`${backendUrl}/api/barbeiros/${b.id}`, {
@@ -191,6 +182,13 @@ export function TeamManagementPage() {
     );
   }
 
+  const subscriptionTier = user.subscriptionTier;
+  const maxTeamUsers = user.maxTeamUsers;
+  const teamUsersUsed = user.teamUsersUsed;
+  const canAddTeamMember =
+    subscriptionTier !== null && teamUsersUsed < maxTeamUsers;
+
+  /** Plano definido no login (`/api/user/profile`); evita paywall a piscar em cada visita. */
   const showNoPlanPaywall = !subscriptionTier;
   const atLimit = subscriptionTier !== null && teamUsersUsed >= maxTeamUsers;
   const upgradeTarget: WagooPlanTier | null =
@@ -219,7 +217,7 @@ export function TeamManagementPage() {
           <div className="space-y-2">
             <div className="flex items-center gap-3 flex-wrap">
               <h1 className="text-3xl font-black text-slate-900 tracking-tight">
-                Equipe &amp; Agendas
+                Apenas para Equipe
               </h1>
               {subscriptionTier ? (
                 <Badge className="bg-gradient-to-r from-amber-400 to-amber-500 text-slate-900 border-0 font-black uppercase tracking-wider text-[10px] px-3 py-1 gap-1">

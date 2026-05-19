@@ -263,9 +263,9 @@ export function Dashboard() {
             <nav className="flex-1 px-6 space-y-2">
               <NavItem icon={<LayoutDashboard size={20} />} label="Visão Geral" active={activeSection === "overview"} onClick={() => { setActiveSection("overview"); setIsSidebarOpen(false); }} />
               <NavItem icon={<BarChart3 size={20} />} label="Analytics" active={activeSection === "analytics"} onClick={() => { setActiveSection("analytics"); setIsSidebarOpen(false); }} />
-              <NavItem icon={<CalendarDays size={20} />} label="Agenda" active={false} onClick={() => { navigate("/dashboard/calendario"); setIsSidebarOpen(false); }} />
+              <NavItem icon={<CalendarDays size={20} />} label="Calendário" active={false} onClick={() => { navigate("/dashboard/calendario"); setIsSidebarOpen(false); }} />
               <NavItem icon={<Clock size={20} />} label="Horários" active={activeSection === "hours"} onClick={() => { setActiveSection("hours"); setIsSidebarOpen(false); }} />
-              <NavItem icon={<Users size={20} />} label="Equipe & Agendas" active={false} onClick={() => { navigate("/dashboard/equipe"); setIsSidebarOpen(false); }} />
+              <NavItem icon={<Users size={20} />} label="Apenas para Equipe" active={false} onClick={() => { navigate("/dashboard/equipe"); setIsSidebarOpen(false); }} />
               <NavItem icon={<Settings size={20} />} label="Configurações" active={activeSection === "settings"} onClick={() => { setActiveSection("settings"); setIsSidebarOpen(false); }} />
             </nav>
 

@@ -7,6 +7,7 @@ import { ProtectedTeamPage } from "./pages/ProtectedTeamPage";
 import { ProtectedCalendarPage } from "./pages/ProtectedCalendarPage";
 import { PrivacyPage } from "./pages/PrivacyPage";
 import { TermsPage } from "./pages/TermsPage";
+import { PublicCalendarPage } from "./pages/PublicCalendarPage";
 
 export const router = createBrowserRouter([
   {
@@ -37,5 +38,9 @@ export const router = createBrowserRouter([
   {
     path: "/termos",
     Component: TermsPage,
+  },
+  {
+    path: "/calendario/publico/:slug",
+    Component: PublicCalendarPage,
   },
 ]);

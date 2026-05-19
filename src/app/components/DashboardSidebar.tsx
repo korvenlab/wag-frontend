@@ -123,7 +123,7 @@ export function DashboardSidebar({
               />
               <NavItem
                 icon={<CalendarDays size={20} />}
-                label="Agenda"
+                label="Calendário"
                 active={active === "calendar"}
                 onClick={() => {
                   navigate("/dashboard/calendario");
@@ -138,7 +138,7 @@ export function DashboardSidebar({
               />
               <NavItem
                 icon={<Users size={20} />}
-                label="Equipe & Agendas"
+                label="Apenas para Equipe"
                 active={active === "team"}
                 onClick={() => {
                   navigate("/dashboard/equipe");
