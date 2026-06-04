@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   CalendarDays,
   Copy,
@@ -60,6 +60,10 @@ export function CalendarPage() {
   const [shareUrl, setShareUrl] = useState<string | null>(null);
   const [shareLoading, setShareLoading] = useState(false);
   const [copied, setCopied] = useState(false);
+  const calendarLoadStateRef = useRef<{ userId: string | null; loaded: boolean }>({
+    userId: null,
+    loaded: false,
+  });
 
   const getToken = async () => {
     const {
@@ -80,8 +84,8 @@ export function CalendarPage() {
     }
   }, [backendUrl]);
 
-  const loadEvents = useCallback(async () => {
-    setLoadingEvents(true);
+  const loadEvents = useCallback(async (options?: { background?: boolean }) => {
+    if (!options?.background) setLoadingEvents(true);
     setError(null);
     try {
       const token = await getToken();
@@ -126,12 +130,16 @@ export function CalendarPage() {
       return;
     }
     void loadShare();
-  }, [user, loading, navigate, loadShare]);
+  }, [user?.id, user?.hasPaid, loading, navigate, loadShare]);
 
   useEffect(() => {
     if (!user?.hasPaid) return;
-    void loadEvents();
-  }, [user, loadEvents]);
+    const background =
+      calendarLoadStateRef.current.userId === user.id &&
+      calendarLoadStateRef.current.loaded;
+    void loadEvents({ background });
+    calendarLoadStateRef.current = { userId: user.id, loaded: true };
+  }, [user?.id, user?.hasPaid, loadEvents]);
 
   const calendarDays = useMemo(() => {
     const start = startOfWeek(startOfMonth(monthCursor), { weekStartsOn: 1 });

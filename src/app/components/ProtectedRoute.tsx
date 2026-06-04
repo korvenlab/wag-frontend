@@ -19,13 +19,13 @@ export function ProtectedRoute({ children, requirePayment = false }: ProtectedRo
 
   useEffect(() => {
     if (!loading && !user) navigate("/login");
-  }, [user, loading, navigate]);
+  }, [user?.id, loading, navigate]);
 
   useEffect(() => {
     if (!requirePayment || !user || user.hasPaid || !checkoutSuccess) return;
 
     const id = window.setInterval(() => {
-      void refreshProfile();
+      void refreshProfile({ force: true });
       setPollTick((t) => t + 1);
     }, 2500);
 
@@ -70,7 +70,7 @@ export function ProtectedRoute({ children, requirePayment = false }: ProtectedRo
           <div className="flex flex-col gap-3">
             <button
               type="button"
-              onClick={() => void refreshProfile()}
+              onClick={() => void refreshProfile({ force: true })}
               className="w-full py-4 rounded-2xl bg-[#64b34d] text-white font-black text-sm shadow-wg-green-cta hover:bg-[#4d8f3b] transition-[box-shadow,background-color]"
             >
               Já concluí no Stripe — atualizar agora

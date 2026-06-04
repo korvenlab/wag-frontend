@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   LayoutDashboard, Clock, Settings, LogOut, Menu, X, QrCode,
@@ -54,9 +54,12 @@ export function Dashboard() {
   const navigate = useNavigate();
   const location = useLocation();
   const backendUrl = import.meta.env.VITE_API_URL || "https://wag-backend.onrender.com";
+  const profileLoadedForRef = useRef<string | null>(null);
 
   useEffect(() => {
     if (loading || !user || !user.hasPaid) return;
+    if (profileLoadedForRef.current === user.id) return;
+    profileLoadedForRef.current = user.id;
 
     const fetchUserData = async () => {
       try {
@@ -95,14 +98,14 @@ export function Dashboard() {
     };
     
     fetchUserData();
-  }, [user, loading, backendUrl]);
+  }, [user?.id, user?.hasPaid, loading, backendUrl]);
 
   useEffect(() => {
     if (!loading) {
       if (!user) navigate("/login");
       else if (!user.hasPaid) navigate("/#precos");
     }
-  }, [user, loading, navigate]);
+  }, [user?.id, user?.hasPaid, loading, navigate]);
 
   useEffect(() => {
     const checkDesktop = () => setIsDesktop(window.innerWidth >= 1024);

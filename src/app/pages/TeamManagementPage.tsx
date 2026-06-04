@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   Users,
   Loader2,
@@ -55,6 +55,10 @@ export function TeamManagementPage() {
   const [barbeiroToDelete, setBarbeiroToDelete] = useState<Barbeiro | null>(null);
   const [upgrading, setUpgrading] = useState<WagooPlanTier | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const teamLoadStateRef = useRef<{ userId: string | null; loaded: boolean }>({
+    userId: null,
+    loaded: false,
+  });
 
   const getToken = async () => {
     const {
@@ -63,8 +67,8 @@ export function TeamManagementPage() {
     return session?.access_token ?? null;
   };
 
-  const loadTeam = useCallback(async () => {
-    setLoadingTeam(true);
+  const loadTeam = useCallback(async (options?: { background?: boolean }) => {
+    if (!options?.background) setLoadingTeam(true);
     setError(null);
     try {
       const token = await getToken();
@@ -92,14 +96,17 @@ export function TeamManagementPage() {
       navigate("/#precos");
       return;
     }
-    void loadTeam();
-  }, [user, loading, navigate, loadTeam]);
+    const background =
+      teamLoadStateRef.current.userId === user.id && teamLoadStateRef.current.loaded;
+    void loadTeam({ background });
+    teamLoadStateRef.current = { userId: user.id, loaded: true };
+  }, [user?.id, user?.hasPaid, loading, navigate, loadTeam]);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     if (params.get("checkout") === "success" || params.get("checkout") === "multi_barber_success") {
-      void refreshProfile();
-      void loadTeam();
+      void refreshProfile({ force: true });
+      void loadTeam({ background: true });
       window.history.replaceState({}, "", "/dashboard/equipe");
     }
   }, [refreshProfile, loadTeam]);
@@ -158,8 +165,8 @@ export function TeamManagementPage() {
       }
       setNome("");
       setEmail("");
-      await loadTeam();
-      void refreshProfile();
+      await loadTeam({ background: true });
+      void refreshProfile({ force: true });
     } catch {
       setError("Erro ao cadastrar profissional.");
     } finally {
@@ -203,8 +210,8 @@ export function TeamManagementPage() {
         return;
       }
       setBarbeiroToDelete(null);
-      await loadTeam();
-      void refreshProfile();
+      await loadTeam({ background: true });
+      void refreshProfile({ force: true });
     } catch {
       setError("Erro ao excluir profissional.");
     } finally {

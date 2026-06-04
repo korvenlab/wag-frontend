@@ -3,6 +3,7 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useRef,
   useState,
   ReactNode,
 } from "react";
@@ -22,8 +23,8 @@ interface AuthContextType {
   user: AppUser | null;
   loading: boolean;
   logout: () => Promise<void>;
-  /** Recarrega `hasPaid` e dados do perfil via API autenticada (Bearer). */
-  refreshProfile: () => Promise<void>;
+  /** Recarrega perfil via API. Use `force: true` após checkout ou alterações críticas. */
+  refreshProfile: (options?: { force?: boolean }) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -31,6 +32,25 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 let globalSyncedToken: string | null = null;
 
 const WAGOO_PROMO_STORAGE_KEY = "wagoo_promo_code";
+
+/** Evita refetch ao trocar de aba/janela a cada foco. */
+const VISIBILITY_REFRESH_MIN_MS = 2 * 60 * 1000;
+
+type ProfileSnapshot = Pick<
+  AppUser,
+  "hasPaid" | "multiBarberPlan" | "subscriptionTier" | "maxTeamUsers" | "teamUsersUsed"
+>;
+
+function sameProfileFields(a: ProfileSnapshot | null, b: ProfileSnapshot): boolean {
+  if (!a) return false;
+  return (
+    a.hasPaid === b.hasPaid &&
+    a.multiBarberPlan === b.multiBarberPlan &&
+    a.subscriptionTier === b.subscriptionTier &&
+    a.maxTeamUsers === b.maxTeamUsers &&
+    a.teamUsersUsed === b.teamUsersUsed
+  );
+}
 
 async function tryRedeemPendingPromo(accessToken: string, backendUrl: string): Promise<void> {
   const code = sessionStorage.getItem(WAGOO_PROMO_STORAGE_KEY)?.trim().toLowerCase();
@@ -58,6 +78,7 @@ async function tryRedeemPendingPromo(accessToken: string, backendUrl: string): P
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AppUser | null>(null);
   const [loading, setLoading] = useState(true);
+  const lastVisibilityRefreshRef = useRef(0);
 
   const backendUrl =
     import.meta.env.VITE_API_URL?.replace(/\/+$/, "") ||
@@ -110,27 +131,44 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           ? profileData.has_access
           : !!profileData.has_paid;
       const tier = profileData.subscription_tier ?? null;
-      setUser({
-        ...authUser,
+      const nextProfile: ProfileSnapshot = {
         hasPaid,
         subscriptionTier: tier,
         maxTeamUsers: profileData.max_team_users ?? 0,
         teamUsersUsed: profileData.team_users_used ?? 0,
         multiBarberPlan:
           !!profileData.multi_barber_plan || tier === "pro" || tier === "pro_plus",
+      };
+
+      setUser((prev) => {
+        const next: AppUser = { ...authUser, ...nextProfile };
+        if (prev?.id === authUser.id && sameProfileFields(prev, nextProfile)) {
+          return prev;
+        }
+        return next;
       });
     },
     [backendUrl],
   );
 
-  const refreshProfile = useCallback(async () => {
-    const {
-      data: { session },
-    } = await supabase.auth.getSession();
-    if (!session?.user || !session.access_token) return;
-    await tryRedeemPendingPromo(session.access_token, backendUrl);
-    await fetchProfileAndSetUser(session.user, session);
-  }, [fetchProfileAndSetUser, backendUrl]);
+  const refreshProfile = useCallback(
+    async (options?: { force?: boolean }) => {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      if (!session?.user || !session.access_token) return;
+
+      if (!options?.force) {
+        const elapsed = Date.now() - lastVisibilityRefreshRef.current;
+        if (elapsed < VISIBILITY_REFRESH_MIN_MS) return;
+      }
+      lastVisibilityRefreshRef.current = Date.now();
+
+      await tryRedeemPendingPromo(session.access_token, backendUrl);
+      await fetchProfileAndSetUser(session.user, session);
+    },
+    [fetchProfileAndSetUser, backendUrl],
+  );
 
   useEffect(() => {
     const processUserSession = async (authUser: User, session: Session | null) => {
