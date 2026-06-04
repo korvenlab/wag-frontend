@@ -8,6 +8,7 @@ import {
   UserRound,
   ArrowLeft,
   Crown,
+  Trash2,
 } from "lucide-react";
 import { useNavigate } from "react-router";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/card";
@@ -16,6 +17,16 @@ import { Switch } from "../components/ui/switch";
 import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
 import { Badge } from "../components/ui/badge";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "../components/ui/alert-dialog";
 import { useAuth } from "../context/AuthContext";
 import { FeedbackFab } from "../components/FeedbackFab";
 import { supabase } from "../lib/supabase";
@@ -40,6 +51,8 @@ export function TeamManagementPage() {
   const [nome, setNome] = useState("");
   const [email, setEmail] = useState("");
   const [saving, setSaving] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [barbeiroToDelete, setBarbeiroToDelete] = useState<Barbeiro | null>(null);
   const [upgrading, setUpgrading] = useState<WagooPlanTier | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -171,6 +184,31 @@ export function TeamManagementPage() {
       }
     } catch {
       setError("Erro ao atualizar status.");
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!barbeiroToDelete || !user?.subscriptionTier) return;
+    setDeletingId(barbeiroToDelete.id);
+    setError(null);
+    try {
+      const token = await getToken();
+      const res = await fetch(`${backendUrl}/api/barbeiros/${barbeiroToDelete.id}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setError(data.message || data.error || "Não foi possível excluir o profissional.");
+        return;
+      }
+      setBarbeiroToDelete(null);
+      await loadTeam();
+      void refreshProfile();
+    } catch {
+      setError("Erro ao excluir profissional.");
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -350,13 +388,30 @@ export function TeamManagementPage() {
                           {b.ativo ? "Ativo na IA" : "Pausado na IA"}
                         </p>
                       </div>
-                      <div className="flex items-center gap-3">
-                        <span className="text-xs font-bold text-slate-500">Ativo</span>
-                        <Switch
-                          checked={b.ativo}
-                          onCheckedChange={(v) => handleToggle(b, v)}
-                          className="data-[state=checked]:bg-[#64b34d]"
-                        />
+                      <div className="flex items-center gap-4 flex-wrap sm:flex-nowrap">
+                        <div className="flex items-center gap-3">
+                          <span className="text-xs font-bold text-slate-500">Ativo</span>
+                          <Switch
+                            checked={b.ativo}
+                            onCheckedChange={(v) => handleToggle(b, v)}
+                            className="data-[state=checked]:bg-[#64b34d]"
+                          />
+                        </div>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          className="rounded-xl border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700 font-bold gap-2"
+                          disabled={deletingId === b.id}
+                          onClick={() => setBarbeiroToDelete(b)}
+                        >
+                          {deletingId === b.id ? (
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                          ) : (
+                            <Trash2 className="w-4 h-4" />
+                          )}
+                          Excluir
+                        </Button>
                       </div>
                     </div>
                   ))
@@ -395,6 +450,48 @@ export function TeamManagementPage() {
           ) : null}
         </div>
       </main>
+
+      <AlertDialog
+        open={barbeiroToDelete !== null}
+        onOpenChange={(open) => {
+          if (!open && !deletingId) setBarbeiroToDelete(null);
+        }}
+      >
+        <AlertDialogContent className="rounded-[24px] border-none shadow-2xl max-w-md">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="font-black text-slate-900">
+              Excluir profissional?
+            </AlertDialogTitle>
+            <AlertDialogDescription className="font-medium text-slate-500 leading-relaxed">
+              {barbeiroToDelete ? (
+                <>
+                  <span className="font-bold text-slate-700">{barbeiroToDelete.nome}</span> será
+                  removido da equipe. A IA deixa de oferecer este profissional. Compromissos já
+                  marcados no Google Agenda não são apagados.
+                </>
+              ) : null}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="gap-2 sm:gap-0">
+            <AlertDialogCancel
+              className="rounded-xl font-bold"
+              disabled={deletingId !== null}
+            >
+              Cancelar
+            </AlertDialogCancel>
+            <AlertDialogAction
+              className="rounded-xl bg-red-600 hover:bg-red-700 font-black"
+              disabled={deletingId !== null}
+              onClick={(e) => {
+                e.preventDefault();
+                void handleDelete();
+              }}
+            >
+              {deletingId ? <Loader2 className="w-4 h-4 animate-spin" /> : "Excluir"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <FeedbackFab />
     </div>
