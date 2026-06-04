@@ -6,7 +6,6 @@ import {
   Sparkles,
   Mail,
   UserRound,
-  ArrowLeft,
   Crown,
   Trash2,
 } from "lucide-react";
@@ -28,6 +27,7 @@ import {
   AlertDialogTitle,
 } from "../components/ui/alert-dialog";
 import { useAuth } from "../context/AuthContext";
+import { DashboardSidebar } from "../components/DashboardSidebar";
 import { FeedbackFab } from "../components/FeedbackFab";
 import { supabase } from "../lib/supabase";
 import { planLabel, type WagooPlanTier } from "../lib/wagooPlans";
@@ -40,12 +40,13 @@ type Barbeiro = {
 };
 
 export function TeamManagementPage() {
-  const { user, loading, refreshProfile } = useAuth();
+  const { user, loading, logout, refreshProfile } = useAuth();
   const navigate = useNavigate();
   const backendUrl =
     import.meta.env.VITE_API_URL?.replace(/\/+$/, "") ||
     "https://wag-backend.onrender.com";
 
+  const [storeName, setStoreName] = useState("");
   const [barbeiros, setBarbeiros] = useState<Barbeiro[]>([]);
   const [loadingTeam, setLoadingTeam] = useState(true);
   const [nome, setNome] = useState("");
@@ -73,6 +74,14 @@ export function TeamManagementPage() {
     try {
       const token = await getToken();
       if (!token) return;
+
+      const profileRes = await fetch(`${backendUrl}/api/user/profile`, {
+        headers: { Authorization: `Bearer ${token}`, Accept: "application/json" },
+      });
+      if (profileRes.ok) {
+        const profile = (await profileRes.json()) as { store_name?: string };
+        setStoreName(profile.store_name?.trim() || "");
+      }
 
       const res = await fetch(`${backendUrl}/api/barbeiros`, {
         headers: { Authorization: `Bearer ${token}`, Accept: "application/json" },
@@ -241,24 +250,19 @@ export function TeamManagementPage() {
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] relative">
-      <div className="fixed top-0 right-0 w-[500px] h-[500px] bg-green-50/50 blur-[120px] rounded-full -z-10" />
+      <DashboardSidebar
+        active="team"
+        storeName={storeName}
+        userEmail={user.email}
+        onLogout={() => {
+          void logout();
+          navigate("/login");
+        }}
+      />
 
-      <header className="border-b border-slate-100 bg-white/80 backdrop-blur-md sticky top-0 z-30">
-        <div className="max-w-4xl mx-auto px-6 py-4 flex items-center justify-between gap-4">
-          <Button
-            variant="ghost"
-            className="rounded-xl gap-2 font-bold text-slate-600"
-            onClick={() => navigate("/dashboard")}
-          >
-            <ArrowLeft size={18} />
-            Voltar
-          </Button>
-          <img src="/logo.png" alt="Wagoo" className="w-10 h-10 object-contain lg:hidden" />
-        </div>
-      </header>
-
-      <main className="max-w-4xl mx-auto px-6 py-10 pb-24">
-        <div className="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <main className="lg:ml-72 p-6 lg:p-10 pb-24">
+        <div className="max-w-4xl mx-auto mt-20 lg:mt-10 space-y-8">
+        <div className="mb-2 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div className="space-y-2">
             <div className="flex items-center gap-3 flex-wrap">
               <h1 className="text-3xl font-black text-slate-900 tracking-tight">
@@ -455,6 +459,7 @@ export function TeamManagementPage() {
               </Card>
             </div>
           ) : null}
+        </div>
         </div>
       </main>
 
