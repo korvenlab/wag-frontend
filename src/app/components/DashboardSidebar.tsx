@@ -85,7 +85,7 @@ export function DashboardSidebar({
   return (
     <>
       <div className="lg:hidden fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-md border-b px-6 py-4 flex items-center justify-between">
-        <img src="/logo.png" alt="Wagoo Logo" className="w-10 h-10 object-contain" />
+        <img src="/logo.png" alt="Wagoo Logo" className="w-12 h-12 object-contain" />
         <Button
           variant="ghost"
           size="icon"
@@ -104,8 +104,12 @@ export function DashboardSidebar({
             exit={{ x: -300 }}
             className="fixed top-0 left-0 h-screen w-72 bg-white border-r border-slate-100 z-40 flex flex-col shadow-wg-popover lg:shadow-none"
           >
-            <div className="pt-16 pb-10 flex flex-col items-center justify-center">
-              <img src="/logo.png" alt="Wagoo Logo" className="w-32 h-32 object-contain" />
+            <div className="pt-14 lg:pt-10 pb-6 px-6 flex flex-col items-center justify-center shrink-0">
+              <img
+                src="/logo.png"
+                alt="Wagoo Logo"
+                className="w-full max-w-[220px] h-auto object-contain"
+              />
             </div>
 
             <nav className="flex-1 px-6 space-y-2">
