@@ -12,6 +12,11 @@ import { User, Session } from "@supabase/supabase-js";
 import type { WagooPlanTier } from "../lib/wagooPlans";
 import type { BusinessNicheId } from "../lib/businessNiche";
 import { isBusinessNicheId } from "../lib/businessNiche";
+import {
+  setCachedDashboardProfile,
+  warmBackend,
+  type DashboardProfileCache,
+} from "../lib/dashboardCache";
 
 export type AppUser = User & {
   hasPaid: boolean;
@@ -21,6 +26,7 @@ export type AppUser = User & {
   teamUsersUsed: number;
   businessNiche: BusinessNicheId | null;
   businessNicheCustom: string | null;
+  storeName: string;
 };
 
 interface AuthContextType {
@@ -49,6 +55,7 @@ type ProfileSnapshot = Pick<
   | "teamUsersUsed"
   | "businessNiche"
   | "businessNicheCustom"
+  | "storeName"
 >;
 
 function sameProfileFields(a: ProfileSnapshot | null, b: ProfileSnapshot): boolean {
@@ -60,7 +67,8 @@ function sameProfileFields(a: ProfileSnapshot | null, b: ProfileSnapshot): boole
     a.maxTeamUsers === b.maxTeamUsers &&
     a.teamUsersUsed === b.teamUsersUsed &&
     a.businessNiche === b.businessNiche &&
-    a.businessNicheCustom === b.businessNicheCustom
+    a.businessNicheCustom === b.businessNicheCustom &&
+    a.storeName === b.storeName
   );
 }
 
@@ -109,6 +117,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           teamUsersUsed: 0,
           businessNiche: null,
           businessNicheCustom: null,
+          storeName: "",
         });
         return;
       }
@@ -130,6 +139,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           teamUsersUsed: 0,
           businessNiche: null,
           businessNicheCustom: null,
+          storeName: "",
         });
         return;
       }
@@ -143,12 +153,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         team_users_used?: number;
         business_niche?: string | null;
         business_niche_custom?: string | null;
+        store_name?: string | null;
+        is_ai_enabled?: boolean;
+        whatsapp_connected?: boolean;
+        google_connected?: boolean;
+        messages_answered?: number;
+        appointments_made?: number;
+        service_duration?: number;
+        working_hours?: Record<string, unknown> | null;
       };
       const hasPaid =
         typeof profileData.has_access === "boolean"
           ? profileData.has_access
           : !!profileData.has_paid;
       const tier = profileData.subscription_tier ?? null;
+      const storeName =
+        typeof profileData.store_name === "string" ? profileData.store_name.trim() : "";
       const nextProfile: ProfileSnapshot = {
         hasPaid,
         subscriptionTier: tier,
@@ -163,7 +183,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           typeof profileData.business_niche_custom === "string"
             ? profileData.business_niche_custom
             : null,
+        storeName,
       };
+
+      const cachePayload: DashboardProfileCache = {
+        store_name: storeName,
+        business_niche: nextProfile.businessNiche,
+        business_niche_custom: nextProfile.businessNicheCustom,
+        is_ai_enabled: profileData.is_ai_enabled ?? true,
+        whatsapp_connected: !!profileData.whatsapp_connected,
+        google_connected: !!profileData.google_connected,
+        messages_answered: profileData.messages_answered || 0,
+        appointments_made: profileData.appointments_made || 0,
+        service_duration: profileData.service_duration || 30,
+        working_hours:
+          profileData.working_hours && Object.keys(profileData.working_hours).length > 0
+            ? profileData.working_hours
+            : null,
+      };
+      setCachedDashboardProfile(authUser.id, cachePayload);
 
       setUser((prev) => {
         const next: AppUser = { ...authUser, ...nextProfile };
@@ -194,6 +232,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     },
     [fetchProfileAndSetUser, backendUrl],
   );
+
+  useEffect(() => {
+    warmBackend(backendUrl);
+  }, [backendUrl]);
 
   useEffect(() => {
     const processUserSession = async (authUser: User, session: Session | null) => {
@@ -235,6 +277,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           teamUsersUsed: 0,
           businessNiche: null,
           businessNicheCustom: null,
+          storeName: "",
         });
       } finally {
         setLoading(false);

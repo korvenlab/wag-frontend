@@ -21,6 +21,11 @@ import {
   isBusinessNicheId,
   type BusinessNicheId,
 } from "../lib/businessNiche";
+import {
+  getCachedDashboardProfile,
+  setCachedDashboardProfile,
+  setCachedTeam,
+} from "../lib/dashboardCache";
 
 const DAYS_OF_WEEK = ["Segunda-feira", "Terça-feira", "Quarta-feira", "Quinta-feira", "Sexta-feira", "Sábado", "Domingo"];
 
@@ -29,6 +34,12 @@ const INITIAL_DAY_CONFIG = {
   startTime2: "14:00", endTime2: "18:00", isTurno2Active: true,
   startTime3: "19:00", endTime3: "22:00", isTurno3Active: false,
 };
+
+const defaultWorkingHours = () =>
+  DAYS_OF_WEEK.reduce(
+    (acc, day) => ({ ...acc, [day]: { ...INITIAL_DAY_CONFIG } }),
+    {} as Record<string, typeof INITIAL_DAY_CONFIG>,
+  );
 
 export function Dashboard() {
   const [activeSection, setActiveSection] = useState("overview");
@@ -48,13 +59,14 @@ export function Dashboard() {
   const [showHoursSuccess, setShowHoursSuccess] = useState(false);
   const [showSettingsSuccess, setShowSettingsSuccess] = useState(false);
 
-  const [workingHours, setWorkingHours] = useState<Record<string, any>>({});
+  const [workingHours, setWorkingHours] = useState<Record<string, any>>(defaultWorkingHours);
   const [serviceDuration, setServiceDuration] = useState<number>(30);
   const [storeName, setStoreName] = useState("");
   const [businessNiche, setBusinessNiche] = useState<BusinessNicheId | null>(null);
   const [businessNicheCustom, setBusinessNicheCustom] = useState("");
   const [messagesAnswered, setMessagesAnswered] = useState(0);
   const [appointmentsMade, setAppointmentsMade] = useState(0);
+  const [profileHydrating, setProfileHydrating] = useState(true);
 
   const { user, loading, logout, refreshProfile } = useAuth();
   const navigate = useNavigate();
@@ -63,7 +75,37 @@ export function Dashboard() {
 
   useEffect(() => {
     if (loading || !user || !user.hasPaid) return;
-    if (profileLoadedForRef.current === user.id) return;
+
+    const applyCached = () => {
+      const cached = getCachedDashboardProfile(user.id);
+      if (cached) {
+        setStoreName(cached.store_name || user.storeName || "");
+        setBusinessNiche(
+          isBusinessNicheId(cached.business_niche) ? cached.business_niche : user.businessNiche,
+        );
+        setBusinessNicheCustom(
+          cached.business_niche_custom || user.businessNicheCustom || "",
+        );
+        setIsAIEnabled(cached.is_ai_enabled ?? true);
+        setIsWhatsAppConnected(!!cached.whatsapp_connected);
+        setMessagesAnswered(cached.messages_answered || 0);
+        setAppointmentsMade(cached.appointments_made || 0);
+        setServiceDuration(cached.service_duration || 30);
+        setIsGoogleConnected(!!cached.google_connected);
+        if (cached.working_hours && Object.keys(cached.working_hours).length > 0) {
+          setWorkingHours(cached.working_hours);
+        }
+        setProfileHydrating(false);
+        return true;
+      }
+      if (user.storeName) setStoreName(user.storeName);
+      if (user.businessNiche) setBusinessNiche(user.businessNiche);
+      if (user.businessNicheCustom) setBusinessNicheCustom(user.businessNicheCustom);
+      return false;
+    };
+
+    const hadCache = applyCached();
+    if (profileLoadedForRef.current === user.id && hadCache) return;
     profileLoadedForRef.current = user.id;
 
     const fetchUserData = async () => {
@@ -90,17 +132,47 @@ export function Dashboard() {
           if (data.working_hours && Object.keys(data.working_hours).length > 0) {
             setWorkingHours(data.working_hours);
           } else {
-            const initialSchedule = DAYS_OF_WEEK.reduce((acc, day) => ({ ...acc, [day]: { ...INITIAL_DAY_CONFIG } }), {});
-            setWorkingHours(initialSchedule);
+            setWorkingHours(defaultWorkingHours());
           }
+
+          setCachedDashboardProfile(user.id, {
+            store_name: data.store_name || "",
+            business_niche: isBusinessNicheId(data.business_niche)
+              ? data.business_niche
+              : null,
+            business_niche_custom:
+              typeof data.business_niche_custom === "string"
+                ? data.business_niche_custom
+                : null,
+            is_ai_enabled: data.is_ai_enabled ?? true,
+            whatsapp_connected: !!data.whatsapp_connected,
+            google_connected: !!data.google_connected,
+            messages_answered: data.messages_answered || 0,
+            appointments_made: data.appointments_made || 0,
+            service_duration: data.service_duration || 30,
+            working_hours:
+              data.working_hours && Object.keys(data.working_hours).length > 0
+                ? data.working_hours
+                : null,
+          });
         }
       } catch (error) {
         console.error("Erro ao buscar dados do perfil:", error);
+      } finally {
+        setProfileHydrating(false);
       }
     };
-    
-    fetchUserData();
-  }, [user?.id, user?.hasPaid, loading]);
+
+    void fetchUserData();
+    // Prefetch equipe em background para a próxima navegação
+    void apiFetch("/api/barbeiros")
+      .then(async (res) => {
+        if (!res.ok) return;
+        const data = await res.json();
+        setCachedTeam(user.id, data.barbeiros ?? []);
+      })
+      .catch(() => undefined);
+  }, [user?.id, user?.hasPaid, user?.storeName, user?.businessNiche, user?.businessNicheCustom, loading]);
 
   useEffect(() => {
     if (!loading) {
@@ -358,6 +430,11 @@ export function Dashboard() {
 
             {activeSection === "hours" && (
               <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="lg:col-span-3">
+                {profileHydrating ? (
+                  <p className="text-xs font-bold text-slate-400 mb-3 uppercase tracking-widest">
+                    Atualizando horários…
+                  </p>
+                ) : null}
                 <Card className="rounded-[40px] border-none shadow-wg-elevated bg-white">
                   <div className="p-10 flex flex-col sm:flex-row justify-between items-center gap-4 border-b border-slate-50">
                     <div className="text-center sm:text-left">

@@ -30,6 +30,12 @@ import { useAuth } from "../context/AuthContext";
 import { DashboardSidebar } from "../components/DashboardSidebar";
 import { FeedbackFab } from "../components/FeedbackFab";
 import { supabase } from "../lib/supabase";
+import { apiFetch } from "../lib/apiFetch";
+import {
+  getCachedTeam,
+  setCachedTeam,
+  invalidateTeamCache,
+} from "../lib/dashboardCache";
 import { planLabel, type WagooPlanTier } from "../lib/wagooPlans";
 
 type Barbeiro = {
@@ -69,35 +75,32 @@ export function TeamManagementPage() {
   };
 
   const loadTeam = useCallback(async (options?: { background?: boolean }) => {
+    if (!user?.id) return;
     if (!options?.background) setLoadingTeam(true);
     setError(null);
     try {
-      const token = await getToken();
-      if (!token) return;
-
-      const profileRes = await fetch(`${backendUrl}/api/user/profile`, {
-        headers: { Authorization: `Bearer ${token}`, Accept: "application/json" },
-      });
-      if (profileRes.ok) {
-        const profile = (await profileRes.json()) as { store_name?: string };
-        setStoreName(profile.store_name?.trim() || "");
+      const cached = getCachedTeam(user.id);
+      if (cached && !options?.background) {
+        setBarbeiros(cached);
+        setLoadingTeam(false);
       }
+      if (user.storeName) setStoreName(user.storeName);
 
-      const res = await fetch(`${backendUrl}/api/barbeiros`, {
-        headers: { Authorization: `Bearer ${token}`, Accept: "application/json" },
-      });
+      const res = await apiFetch("/api/barbeiros");
       if (!res.ok) {
         setError("Não foi possível carregar a equipe.");
         return;
       }
       const data = await res.json();
-      setBarbeiros(data.barbeiros ?? []);
+      const list = (data.barbeiros ?? []) as Barbeiro[];
+      setBarbeiros(list);
+      setCachedTeam(user.id, list);
     } catch {
       setError("Erro de conexão com o servidor.");
     } finally {
       setLoadingTeam(false);
     }
-  }, [backendUrl]);
+  }, [user?.id, user?.storeName]);
 
   useEffect(() => {
     if (loading || !user) return;
@@ -105,11 +108,12 @@ export function TeamManagementPage() {
       navigate("/#precos");
       return;
     }
+    if (user.storeName) setStoreName(user.storeName);
     const background =
       teamLoadStateRef.current.userId === user.id && teamLoadStateRef.current.loaded;
     void loadTeam({ background });
     teamLoadStateRef.current = { userId: user.id, loaded: true };
-  }, [user?.id, user?.hasPaid, loading, navigate, loadTeam]);
+  }, [user?.id, user?.hasPaid, user?.storeName, loading, navigate, loadTeam]);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -174,6 +178,7 @@ export function TeamManagementPage() {
       }
       setNome("");
       setEmail("");
+      invalidateTeamCache(user?.id);
       await loadTeam({ background: true });
       void refreshProfile({ force: true });
     } catch {
@@ -196,7 +201,11 @@ export function TeamManagementPage() {
         body: JSON.stringify({ ativo }),
       });
       if (res.ok) {
-        setBarbeiros((prev) => prev.map((x) => (x.id === b.id ? { ...x, ativo } : x)));
+        setBarbeiros((prev) => {
+          const next = prev.map((x) => (x.id === b.id ? { ...x, ativo } : x));
+          if (user?.id) setCachedTeam(user.id, next);
+          return next;
+        });
       }
     } catch {
       setError("Erro ao atualizar status.");
@@ -219,6 +228,7 @@ export function TeamManagementPage() {
         return;
       }
       setBarbeiroToDelete(null);
+      invalidateTeamCache(user?.id);
       await loadTeam({ background: true });
       void refreshProfile({ force: true });
     } catch {

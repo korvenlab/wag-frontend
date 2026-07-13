@@ -63,7 +63,7 @@ export function NicheOnboarding() {
             </div>
             <h1 className="text-2xl font-black tracking-tight">Qual é o nicho do seu negócio?</h1>
             <p className="mt-2 text-sm font-medium text-white/90 leading-relaxed">
-              Assim a IA fala a língua certa com seus clientes — sem chamar manicure de barbeiro.
+              Assim a IA fala a língua certa com seus clientes.
             </p>
           </div>
 

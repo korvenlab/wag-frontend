@@ -126,7 +126,9 @@ export function FAQ() {
             Ainda tem dúvidas? Nossa equipe está pronta para ajudar!
           </p>
           <motion.a
-            href="mailto:suporte@korven.lab?subject=Suporte%20Wagoo"
+            href="https://wa.me/5582999450453"
+            target="_blank"
+            rel="noopener noreferrer"
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             className="inline-block px-8 py-4 rounded-2xl bg-slate-900 text-white font-bold shadow-wg-cta hover:bg-[#64b34d] transition-[box-shadow,background-color] border border-slate-700"
