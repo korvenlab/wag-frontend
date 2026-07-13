@@ -58,6 +58,8 @@ export function Dashboard() {
 
   const [showHoursSuccess, setShowHoursSuccess] = useState(false);
   const [showSettingsSuccess, setShowSettingsSuccess] = useState(false);
+  const [isCancelingSubscription, setIsCancelingSubscription] = useState(false);
+  const [cancelSubscriptionError, setCancelSubscriptionError] = useState<string | null>(null);
 
   const [workingHours, setWorkingHours] = useState<Record<string, any>>(defaultWorkingHours);
   const [serviceDuration, setServiceDuration] = useState<number>(30);
@@ -295,6 +297,30 @@ export function Dashboard() {
       console.error(error); 
     } finally { 
       setIsSavingSettings(false); 
+    }
+  };
+
+  const handleCancelSubscription = async () => {
+    setCancelSubscriptionError(null);
+    setIsCancelingSubscription(true);
+    try {
+      const response = await apiFetch("/api/stripe/create-billing-portal-session", {
+        method: "POST",
+        body: JSON.stringify({}),
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok || !data.url) {
+        setCancelSubscriptionError(
+          data.error || "Não foi possível abrir o cancelamento da assinatura.",
+        );
+        return;
+      }
+      window.location.href = data.url;
+    } catch (error) {
+      console.error(error);
+      setCancelSubscriptionError("Erro de conexão ao abrir o portal da Stripe.");
+    } finally {
+      setIsCancelingSubscription(false);
     }
   };
 
@@ -582,6 +608,28 @@ export function Dashboard() {
                       {isSavingSettings ? <Loader2 className="animate-spin" /> : "Salvar Alterações"}
                     </Button>
                     {showSettingsSuccess && <p className="text-emerald-600 text-xs font-black text-center uppercase tracking-widest">✓ Perfil Atualizado</p>}
+
+                    <div className="pt-6 border-t border-slate-100 space-y-3">
+                      <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 ml-1">
+                        Assinatura
+                      </p>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => void handleCancelSubscription()}
+                        disabled={isCancelingSubscription}
+                        className="h-9 px-4 text-xs font-bold rounded-xl border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700 hover:border-red-300"
+                      >
+                        {isCancelingSubscription ? (
+                          <Loader2 className="animate-spin w-3.5 h-3.5" />
+                        ) : (
+                          "Cancelar assinatura"
+                        )}
+                      </Button>
+                      {cancelSubscriptionError && (
+                        <p className="text-xs text-red-600 font-medium">{cancelSubscriptionError}</p>
+                      )}
+                    </div>
                   </div>
                 </Card>
               </motion.div>

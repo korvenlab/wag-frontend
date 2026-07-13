@@ -1,10 +1,74 @@
 import { motion } from "motion/react";
 import { useNavigate, useSearchParams } from "react-router";
 import { useEffect, useState, useRef } from "react";
-import { supabase } from "../lib/supabase"; 
-import { ArrowLeft } from "lucide-react"; // Importe um ícone para o botão
+import { supabase } from "../lib/supabase";
+import { ArrowLeft } from "lucide-react";
+import type { Session } from "@supabase/supabase-js";
 
 const WAGOO_PROMO_STORAGE_KEY = "wagoo_promo_code";
+
+async function redeemPendingPromo(accessToken: string, apiBase: string): Promise<void> {
+  const code = sessionStorage.getItem(WAGOO_PROMO_STORAGE_KEY)?.trim().toLowerCase();
+  if (!code) return;
+  try {
+    const res = await fetch(`${apiBase}/api/promo/redeem`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ code }),
+    });
+    if (res.ok || res.status === 404 || res.status === 409) {
+      sessionStorage.removeItem(WAGOO_PROMO_STORAGE_KEY);
+    }
+  } catch {
+    /* ignore — AuthContext tenta de novo depois */
+  }
+}
+
+async function syncProviderTokens(session: Session, apiBase: string): Promise<boolean> {
+  if (!session.provider_token) return true;
+
+  for (let i = 0; i < 3; i++) {
+    try {
+      const response = await fetch(`${apiBase}/api/auth/sync`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({
+          accessToken: session.provider_token,
+          refreshToken: session.provider_refresh_token,
+          expiresAt: session.expires_at,
+        }),
+      });
+      if (response.ok) return true;
+      if (response.status === 400 || response.status === 401) return false;
+    } catch {
+      if (i < 2) await new Promise((r) => setTimeout(r, 3000));
+    }
+  }
+  return false;
+}
+
+async function userHasWagooAccess(accessToken: string, apiBase: string): Promise<boolean> {
+  try {
+    const res = await fetch(`${apiBase}/api/user/profile`, {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        Accept: "application/json",
+      },
+    });
+    if (!res.ok) return false;
+    const data = await res.json();
+    if (typeof data.has_access === "boolean") return data.has_access;
+    return !!data.has_paid;
+  } catch {
+    return false;
+  }
+}
 
 export function LoginPage() {
   const navigate = useNavigate();
@@ -13,7 +77,8 @@ export function LoginPage() {
   const [promoActive, setPromoActive] = useState(false);
   const syncProcessed = useRef(false);
 
-  const apiBase = import.meta.env.VITE_API_URL?.replace(/\/+$/, "") || "https://wag-backend.onrender.com";
+  const apiBase =
+    import.meta.env.VITE_API_URL?.replace(/\/+$/, "") || "https://wag-backend.onrender.com";
 
   useEffect(() => {
     const promo =
@@ -26,59 +91,49 @@ export function LoginPage() {
   }, [searchParams]);
 
   useEffect(() => {
-    const syncSessionWithBackend = async (session: any, retries = 3) => {
+    const finishLogin = async (session: Session) => {
       if (syncProcessed.current) return;
-
-      if (!session?.provider_token || !session?.user) {
+      if (!session.user) {
         setStatus("Aguardando login com Google...");
         return;
       }
 
-      const BACKEND_URL = `${apiBase}/api/auth/sync`;
+      syncProcessed.current = true;
 
-      for (let i = 0; i < retries; i++) {
-        try {
-          setStatus(
-            i === 0
-              ? "Sincronizando sua conta..."
-              : `Conectando ao servidor (tentativa ${i + 1})...`,
-          );
-          
-          const response = await fetch(BACKEND_URL, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              Authorization: `Bearer ${session.access_token}`,
-            },
-            body: JSON.stringify({
-              accessToken: session.provider_token,
-              refreshToken: session.provider_refresh_token,
-              expiresAt: session.expires_at
-            })
-          });
-
-          if (response.ok) {
-            syncProcessed.current = true;
-            setStatus("Tudo certo! Entrando...");
-            setTimeout(() => navigate("/dashboard"), 1000);
-            return;
-          } else {
-            if (response.status === 400 || response.status === 401) break;
-          }
-        } catch (err) {
-          if (i < retries - 1) await new Promise(res => setTimeout(res, 3000));
+      try {
+        if (session.provider_token) {
+          setStatus("Sincronizando sua conta...");
+          await syncProviderTokens(session, apiBase);
         }
+
+        setStatus("Verificando seu plano...");
+        await redeemPendingPromo(session.access_token, apiBase);
+        const hasAccess = await userHasWagooAccess(session.access_token, apiBase);
+
+        if (hasAccess) {
+          setStatus("Tudo certo! Entrando...");
+          navigate("/dashboard", { replace: true });
+          return;
+        }
+
+        setStatus("Escolha um plano para continuar...");
+        navigate("/#precos", { replace: true });
+      } catch {
+        syncProcessed.current = false;
+        setStatus("Não foi possível verificar a conta. Tente de novo.");
       }
-      navigate("/dashboard");
     };
 
     supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) syncSessionWithBackend(session);
+      if (session) void finishLogin(session);
+      else setStatus("Aguardando login com Google...");
     });
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (["SIGNED_IN", "INITIAL_SESSION", "TOKEN_REFRESHED"].includes(event) && session) {
-        syncSessionWithBackend(session);
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      if (["SIGNED_IN", "INITIAL_SESSION"].includes(event) && session) {
+        void finishLogin(session);
       }
     });
 
@@ -86,24 +141,24 @@ export function LoginPage() {
   }, [navigate, apiBase]);
 
   const handleGoogleLogin = async () => {
+    syncProcessed.current = false;
     setStatus("Redirecionando para o Google...");
     await supabase.auth.signInWithOAuth({
-      provider: 'google',
+      provider: "google",
       options: {
         redirectTo: window.location.origin + "/login",
-        scopes: 'https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/calendar.events',
-        queryParams: { access_type: 'offline', prompt: 'consent' },
-      }
+        scopes:
+          "https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/calendar.events",
+        queryParams: { access_type: "offline", prompt: "consent" },
+      },
     });
   };
 
   return (
     <div className="min-h-screen bg-white flex flex-col items-center justify-center p-6 relative">
-      
-      {/* FEATURE: Botão Voltar no Topo Esquerdo */}
       <div className="absolute top-8 left-8">
-        <button 
-          onClick={() => window.location.href = "https://wagoobot.com"}
+        <button
+          onClick={() => (window.location.href = "https://wagoobot.com")}
           className="flex items-center gap-2 text-gray-400 hover:text-gray-900 font-medium transition-colors group"
         >
           <ArrowLeft size={20} className="group-hover:-translate-x-1 transition-transform" />
@@ -111,22 +166,19 @@ export function LoginPage() {
         </button>
       </div>
 
-      <motion.div 
+      <motion.div
         initial={{ opacity: 0, scale: 0.9 }}
         animate={{ opacity: 1, scale: 1 }}
         className="text-center space-y-12 max-w-sm w-full"
       >
         <div className="flex justify-center">
-          <img 
-            src="/logo.png" 
-            className="w-56 h-auto object-contain" 
-            alt="Wagoo" 
-          />
+          <img src="/logo.png" className="w-56 h-auto object-contain" alt="Wagoo" />
         </div>
-        
+
         {promoActive ? (
           <div className="p-3 rounded-2xl border border-emerald-200 bg-emerald-50 text-emerald-900 text-xs font-semibold text-center leading-relaxed">
-            Link promocional ativo: após o Google liberar o acesso, você ganha o período de cortesia no Wagoo (resgate automático).
+            Link promocional ativo: após o Google liberar o acesso, você ganha o período de cortesia
+            no Wagoo (resgate automático).
           </div>
         ) : null}
 
