@@ -1,9 +1,9 @@
 import { useState, useEffect, useRef } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import {
-  LayoutDashboard, Clock, Settings, LogOut, Menu, X, QrCode,
-  Bot, Phone, BarChart3, MessageSquare, Users, CalendarDays,
-  CalendarCheck, Zap, Loader2, Check, Coffee, Moon, Sun, Copy, ChevronRight
+  QrCode,
+  Bot, Phone, MessageSquare,
+  CalendarCheck, Zap, Loader2, Check, Coffee, Moon, Sun, Copy
 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/card";
 import { Button } from "../components/ui/button";
@@ -13,8 +13,14 @@ import { Label } from "../components/ui/label";
 import { useAuth } from "../context/AuthContext";
 import { useNavigate, useLocation } from "react-router";
 import { FeedbackFab } from "../components/FeedbackFab";
-import { supabase } from "../lib/supabase";
+import { DashboardSidebar } from "../components/DashboardSidebar";
+import { apiFetch } from "../lib/apiFetch";
 import { planLabel } from "../lib/wagooPlans";
+import {
+  BUSINESS_NICHE_OPTIONS,
+  isBusinessNicheId,
+  type BusinessNicheId,
+} from "../lib/businessNiche";
 
 const DAYS_OF_WEEK = ["Segunda-feira", "Terça-feira", "Quarta-feira", "Quinta-feira", "Sexta-feira", "Sábado", "Domingo"];
 
@@ -25,8 +31,6 @@ const INITIAL_DAY_CONFIG = {
 };
 
 export function Dashboard() {
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [isDesktop, setIsDesktop] = useState(false);
   const [activeSection, setActiveSection] = useState("overview");
   const [selectedDay, setSelectedDay] = useState("Segunda-feira");
 
@@ -47,13 +51,14 @@ export function Dashboard() {
   const [workingHours, setWorkingHours] = useState<Record<string, any>>({});
   const [serviceDuration, setServiceDuration] = useState<number>(30);
   const [storeName, setStoreName] = useState("");
+  const [businessNiche, setBusinessNiche] = useState<BusinessNicheId | null>(null);
+  const [businessNicheCustom, setBusinessNicheCustom] = useState("");
   const [messagesAnswered, setMessagesAnswered] = useState(0);
   const [appointmentsMade, setAppointmentsMade] = useState(0);
 
-  const { user, loading, logout } = useAuth();
+  const { user, loading, logout, refreshProfile } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const backendUrl = import.meta.env.VITE_API_URL || "https://wag-backend.onrender.com";
   const profileLoadedForRef = useRef<string | null>(null);
 
   useEffect(() => {
@@ -63,27 +68,24 @@ export function Dashboard() {
 
     const fetchUserData = async () => {
       try {
-        const {
-          data: { session },
-        } = await supabase.auth.getSession();
-        const token = session?.access_token;
-        if (!token) return;
-
-        const response = await fetch(`${backendUrl}/api/user/profile`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            Accept: "application/json",
-          },
-        });
+        const response = await apiFetch("/api/user/profile");
         if (response.ok) {
           const data = await response.json();
           setStoreName(data.store_name || "");
+          setBusinessNiche(
+            isBusinessNicheId(data.business_niche) ? data.business_niche : null,
+          );
+          setBusinessNicheCustom(
+            typeof data.business_niche_custom === "string"
+              ? data.business_niche_custom
+              : "",
+          );
           setIsAIEnabled(data.is_ai_enabled ?? true);
-          setIsWhatsAppConnected(!!data.whatsapp_session);
+          setIsWhatsAppConnected(!!data.whatsapp_connected);
           setMessagesAnswered(data.messages_answered || 0);
           setAppointmentsMade(data.appointments_made || 0);
           setServiceDuration(data.service_duration || 30);
-          setIsGoogleConnected(!!(data.googleAuth && data.googleAuth.refreshToken));
+          setIsGoogleConnected(!!data.google_connected);
 
           if (data.working_hours && Object.keys(data.working_hours).length > 0) {
             setWorkingHours(data.working_hours);
@@ -98,7 +100,7 @@ export function Dashboard() {
     };
     
     fetchUserData();
-  }, [user?.id, user?.hasPaid, loading, backendUrl]);
+  }, [user?.id, user?.hasPaid, loading]);
 
   useEffect(() => {
     if (!loading) {
@@ -106,13 +108,6 @@ export function Dashboard() {
       else if (!user.hasPaid) navigate("/#precos");
     }
   }, [user?.id, user?.hasPaid, loading, navigate]);
-
-  useEffect(() => {
-    const checkDesktop = () => setIsDesktop(window.innerWidth >= 1024);
-    checkDesktop();
-    window.addEventListener("resize", checkDesktop);
-    return () => window.removeEventListener("resize", checkDesktop);
-  }, []);
 
   useEffect(() => {
     const section = (location.state as { section?: string } | null)?.section;
@@ -127,10 +122,9 @@ export function Dashboard() {
     setIsLoadingQR(true);
     setQrCode(null);
     try {
-      const response = await fetch(`${backendUrl}/api/whatsapp/qr`, {
+      const response = await apiFetch("/api/whatsapp/qr", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: user?.email }),
+        body: JSON.stringify({}),
       });
       if (response.ok) {
         const data = await response.json();
@@ -142,10 +136,9 @@ export function Dashboard() {
   const handleDisconnectWhatsApp = async () => {
     setIsDisconnecting(true);
     try {
-      const response = await fetch(`${backendUrl}/api/whatsapp/disconnect`, {
+      const response = await apiFetch("/api/whatsapp/disconnect", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: user?.email }),
+        body: JSON.stringify({}),
       });
       if (response.ok) {
         setIsWhatsAppConnected(false);
@@ -159,10 +152,9 @@ export function Dashboard() {
     setIsAIEnabled(checked);
     setIsSavingAI(true);
     try {
-      await fetch(`${backendUrl}/api/settings/ai`, {
+      await apiFetch("/api/settings/ai", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: user?.email, is_ai_enabled: checked }),
+        body: JSON.stringify({ is_ai_enabled: checked }),
       });
     } catch (error) { 
       setIsAIEnabled(!checked); 
@@ -190,11 +182,9 @@ export function Dashboard() {
   const handleSaveHours = async () => {
     setIsSavingHours(true);
     try {
-      const response = await fetch(`${backendUrl}/api/settings/hours`, {
+      const response = await apiFetch("/api/settings/hours", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ 
-          email: user?.email, 
           workingHours: workingHours, 
           serviceDuration: serviceDuration 
         }),
@@ -211,14 +201,21 @@ export function Dashboard() {
   };
 
   const handleSaveSettings = async () => {
+    if (!businessNiche) return;
+    if (businessNiche === "outro" && businessNicheCustom.trim().length < 2) return;
     setIsSavingSettings(true);
     try {
-      const response = await fetch(`${backendUrl}/api/settings/store`, {
+      const response = await apiFetch("/api/settings/store", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: user?.email, storeName: storeName }),
+        body: JSON.stringify({
+          storeName: storeName,
+          businessNiche,
+          businessNicheCustom:
+            businessNiche === "outro" ? businessNicheCustom.trim() : undefined,
+        }),
       });
       if (response.ok) {
+        await refreshProfile({ force: true });
         setShowSettingsSuccess(true);
         setTimeout(() => setShowSettingsSuccess(false), 3000);
       }
@@ -239,55 +236,24 @@ export function Dashboard() {
 
   if (!user || !user.hasPaid) return null;
 
+  const sidebarActive =
+    activeSection === "overview" ||
+    activeSection === "analytics" ||
+    activeSection === "hours" ||
+    activeSection === "settings"
+      ? activeSection
+      : "overview";
+
   return (
     <div className="min-h-screen bg-[#F8FAFC]">
       <div className="fixed top-0 right-0 w-[500px] h-[500px] bg-green-50/50 blur-[120px] rounded-full -z-10" />
 
-      {/* Mobile Header */}
-      <div className="lg:hidden fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-md border-b px-6 py-4 flex items-center justify-between">
-        <img src="/logo.png" alt="Wagoo Logo" className="w-12 h-12 object-contain" />
-        <Button variant="ghost" size="icon" className="rounded-full" onClick={() => setIsSidebarOpen(!isSidebarOpen)}>
-          {isSidebarOpen ? <X /> : <Menu />}
-        </Button>
-      </div>
-
-      <AnimatePresence>
-        {(isSidebarOpen || isDesktop) && (
-          <motion.aside 
-            initial={{ x: -300 }} 
-            animate={{ x: 0 }} 
-            exit={{ x: -300 }} 
-            className="fixed top-0 left-0 h-screen w-72 bg-white border-r border-slate-100 z-40 flex flex-col shadow-wg-popover lg:shadow-none"
-          >
-            <div className="pt-14 lg:pt-10 pb-6 px-6 flex flex-col items-center justify-center shrink-0">
-              <img
-                src="/logo.png"
-                alt="Wagoo Logo"
-                className="w-full max-w-[220px] h-auto object-contain"
-              />
-            </div>
-
-            <nav className="flex-1 px-6 space-y-2">
-              <NavItem icon={<LayoutDashboard size={20} />} label="Visão Geral" active={activeSection === "overview"} onClick={() => { setActiveSection("overview"); setIsSidebarOpen(false); }} />
-              <NavItem icon={<BarChart3 size={20} />} label="Analytics" active={activeSection === "analytics"} onClick={() => { setActiveSection("analytics"); setIsSidebarOpen(false); }} />
-              <NavItem icon={<CalendarDays size={20} />} label="Calendário" active={false} onClick={() => { navigate("/dashboard/calendario"); setIsSidebarOpen(false); }} />
-              <NavItem icon={<Clock size={20} />} label="Horários" active={activeSection === "hours"} onClick={() => { setActiveSection("hours"); setIsSidebarOpen(false); }} />
-              <NavItem icon={<Users size={20} />} label="Apenas para Equipe" active={false} onClick={() => { navigate("/dashboard/equipe"); setIsSidebarOpen(false); }} />
-              <NavItem icon={<Settings size={20} />} label="Configurações" active={activeSection === "settings"} onClick={() => { setActiveSection("settings"); setIsSidebarOpen(false); }} />
-            </nav>
-
-            <div className="p-8 mt-auto">
-              <div className="bg-slate-50 rounded-2xl p-4 mb-4 border border-slate-100">
-                <p className="font-bold text-slate-900 text-sm truncate">{storeName || "Minha Loja"}</p>
-                <p className="text-xs text-slate-400 font-medium truncate">{user?.email}</p>
-              </div>
-              <button onClick={handleLogout} className="w-full flex items-center justify-center gap-2 py-3 rounded-xl text-red-500 font-bold text-sm hover:bg-red-50 transition-colors">
-                <LogOut size={16} /> Sair
-              </button>
-            </div>
-          </motion.aside>
-        )}
-      </AnimatePresence>
+      <DashboardSidebar
+        active={sidebarActive}
+        storeName={storeName}
+        userEmail={user.email}
+        onLogout={handleLogout}
+      />
 
       <main className="lg:ml-72 p-6 lg:p-10">
         <div className="max-w-5xl mx-auto">
@@ -487,14 +453,55 @@ export function Dashboard() {
                 <Card className="rounded-[40px] border-none shadow-wg-elevated bg-white p-10">
                   <div className="mb-10">
                     <h3 className="text-2xl font-black text-slate-900 tracking-tighter">Configurações do Perfil</h3>
-                    <p className="text-slate-500 font-medium mt-1 text-base leading-relaxed">Personalize o nome da sua loja no sistema para a IA se apresentar.</p>
+                    <p className="text-slate-500 font-medium mt-1 text-base leading-relaxed">
+                      Nome da loja e nicho — a IA usa isso para falar com seus clientes no tom certo.
+                    </p>
                   </div>
                   <div className="space-y-8 max-w-lg">
                     <div className="space-y-3">
                       <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 ml-1">Nome de Exibição</Label>
                       <Input value={storeName} onChange={(e) => setStoreName(e.target.value)} className="h-14 px-6 rounded-2xl bg-slate-50 border-none font-bold text-lg focus-visible:ring-1 focus-visible:ring-[#64b34d]" />
                     </div>
-                    <Button onClick={handleSaveSettings} disabled={isSavingSettings} className="w-full h-14 rounded-2xl bg-slate-900 text-white font-black text-base transition-all hover:bg-slate-800">
+                    <div className="space-y-3">
+                      <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 ml-1">Nicho do negócio</Label>
+                      <div className="grid gap-2 sm:grid-cols-2">
+                        {BUSINESS_NICHE_OPTIONS.map((opt) => {
+                          const active = businessNiche === opt.id;
+                          return (
+                            <button
+                              key={opt.id}
+                              type="button"
+                              onClick={() => setBusinessNiche(opt.id)}
+                              className={`text-left rounded-2xl border-2 px-4 py-3 transition-all ${
+                                active
+                                  ? "border-[#64b34d] bg-green-50/60"
+                                  : "border-slate-100 hover:border-slate-200"
+                              }`}
+                            >
+                              <p className="font-black text-slate-900 text-sm">{opt.label}</p>
+                              <p className="text-[11px] text-slate-500 font-medium mt-0.5">{opt.description}</p>
+                            </button>
+                          );
+                        })}
+                      </div>
+                      {businessNiche === "outro" && (
+                        <Input
+                          value={businessNicheCustom}
+                          onChange={(e) => setBusinessNicheCustom(e.target.value)}
+                          placeholder="Ex.: Studio de sobrancelhas"
+                          className="h-12 px-4 rounded-2xl bg-slate-50 border-none font-bold"
+                        />
+                      )}
+                    </div>
+                    <Button
+                      onClick={handleSaveSettings}
+                      disabled={
+                        isSavingSettings ||
+                        !businessNiche ||
+                        (businessNiche === "outro" && businessNicheCustom.trim().length < 2)
+                      }
+                      className="w-full h-14 rounded-2xl bg-slate-900 text-white font-black text-base transition-all hover:bg-slate-800"
+                    >
                       {isSavingSettings ? <Loader2 className="animate-spin" /> : "Salvar Alterações"}
                     </Button>
                     {showSettingsSuccess && <p className="text-emerald-600 text-xs font-black text-center uppercase tracking-widest">✓ Perfil Atualizado</p>}
@@ -508,20 +515,6 @@ export function Dashboard() {
 
       <FeedbackFab />
     </div>
-  );
-}
-
-function NavItem({ icon, label, active, onClick }: any) {
-  return (
-    <button onClick={onClick} className={`w-full flex items-center justify-between px-5 py-4 rounded-2xl transition-all ${
-      active ? "bg-slate-50 text-slate-900 shadow-wg-subtle" : "text-slate-400 hover:text-slate-700 hover:bg-slate-50/50"
-    }`}>
-      <div className="flex items-center gap-4">
-        <span className={active ? "text-[#64b34d]" : "text-slate-300"}>{icon}</span>
-        <span className="text-sm font-bold tracking-tight">{label}</span>
-      </div>
-      {active && <ChevronRight size={14} className="text-slate-300" />}
-    </button>
   );
 }
 

@@ -90,6 +90,8 @@ export function DashboardSidebar({
           variant="ghost"
           size="icon"
           className="rounded-full"
+          aria-label={isSidebarOpen ? "Fechar menu" : "Abrir menu"}
+          aria-expanded={isSidebarOpen}
           onClick={() => setIsSidebarOpen(!isSidebarOpen)}
         >
           {isSidebarOpen ? <X /> : <Menu />}
@@ -142,7 +144,7 @@ export function DashboardSidebar({
               />
               <NavItem
                 icon={<Users size={20} />}
-                label="Apenas para Equipe"
+                label="Gerenciar Equipe"
                 active={active === "team"}
                 onClick={() => {
                   navigate("/dashboard/equipe");

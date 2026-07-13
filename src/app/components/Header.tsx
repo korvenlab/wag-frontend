@@ -180,7 +180,10 @@ export function Header() {
           </div>
 
           <button
+            type="button"
             className="md:hidden text-gray-900"
+            aria-label={isMobileMenuOpen ? "Fechar menu" : "Abrir menu"}
+            aria-expanded={isMobileMenuOpen}
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
           >
             {isMobileMenuOpen ? <X size={28} /> : <Menu size={28} />}

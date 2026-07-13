@@ -30,7 +30,7 @@ export const WAGOO_PLAN_CARDS: WagooPlanCard[] = [
     name: "Pro+",
     priceBrl: 259,
     maxUsers: 5,
-    description: "Até 5 usuários para barbearias em crescimento",
+    description: "Até 5 usuários para negócios em crescimento",
   },
 ];
 

@@ -93,16 +93,22 @@ export const HeroSection = () => {
             </p>
           </div>
 
-          <div className="flex flex-col sm:flex-row gap-6 items-center">
-            <Button className="h-14 min-h-[48px] sm:h-16 px-8 sm:px-10 rounded-2xl bg-slate-900 text-white font-bold hover:bg-[#64b34d] transition-[box-shadow,background-color] shadow-wg-cta group border border-slate-700 focus-visible:ring-2 focus-visible:ring-[#64b34d] focus-visible:ring-offset-2">
-              Começar Agora
-              <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
+          <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
+            <Button
+              asChild
+              className="h-14 min-h-[48px] sm:h-16 px-8 sm:px-10 rounded-2xl bg-slate-900 text-white font-bold hover:bg-[#64b34d] transition-[box-shadow,background-color] shadow-wg-cta group border border-slate-700 focus-visible:ring-2 focus-visible:ring-[#64b34d] focus-visible:ring-offset-2"
+            >
+              <a href="/login">
+                Começar Agora
+                <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform inline" />
+              </a>
             </Button>
-            <div className="flex items-center gap-3 text-slate-600 font-bold rounded-2xl border border-slate-200 px-5 py-3 bg-white/90">
-               <span className="text-slate-900">A partir de R$ 59/mês</span>
-               <span className="w-1.5 h-1.5 shrink-0 rounded-full bg-green-600" aria-hidden />
-               <span>Setup em 2 min</span>
-            </div>
+            <a
+              href="#precos"
+              className="text-slate-600 font-bold underline-offset-4 hover:underline hover:text-slate-900"
+            >
+              Ver planos
+            </a>
           </div>
         </motion.div>
 
@@ -177,21 +183,11 @@ export const HeroSection = () => {
             </div>
           </div>
 
-          {/* Badge Flutuante de Valor */}
-          <motion.div
-            animate={reduceMotion ? { y: 0 } : { y: [0, -10, 0] }}
-            transition={
-              reduceMotion
-                ? { duration: 0 }
-                : { duration: 4, repeat: Infinity, ease: "easeInOut" }
-            }
-            className="absolute -right-2 -bottom-2 sm:-right-6 sm:-bottom-6 bg-slate-900 text-white p-4 sm:p-6 rounded-[24px] sm:rounded-[32px] shadow-wg-badge flex items-center gap-4 z-40 border border-slate-600"
-          >
-             <div className="text-left">
-                <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Resultado</p>
-                <p className="text-xl sm:text-2xl font-black text-green-400 leading-none">+40h / mês</p>
-             </div>
-          </motion.div>
+          {/* Badge de valor — ancorado no mock, sem overlay solto */}
+          <div className="absolute right-4 bottom-4 sm:right-6 sm:bottom-6 bg-slate-900 text-white px-4 py-3 rounded-2xl shadow-wg-badge z-10 border border-slate-600">
+             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Mais tempo livre</p>
+             <p className="text-lg font-black text-green-400 leading-none mt-1">+40h / mês</p>
+          </div>
 
         </motion.div>
       </div>

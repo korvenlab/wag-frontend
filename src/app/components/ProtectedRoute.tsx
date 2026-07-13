@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router";
 import { useAuth } from "../context/AuthContext";
 import { motion } from "motion/react";
-import { Loader2, Lock, LogOut, Sparkles } from "lucide-react";
+import { NicheOnboarding } from "./NicheOnboarding";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -106,14 +106,14 @@ export function ProtectedRoute({ children, requirePayment = false }: ProtectedRo
             <div className="bg-gradient-to-br from-[#64b34d] to-[#4d8f3b] px-8 py-10 text-white text-center">
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/15 text-[10px] font-black uppercase tracking-[0.2em] mb-4">
                 <Sparkles className="w-3.5 h-3.5" />
-                Plano Pro
+                Planos Wagoo
               </div>
               <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-white/20 flex items-center justify-center backdrop-blur-sm">
                 <Lock className="w-8 h-8 text-white" strokeWidth={2.5} />
               </div>
               <h1 className="text-2xl font-black tracking-tight">Dashboard exclusivo para assinantes</h1>
               <p className="mt-2 text-sm font-medium text-white/90 leading-relaxed">
-                Conecte o WhatsApp e a IA só depois de ativar o plano — assim sua conta fica segura e
+                Conecte o WhatsApp e a IA só depois de ativar um plano — assim sua conta fica segura e
                 alinhada ao Stripe.
               </p>
             </div>
@@ -121,7 +121,7 @@ export function ProtectedRoute({ children, requirePayment = false }: ProtectedRo
             <div className="p-8 space-y-6">
               <p className="text-slate-600 text-sm font-medium leading-relaxed text-center">
                 Você está logado como{" "}
-                <span className="font-bold text-slate-900">{user.email}</span>. Ative o Plano Pro para
+                <span className="font-bold text-slate-900">{user.email}</span>. Escolha Basic, Pro ou Pro+ para
                 continuar ou saia e use outra conta.
               </p>
 
@@ -135,7 +135,7 @@ export function ProtectedRoute({ children, requirePayment = false }: ProtectedRo
                 }}
                 className="w-full py-4 rounded-2xl bg-slate-900 text-white font-black text-sm hover:bg-slate-800 transition-[box-shadow,background-color] shadow-wg-cta"
               >
-                Ver Plano Pro e ativar
+                Ver planos e ativar
               </button>
 
               <button
@@ -164,6 +164,10 @@ export function ProtectedRoute({ children, requirePayment = false }: ProtectedRo
         </motion.div>
       </div>
     );
+  }
+
+  if (requirePayment && user.hasPaid && !user.businessNiche) {
+    return <NicheOnboarding />;
   }
 
   return <>{children}</>;

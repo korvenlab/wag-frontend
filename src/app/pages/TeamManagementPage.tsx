@@ -266,7 +266,7 @@ export function TeamManagementPage() {
           <div className="space-y-2">
             <div className="flex items-center gap-3 flex-wrap">
               <h1 className="text-3xl font-black text-slate-900 tracking-tight">
-                Apenas para Equipe
+                Gerenciar Equipe
               </h1>
               {subscriptionTier ? (
                 <Badge className="bg-gradient-to-r from-amber-400 to-amber-500 text-slate-900 border-0 font-black uppercase tracking-wider text-[10px] px-3 py-1 gap-1">
@@ -310,7 +310,7 @@ export function TeamManagementPage() {
                 <div className="grid sm:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400">
-                      Nome do barbeiro
+                      Nome do profissional
                     </Label>
                     <div className="relative">
                       <UserRound className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 w-4 h-4" />
@@ -333,7 +333,7 @@ export function TeamManagementPage() {
                         type="email"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
-                        placeholder="barbeiro@gmail.com"
+                        placeholder="profissional@gmail.com"
                         className="h-12 pl-11 rounded-xl bg-slate-50 border-none font-semibold"
                         disabled={!canAddTeamMember}
                       />

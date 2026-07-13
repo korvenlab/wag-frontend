@@ -33,7 +33,7 @@ export function PublicCalendarPage() {
     "https://wag-backend.onrender.com";
 
   const monthCursor = useMemo(() => startOfMonth(new Date()), []);
-  const [storeName, setStoreName] = useState("Barbearia");
+  const [storeName, setStoreName] = useState("Loja");
   const [selectedDate, setSelectedDate] = useState(() => new Date());
   const [events, setEvents] = useState<CalendarEventItem[]>([]);
   const [barbeiros, setBarbeiros] = useState<BarberOption[]>([]);
@@ -69,7 +69,7 @@ export function PublicCalendarPage() {
       }
 
       const data = await res.json();
-      setStoreName(data.store_name ?? "Barbearia");
+      setStoreName(data.store_name ?? "Loja");
       setEvents(data.events ?? []);
       setBarbeiros(data.barbeiros ?? []);
     } catch {
@@ -185,7 +185,7 @@ export function PublicCalendarPage() {
             </div>
             {loading && (
               <p className="text-center text-xs text-slate-400 mt-4 flex justify-center gap-2">
-                <Loader2 size={14} className="animate-spin" /> A carregar…
+                <Loader2 size={14} className="animate-spin" /> Carregando…
               </p>
             )}
           </Card>

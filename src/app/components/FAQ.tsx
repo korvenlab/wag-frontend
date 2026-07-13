@@ -35,12 +35,12 @@ export function FAQ() {
     {
       question: "O Wagoo é exclusivo para a minha agenda?",
       answer:
-        "Com o Plano Pro, o Wagoo gerencia sua agenda principal no Google Calendar — ideal para autônomos e negócios com um profissional por assinatura.",
+        "Todos os planos sincronizam com o Google Calendar. No Basic, a agenda principal do negócio; nos planos com equipe (Pro e Pro+), cada profissional pode ter a própria agenda vinculada.",
     },
     {
       question: "Meus dados e os dos meus clientes estão seguros?",
       answer:
-        "Absolutamente! Usamos criptografia de ponta a ponta. Seus dados e os de seus clientes estão protegidos com segurança de nível bancário e seguimos todas as normas da LGPD.",
+        "Sim. Usamos autenticação OAuth2, criptografia em trânsito (TLS) e seguimos as práticas da LGPD. Não revendemos dados dos seus clientes.",
     },
     {
       question: "Posso usar com WhatsApp pessoal ou precisa ser Business?",
@@ -125,13 +125,14 @@ export function FAQ() {
           <p className="text-slate-500 mb-6 font-medium">
             Ainda tem dúvidas? Nossa equipe está pronta para ajudar!
           </p>
-          <motion.button
+          <motion.a
+            href="mailto:suporte@korven.lab?subject=Suporte%20Wagoo"
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
-            className="px-8 py-4 rounded-2xl bg-slate-900 text-white font-bold shadow-wg-cta hover:bg-[#64b34d] transition-[box-shadow,background-color] border border-slate-700"
+            className="inline-block px-8 py-4 rounded-2xl bg-slate-900 text-white font-bold shadow-wg-cta hover:bg-[#64b34d] transition-[box-shadow,background-color] border border-slate-700"
           >
             Falar com o Suporte
-          </motion.button>
+          </motion.a>
         </motion.div>
       </div>
     </section>

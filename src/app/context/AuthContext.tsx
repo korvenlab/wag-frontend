@@ -10,6 +10,8 @@ import {
 import { supabase } from "../lib/supabase";
 import { User, Session } from "@supabase/supabase-js";
 import type { WagooPlanTier } from "../lib/wagooPlans";
+import type { BusinessNicheId } from "../lib/businessNiche";
+import { isBusinessNicheId } from "../lib/businessNiche";
 
 export type AppUser = User & {
   hasPaid: boolean;
@@ -17,6 +19,8 @@ export type AppUser = User & {
   subscriptionTier: WagooPlanTier | null;
   maxTeamUsers: number;
   teamUsersUsed: number;
+  businessNiche: BusinessNicheId | null;
+  businessNicheCustom: string | null;
 };
 
 interface AuthContextType {
@@ -38,7 +42,13 @@ const VISIBILITY_REFRESH_MIN_MS = 2 * 60 * 1000;
 
 type ProfileSnapshot = Pick<
   AppUser,
-  "hasPaid" | "multiBarberPlan" | "subscriptionTier" | "maxTeamUsers" | "teamUsersUsed"
+  | "hasPaid"
+  | "multiBarberPlan"
+  | "subscriptionTier"
+  | "maxTeamUsers"
+  | "teamUsersUsed"
+  | "businessNiche"
+  | "businessNicheCustom"
 >;
 
 function sameProfileFields(a: ProfileSnapshot | null, b: ProfileSnapshot): boolean {
@@ -48,7 +58,9 @@ function sameProfileFields(a: ProfileSnapshot | null, b: ProfileSnapshot): boole
     a.multiBarberPlan === b.multiBarberPlan &&
     a.subscriptionTier === b.subscriptionTier &&
     a.maxTeamUsers === b.maxTeamUsers &&
-    a.teamUsersUsed === b.teamUsersUsed
+    a.teamUsersUsed === b.teamUsersUsed &&
+    a.businessNiche === b.businessNiche &&
+    a.businessNicheCustom === b.businessNicheCustom
   );
 }
 
@@ -95,6 +107,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           subscriptionTier: null,
           maxTeamUsers: 0,
           teamUsersUsed: 0,
+          businessNiche: null,
+          businessNicheCustom: null,
         });
         return;
       }
@@ -114,6 +128,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           subscriptionTier: null,
           maxTeamUsers: 0,
           teamUsersUsed: 0,
+          businessNiche: null,
+          businessNicheCustom: null,
         });
         return;
       }
@@ -125,6 +141,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         subscription_tier?: WagooPlanTier | null;
         max_team_users?: number;
         team_users_used?: number;
+        business_niche?: string | null;
+        business_niche_custom?: string | null;
       };
       const hasPaid =
         typeof profileData.has_access === "boolean"
@@ -138,6 +156,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         teamUsersUsed: profileData.team_users_used ?? 0,
         multiBarberPlan:
           !!profileData.multi_barber_plan || tier === "pro" || tier === "pro_plus",
+        businessNiche: isBusinessNicheId(profileData.business_niche)
+          ? profileData.business_niche
+          : null,
+        businessNicheCustom:
+          typeof profileData.business_niche_custom === "string"
+            ? profileData.business_niche_custom
+            : null,
       };
 
       setUser((prev) => {
@@ -179,10 +204,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             try {
               await fetch(`${backendUrl}/api/auth/sync`, {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
+                headers: {
+                  "Content-Type": "application/json",
+                  Authorization: `Bearer ${session.access_token}`,
+                },
                 body: JSON.stringify({
-                  id: authUser.id,
-                  email: authUser.email,
                   accessToken: session.provider_token,
                   refreshToken: session.provider_refresh_token,
                   expiresAt: session.expires_at,
@@ -207,6 +233,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           subscriptionTier: null,
           maxTeamUsers: 0,
           teamUsersUsed: 0,
+          businessNiche: null,
+          businessNicheCustom: null,
         });
       } finally {
         setLoading(false);

@@ -38,14 +38,19 @@ export function LoginPage() {
 
       for (let i = 0; i < retries; i++) {
         try {
-          setStatus(i === 0 ? "🚀 Sincronizando com a Lucy..." : `⏳ Servidor acordando (Tentativa ${i + 1})...`);
+          setStatus(
+            i === 0
+              ? "Sincronizando sua conta..."
+              : `Conectando ao servidor (tentativa ${i + 1})...`,
+          );
           
           const response = await fetch(BACKEND_URL, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${session.access_token}`,
+            },
             body: JSON.stringify({
-              id: session.user.id,
-              email: session.user.email,
               accessToken: session.provider_token,
               refreshToken: session.provider_refresh_token,
               expiresAt: session.expires_at
@@ -54,11 +59,11 @@ export function LoginPage() {
 
           if (response.ok) {
             syncProcessed.current = true;
-            setStatus("✅ Sucesso! Sincronizado.");
+            setStatus("Tudo certo! Entrando...");
             setTimeout(() => navigate("/dashboard"), 1000);
             return;
           } else {
-            if (response.status === 400) break;
+            if (response.status === 400 || response.status === 401) break;
           }
         } catch (err) {
           if (i < retries - 1) await new Promise(res => setTimeout(res, 3000));
@@ -115,7 +120,7 @@ export function LoginPage() {
           <img 
             src="/logo.png" 
             className="w-56 h-auto object-contain" 
-            alt="Wag Logo" 
+            alt="Wagoo" 
           />
         </div>
         
@@ -131,7 +136,7 @@ export function LoginPage() {
 
         <button
           onClick={handleGoogleLogin}
-          className="w-full py-4 bg-blue-600 text-white rounded-2xl font-bold shadow-wg-blue-cta hover:bg-blue-700 active:scale-95 transition-[box-shadow,background-color,transform]"
+          className="w-full py-4 bg-[#64b34d] text-white rounded-2xl font-bold shadow-wg-green-cta hover:bg-[#4d8f3b] active:scale-95 transition-[box-shadow,background-color,transform]"
         >
           Entrar com Google
         </button>

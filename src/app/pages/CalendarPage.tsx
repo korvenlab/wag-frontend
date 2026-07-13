@@ -22,6 +22,7 @@ import { useNavigate } from "react-router";
 import { Card, CardContent } from "../components/ui/card";
 import { Button } from "../components/ui/button";
 import { Badge } from "../components/ui/badge";
+import { apiFetch } from "../lib/apiFetch";
 import {
   Select,
   SelectContent,
@@ -170,9 +171,7 @@ export function CalendarPage() {
     if (!user?.email) return;
     setConnectingGoogle(true);
     try {
-      const res = await fetch(
-        `${backendUrl}/api/auth/google/url?email=${encodeURIComponent(user.email)}`,
-      );
+      const res = await apiFetch("/api/auth/google/url");
       const data = await res.json();
       if (data.url) window.open(data.url, "_blank", "noopener,noreferrer");
     } finally {
@@ -273,7 +272,7 @@ export function CalendarPage() {
           <Card className="rounded-2xl border-slate-200 bg-white p-4 flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between">
             <div className="flex items-center gap-2 text-sm font-medium text-slate-600">
               <Link2 size={18} className="text-[#64b34d]" />
-              Link público com o nome da loja (ex.: /calendario/publico/minha-barbearia)
+              Link público com o nome da loja (ex.: /calendario/publico/minha-loja)
             </div>
             <Button
               type="button"
@@ -344,7 +343,7 @@ export function CalendarPage() {
               </div>
               {loadingEvents && (
                 <p className="text-center text-xs text-slate-400 mt-4 flex justify-center gap-2">
-                  <Loader2 size={14} className="animate-spin" /> A carregar…
+                  <Loader2 size={14} className="animate-spin" /> Carregando…
                 </p>
               )}
             </Card>
