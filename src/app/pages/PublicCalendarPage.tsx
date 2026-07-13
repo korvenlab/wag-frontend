@@ -120,8 +120,8 @@ export function PublicCalendarPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] p-6">
-      <div className="max-w-5xl mx-auto space-y-6">
+    <div className="min-h-screen bg-[#F8FAFC] p-6 lg:p-10">
+      <div className="max-w-7xl mx-auto space-y-6">
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
           <div>
             <h1 className="text-3xl font-black text-slate-900 flex items-center gap-2">
@@ -147,16 +147,16 @@ export function PublicCalendarPage() {
           </Select>
         </div>
 
-        <div className="grid lg:grid-cols-5 gap-6">
-          <Card className="lg:col-span-3 p-6 rounded-[32px] shadow-wg-elevated border-none">
-            <div className="grid grid-cols-7 gap-1 mb-2">
+        <div className="grid lg:grid-cols-12 gap-6">
+          <Card className="lg:col-span-8 p-6 lg:p-8 rounded-[32px] shadow-wg-elevated border-none">
+            <div className="grid grid-cols-7 gap-1 lg:gap-2 mb-2 lg:mb-3">
               {WEEKDAYS.map((d) => (
-                <div key={d} className="text-center text-[10px] font-black text-slate-400">
+                <div key={d} className="text-center text-[10px] lg:text-xs font-black text-slate-400 lg:py-1">
                   {d}
                 </div>
               ))}
             </div>
-            <div className="grid grid-cols-7 gap-1">
+            <div className="grid grid-cols-7 gap-1 lg:gap-2">
               {calendarDays.map((day) => {
                 const key = format(day, "yyyy-MM-dd");
                 const count = (eventsByDay.get(key) ?? []).length;
@@ -167,17 +167,17 @@ export function PublicCalendarPage() {
                     type="button"
                     disabled={!inMonth}
                     onClick={() => inMonth && setSelectedDate(day)}
-                    className={`min-h-[44px] rounded-xl text-sm font-bold ${
+                    className={`min-h-[44px] lg:min-h-[88px] rounded-xl lg:rounded-2xl text-sm lg:text-lg font-bold ${
                       isSameDay(day, selectedDate)
                         ? "bg-[#64b34d] text-white"
                         : inMonth
-                          ? "bg-slate-50"
+                          ? "bg-slate-50 hover:bg-slate-100"
                           : "opacity-30"
                     }`}
                   >
                     {inMonth ? format(day, "d") : ""}
                     {inMonth && count > 0 && (
-                      <span className="block text-[9px]">{count}</span>
+                      <span className="block text-[9px] lg:text-xs lg:mt-1">{count}</span>
                     )}
                   </button>
                 );
@@ -190,8 +190,8 @@ export function PublicCalendarPage() {
             )}
           </Card>
 
-          <Card className="lg:col-span-2 p-6 rounded-[32px] shadow-wg-elevated border-none max-h-[520px] overflow-y-auto">
-            <p className="font-black mb-4">
+          <Card className="lg:col-span-4 p-6 rounded-[32px] shadow-wg-elevated border-none max-h-[520px] lg:max-h-none overflow-y-auto">
+            <p className="font-black mb-4 lg:text-lg">
               {format(selectedDate, "EEEE, d 'de' MMMM", { locale: ptBR })}
             </p>
             <div className="space-y-3">

@@ -19,10 +19,9 @@ import {
 } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useNavigate } from "react-router";
-import { Card, CardContent } from "../components/ui/card";
+import { Card } from "../components/ui/card";
 import { Button } from "../components/ui/button";
 import { Badge } from "../components/ui/badge";
-import { apiFetch } from "../lib/apiFetch";
 import {
   Select,
   SelectContent,
@@ -50,8 +49,6 @@ export function CalendarPage() {
   const monthCursor = useMemo(() => startOfMonth(new Date()), []);
 
   const [storeName, setStoreName] = useState("");
-  const [googleConnected, setGoogleConnected] = useState(false);
-  const [connectingGoogle, setConnectingGoogle] = useState(false);
   const [selectedDate, setSelectedDate] = useState(() => new Date());
   const [events, setEvents] = useState<CalendarEventItem[]>([]);
   const [barbeiros, setBarbeiros] = useState<BarberOption[]>([]);
@@ -112,7 +109,6 @@ export function CalendarPage() {
       }
 
       const data = await res.json();
-      setGoogleConnected(!!data.googleConnected);
       setEvents(data.events ?? []);
       setBarbeiros(data.barbeiros ?? []);
       if (data.store_name) setStoreName(data.store_name);
@@ -166,18 +162,6 @@ export function CalendarPage() {
     const key = format(selectedDate, "yyyy-MM-dd");
     return eventsByDay.get(key) ?? [];
   }, [eventsByDay, selectedDate]);
-
-  const handleConnectGoogle = async () => {
-    if (!user?.email) return;
-    setConnectingGoogle(true);
-    try {
-      const res = await apiFetch("/api/auth/google/url");
-      const data = await res.json();
-      if (data.url) window.open(data.url, "_blank", "noopener,noreferrer");
-    } finally {
-      setConnectingGoogle(false);
-    }
-  };
 
   const copyShare = async () => {
     setShareLoading(true);
@@ -239,40 +223,25 @@ export function CalendarPage() {
                 {storeName || "Sua loja"} — {format(monthCursor, "MMMM yyyy", { locale: ptBR })}
               </p>
             </div>
-            <div className="flex flex-col sm:flex-row gap-2">
-              <Select value={selectedBarber} onValueChange={setSelectedBarber}>
-                <SelectTrigger className="w-full sm:w-[200px] h-11 rounded-xl font-bold">
-                  <SelectValue placeholder="Profissional" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todos os profissionais</SelectItem>
-                  {barbeiros.map((b) => (
-                    <SelectItem key={b.id} value={b.nome}>
-                      {b.nome}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {googleConnected ? (
-                <Badge className="h-11 px-4 flex items-center bg-emerald-50 text-emerald-700 border-emerald-200">
-                  Google conectado
-                </Badge>
-              ) : (
-                <Button
-                  onClick={() => void handleConnectGoogle()}
-                  disabled={connectingGoogle}
-                  className="rounded-xl bg-[#64b34d] font-bold"
-                >
-                  Conectar Google
-                </Button>
-              )}
-            </div>
+            <Select value={selectedBarber} onValueChange={setSelectedBarber}>
+              <SelectTrigger className="w-full sm:w-[200px] h-11 rounded-xl font-bold">
+                <SelectValue placeholder="Profissional" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos os profissionais</SelectItem>
+                {barbeiros.map((b) => (
+                  <SelectItem key={b.id} value={b.nome}>
+                    {b.nome}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           <Card className="rounded-2xl border-slate-200 bg-white p-4 flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between">
             <div className="flex items-center gap-2 text-sm font-medium text-slate-600">
               <Link2 size={18} className="text-[#64b34d]" />
-              Link público com o nome da loja (ex.: /calendario/publico/minha-loja)
+              Link para o cliente ver a agenda e escolher um horário, sem precisar entrar no sistema
             </div>
             <Button
               type="button"
@@ -289,14 +258,6 @@ export function CalendarPage() {
               {copied ? "Copiado!" : shareUrl ? "Copiar link público" : "Gerar e copiar link"}
             </Button>
           </Card>
-
-          {!googleConnected && (
-            <Card className="rounded-[24px] border-amber-200 bg-amber-50/80">
-              <CardContent className="pt-6 text-sm text-amber-900 font-medium">
-                Conecte o Google Agenda para ver os horários marcados pela IA e manualmente.
-              </CardContent>
-            </Card>
-          )}
 
           <div className="grid lg:grid-cols-5 gap-6">
             <Card className="lg:col-span-3 rounded-[32px] border-none shadow-wg-elevated p-6">
