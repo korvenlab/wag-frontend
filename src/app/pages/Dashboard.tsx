@@ -202,10 +202,41 @@ export function Dashboard() {
       });
       if (response.ok) {
         const data = await response.json();
-        setQrCode(data.qrCode);
+        if (data.connected) {
+          setIsWhatsAppConnected(true);
+          setQrCode(null);
+        } else if (data.qrCode) {
+          setQrCode(data.qrCode);
+        }
       }
     } catch (error) { console.error(error); } finally { setIsLoadingQR(false); }
   };
+
+  // Baileys renova o QR ~20s; busca o atual sem derrubar o socket no backend.
+  useEffect(() => {
+    if (!qrCode || isWhatsAppConnected) return;
+    const id = window.setInterval(() => {
+      void (async () => {
+        try {
+          const response = await apiFetch("/api/whatsapp/qr", {
+            method: "POST",
+            body: JSON.stringify({}),
+          });
+          if (!response.ok) return;
+          const data = await response.json();
+          if (data.connected) {
+            setIsWhatsAppConnected(true);
+            setQrCode(null);
+          } else if (typeof data.qrCode === "string") {
+            setQrCode(data.qrCode);
+          }
+        } catch {
+          /* ignore */
+        }
+      })();
+    }, 15_000);
+    return () => window.clearInterval(id);
+  }, [qrCode, isWhatsAppConnected]);
 
   const handleDisconnectWhatsApp = async () => {
     setIsDisconnecting(true);
