@@ -27,6 +27,7 @@ export type AppUser = User & {
   businessNiche: BusinessNicheId | null;
   businessNicheCustom: string | null;
   storeName: string;
+  whatsappConnected: boolean;
 };
 
 interface AuthContextType {
@@ -56,6 +57,7 @@ type ProfileSnapshot = Pick<
   | "businessNiche"
   | "businessNicheCustom"
   | "storeName"
+  | "whatsappConnected"
 >;
 
 function sameProfileFields(a: ProfileSnapshot | null, b: ProfileSnapshot): boolean {
@@ -68,7 +70,8 @@ function sameProfileFields(a: ProfileSnapshot | null, b: ProfileSnapshot): boole
     a.teamUsersUsed === b.teamUsersUsed &&
     a.businessNiche === b.businessNiche &&
     a.businessNicheCustom === b.businessNicheCustom &&
-    a.storeName === b.storeName
+    a.storeName === b.storeName &&
+    a.whatsappConnected === b.whatsappConnected
   );
 }
 
@@ -118,6 +121,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           businessNiche: null,
           businessNicheCustom: null,
           storeName: "",
+          whatsappConnected: false,
         });
         return;
       }
@@ -140,6 +144,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           businessNiche: null,
           businessNicheCustom: null,
           storeName: "",
+          whatsappConnected: false,
         });
         return;
       }
@@ -184,6 +189,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             ? profileData.business_niche_custom
             : null,
         storeName,
+        whatsappConnected: !!profileData.whatsapp_connected,
       };
 
       const cachePayload: DashboardProfileCache = {
@@ -278,6 +284,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           businessNiche: null,
           businessNicheCustom: null,
           storeName: "",
+          whatsappConnected: false,
         });
       } finally {
         setLoading(false);

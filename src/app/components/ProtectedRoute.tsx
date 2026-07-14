@@ -4,6 +4,11 @@ import { useAuth } from "../context/AuthContext";
 import { motion } from "motion/react";
 import { Loader2 } from "lucide-react";
 import { NicheOnboarding } from "./NicheOnboarding";
+import {
+  hasSkippedWhatsAppOnboarding,
+  skipWhatsAppOnboardingKey,
+  WhatsAppOnboarding,
+} from "./WhatsAppOnboarding";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -17,6 +22,15 @@ export function ProtectedRoute({ children, requirePayment = false }: ProtectedRo
   const checkoutSuccess =
     searchParams.get("checkout") === "success" || searchParams.get("success") === "true";
   const [pollTick, setPollTick] = useState(0);
+  const [waOnboardingSkipped, setWaOnboardingSkipped] = useState(false);
+
+  useEffect(() => {
+    if (!user?.id) {
+      setWaOnboardingSkipped(false);
+      return;
+    }
+    setWaOnboardingSkipped(hasSkippedWhatsAppOnboarding(user.id));
+  }, [user?.id]);
 
   useEffect(() => {
     if (!loading && !user) navigate("/login");
@@ -107,6 +121,27 @@ export function ProtectedRoute({ children, requirePayment = false }: ProtectedRo
 
   if (requirePayment && user.hasPaid && !user.businessNiche) {
     return <NicheOnboarding />;
+  }
+
+  if (
+    requirePayment &&
+    user.hasPaid &&
+    user.businessNiche &&
+    !user.whatsappConnected &&
+    !waOnboardingSkipped
+  ) {
+    return (
+      <WhatsAppOnboarding
+        onSkip={() => {
+          try {
+            localStorage.setItem(skipWhatsAppOnboardingKey(user.id), "1");
+          } catch {
+            /* ignore */
+          }
+          setWaOnboardingSkipped(true);
+        }}
+      />
+    );
   }
 
   return <>{children}</>;
