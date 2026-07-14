@@ -2,7 +2,7 @@ import { motion } from "motion/react";
 import { useNavigate, useSearchParams } from "react-router";
 import { useEffect, useState, useRef } from "react";
 import { supabase } from "../lib/supabase";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Loader2 } from "lucide-react";
 import type { Session } from "@supabase/supabase-js";
 
 const WAGOO_PROMO_STORAGE_KEY = "wagoo_promo_code";
@@ -74,6 +74,8 @@ export function LoginPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [status, setStatus] = useState("Verificando sessão...");
+  /** Só mostra "Entrar com Google" quando não há sessão em curso de sync. */
+  const [showLoginButton, setShowLoginButton] = useState(false);
   const [promoActive, setPromoActive] = useState(false);
   const syncProcessed = useRef(false);
 
@@ -95,9 +97,11 @@ export function LoginPage() {
       if (syncProcessed.current) return;
       if (!session.user) {
         setStatus("Aguardando login com Google...");
+        setShowLoginButton(true);
         return;
       }
 
+      setShowLoginButton(false);
       syncProcessed.current = true;
 
       try {
@@ -120,19 +124,25 @@ export function LoginPage() {
         navigate("/#precos", { replace: true });
       } catch {
         syncProcessed.current = false;
+        setShowLoginButton(true);
         setStatus("Não foi possível verificar a conta. Tente de novo.");
       }
     };
 
     supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) void finishLogin(session);
-      else setStatus("Aguardando login com Google...");
+      if (session) {
+        void finishLogin(session);
+      } else {
+        setStatus("Aguardando login com Google...");
+        setShowLoginButton(true);
+      }
     });
 
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((event, session) => {
       if (["SIGNED_IN", "INITIAL_SESSION"].includes(event) && session) {
+        setShowLoginButton(false);
         void finishLogin(session);
       }
     });
@@ -142,6 +152,7 @@ export function LoginPage() {
 
   const handleGoogleLogin = async () => {
     syncProcessed.current = false;
+    setShowLoginButton(false);
     setStatus("Redirecionando para o Google...");
     await supabase.auth.signInWithOAuth({
       provider: "google",
@@ -182,16 +193,37 @@ export function LoginPage() {
           </div>
         ) : null}
 
-        <div className="p-4 bg-gray-50 rounded-2xl border border-gray-100 min-h-[60px] flex items-center justify-center">
-          <p className="text-sm font-medium text-gray-600">{status}</p>
-        </div>
+        {showLoginButton ? (
+          <div className="p-4 bg-gray-50 rounded-2xl border border-gray-100 min-h-[60px] flex items-center justify-center">
+            <p className="text-sm font-medium text-gray-600">{status}</p>
+          </div>
+        ) : (
+          <div
+            role="status"
+            aria-live="polite"
+            className="px-5 py-6 rounded-2xl border-2 border-[#64b34d]/40 bg-[#64b34d]/10 min-h-[88px] flex flex-col items-center justify-center gap-3"
+          >
+            <Loader2
+              className="w-7 h-7 text-[#64b34d] animate-spin"
+              strokeWidth={2.5}
+              aria-hidden
+            />
+            <p className="text-base font-bold text-slate-900 tracking-tight">{status}</p>
+            <p className="text-xs font-semibold text-[#4d8f3b] uppercase tracking-widest">
+              Sincronizando
+            </p>
+          </div>
+        )}
 
-        <button
-          onClick={handleGoogleLogin}
-          className="w-full py-4 bg-[#64b34d] text-white rounded-2xl font-bold shadow-wg-green-cta hover:bg-[#4d8f3b] active:scale-95 transition-[box-shadow,background-color,transform]"
-        >
-          Entrar com Google
-        </button>
+        {showLoginButton ? (
+          <button
+            type="button"
+            onClick={handleGoogleLogin}
+            className="w-full py-4 bg-[#64b34d] text-white rounded-2xl font-bold shadow-wg-green-cta hover:bg-[#4d8f3b] active:scale-95 transition-[box-shadow,background-color,transform]"
+          >
+            Entrar com Google
+          </button>
+        ) : null}
       </motion.div>
     </div>
   );
