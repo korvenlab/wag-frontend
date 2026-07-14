@@ -47,6 +47,7 @@ export function Dashboard() {
 
   const [isAIEnabled, setIsAIEnabled] = useState(true);
   const [qrCode, setQrCode] = useState<string | null>(null);
+  const [waStatus, setWaStatus] = useState<"idle" | "waiting_qr" | "connecting" | "connected">("idle");
   const [isLoadingQR, setIsLoadingQR] = useState(false);
   const [isDisconnecting, setIsDisconnecting] = useState(false);
   const [showConfirmDisconnect, setShowConfirmDisconnect] = useState(false);
@@ -195,6 +196,7 @@ export function Dashboard() {
   const handleGenerateQR = async () => {
     setIsLoadingQR(true);
     setQrCode(null);
+    setWaStatus("waiting_qr");
     try {
       const response = await apiFetch("/api/whatsapp/qr", {
         method: "POST",
@@ -202,19 +204,31 @@ export function Dashboard() {
       });
       if (response.ok) {
         const data = await response.json();
-        if (data.connected) {
+        if (data.connected || data.status === "connected") {
           setIsWhatsAppConnected(true);
           setQrCode(null);
+          setWaStatus("connected");
+        } else if (data.status === "connecting") {
+          setWaStatus("connecting");
         } else if (data.qrCode) {
           setQrCode(data.qrCode);
+          setWaStatus("waiting_qr");
         }
       }
-    } catch (error) { console.error(error); } finally { setIsLoadingQR(false); }
+    } catch (error) {
+      console.error(error);
+      setWaStatus("idle");
+    } finally {
+      setIsLoadingQR(false);
+    }
   };
 
-  // Baileys renova o QR ~20s; busca o atual sem derrubar o socket no backend.
+  // Poll: QR renovado (~15s) e status connecting pós-scan (515) a cada 2s.
   useEffect(() => {
-    if (!qrCode || isWhatsAppConnected) return;
+    if (isWhatsAppConnected) return;
+    if (waStatus !== "waiting_qr" && waStatus !== "connecting") return;
+
+    const intervalMs = waStatus === "connecting" ? 2_000 : 15_000;
     const id = window.setInterval(() => {
       void (async () => {
         try {
@@ -224,19 +238,23 @@ export function Dashboard() {
           });
           if (!response.ok) return;
           const data = await response.json();
-          if (data.connected) {
+          if (data.connected || data.status === "connected") {
             setIsWhatsAppConnected(true);
             setQrCode(null);
+            setWaStatus("connected");
+          } else if (data.status === "connecting") {
+            setWaStatus("connecting");
           } else if (typeof data.qrCode === "string") {
             setQrCode(data.qrCode);
+            setWaStatus("waiting_qr");
           }
         } catch {
           /* ignore */
         }
       })();
-    }, 15_000);
+    }, intervalMs);
     return () => window.clearInterval(id);
-  }, [qrCode, isWhatsAppConnected]);
+  }, [waStatus, isWhatsAppConnected]);
 
   const handleDisconnectWhatsApp = async () => {
     setIsDisconnecting(true);
@@ -248,6 +266,7 @@ export function Dashboard() {
       if (response.ok) {
         setIsWhatsAppConnected(false);
         setQrCode(null);
+        setWaStatus("idle");
         setShowConfirmDisconnect(false);
       }
     } catch (error) { console.error("Erro ao desconectar:", error); } finally { setIsDisconnecting(false); }
@@ -431,7 +450,28 @@ export function Dashboard() {
                              <span className="text-[#64b34d] font-black text-[10px] uppercase block mt-3 tracking-[0.2em]">Ativo</span>
                            </div>
                          ) :
-                         qrCode ? <img src={qrCode} className="w-full h-full p-3" alt="QR Code" /> : <QrCode className="text-slate-100 w-12 h-12" />}
+                         qrCode || waStatus === "connecting" ? (
+                           <div className="relative w-full h-full">
+                             {qrCode ? (
+                               <img src={qrCode} className="w-full h-full p-3" alt="QR Code" />
+                             ) : (
+                               <div className="w-full h-full flex items-center justify-center">
+                                 <QrCode className="text-slate-100 w-12 h-12" />
+                               </div>
+                             )}
+                             {waStatus === "connecting" ? (
+                               <div className="absolute inset-0 bg-white/85 flex flex-col items-center justify-center gap-2 px-4 text-center">
+                                 <Loader2 className="animate-spin text-[#64b34d] w-8 h-8" />
+                                 <span className="text-slate-900 font-black text-xs tracking-wide">
+                                   Conectando…
+                                 </span>
+                                 <span className="text-slate-500 text-[10px] font-medium leading-snug">
+                                   Finalize no celular se pedir confirmação
+                                 </span>
+                               </div>
+                             ) : null}
+                           </div>
+                         ) : <QrCode className="text-slate-100 w-12 h-12" />}
                       </div>
                       
                       <div className="space-y-5 text-center sm:text-left flex-1">
