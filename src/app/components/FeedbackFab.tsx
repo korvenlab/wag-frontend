@@ -102,7 +102,7 @@ export function FeedbackFab() {
         <SheetHeader className="text-left">
           <SheetTitle className="text-slate-900">Ajuda e feedback</SheetTitle>
           <SheetDescription className="text-slate-500">
-            Encontrou um bug ou tem uma sugestão? Envie para a equipe Korven — aparece no painel com origem Wagoo.
+            Encontrou um bug ou tem uma sugestão? Envie para a equipe Korven.
           </SheetDescription>
         </SheetHeader>
         <div className="mt-6 flex flex-1 flex-col gap-4 px-1 pb-6">
