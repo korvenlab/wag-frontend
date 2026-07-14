@@ -238,12 +238,6 @@
   .site{ color:var(--muted); font-weight:700; font-size:13px; letter-spacing:.2em; text-transform:uppercase; }
 
   /* ---------- help / controls ---------- */
-  .help{ position:fixed; right:20px; bottom:78px; z-index:7; font-size:12px; color:var(--muted);
-    background:rgba(0,0,0,.35); border:1px solid var(--stroke); padding:8px 12px; border-radius:10px;
-    transition:opacity .6s; }
-  .help.hide{ opacity:0; }
-  body.paused .stage::after{ content:"❚❚"; position:fixed; top:50%; left:50%; transform:translate(-50%,-50%);
-    font-size:60px; color:rgba(255,255,255,.9); z-index:9; text-shadow:0 0 20px rgba(0,0,0,.6); }
   body.paused *{ animation-play-state:paused !important; }
 </style>
 </head>
@@ -344,8 +338,6 @@
     <div class="pill" data-step="2"><b>03</b> Confirmado e sincronizado</div>
   </div>
 
-  <div class="help" id="help">Espaço = pausar · R = reiniciar · F11 = tela cheia</div>
-
 <script>
   // ---- timeline (seconds) ----
   const SCENES = [
@@ -396,10 +388,7 @@
   }
   requestAnimationFrame(frame);
 
-  // ---- controls ----
-  const help = document.getElementById("help");
-  let hideT = setTimeout(()=>help.classList.add("hide"), 5000);
-
+  // ---- controls (keyboard only, sem instruções na tela) ----
   addEventListener("keydown", (e)=>{
     if(e.code === "Space"){
       e.preventDefault();
@@ -411,13 +400,6 @@
     if(e.key.toLowerCase() === "r"){
       start = performance.now(); paused = false; body.classList.remove("paused");
     }
-    help.classList.remove("hide");
-    clearTimeout(hideT); hideT = setTimeout(()=>help.classList.add("hide"), 4000);
-  });
-
-  addEventListener("mousemove", ()=>{
-    help.classList.remove("hide");
-    clearTimeout(hideT); hideT = setTimeout(()=>help.classList.add("hide"), 4000);
   });
 </script>
 </body>
