@@ -5,6 +5,10 @@
       "destination": "/pitch.html"
     },
     {
+      "source": "/pitch/financas",
+      "destination": "/pitch-financas.html"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
     }
