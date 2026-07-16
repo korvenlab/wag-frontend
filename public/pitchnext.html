@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Wagoo — Pitch Next</title>
+<title>Wagoo — Pitch Next (Controle)</title>
 <meta name="robots" content="noindex" />
 <style>
   :root{
@@ -11,460 +11,224 @@
     --green-deep:#4d8f3b;
     --ink:#05070a;
     --muted:rgba(255,255,255,.55);
-    --glass:rgba(255,255,255,.04);
-    --stroke:rgba(255,255,255,.10);
+    --glass:rgba(255,255,255,.05);
+    --stroke:rgba(255,255,255,.12);
   }
   *{ box-sizing:border-box; margin:0; padding:0; }
-  html,body{ height:100%; }
+  html,body{ min-height:100%; }
   body{
     background:
-      radial-gradient(1200px 700px at 18% 12%, rgba(100,179,77,.14), transparent 60%),
-      radial-gradient(1000px 800px at 88% 88%, rgba(100,179,77,.10), transparent 55%),
-      radial-gradient(900px 900px at 50% 50%, rgba(255,255,255,.03), transparent 60%),
+      radial-gradient(900px 500px at 20% 0%, rgba(100,179,77,.16), transparent 55%),
+      radial-gradient(800px 600px at 100% 100%, rgba(100,179,77,.08), transparent 50%),
       var(--ink);
     color:#fff;
     font-family:"Inter","Segoe UI",system-ui,-apple-system,Arial,sans-serif;
     letter-spacing:-.01em;
     -webkit-font-smoothing:antialiased;
-    overflow:hidden;
+  }
+  .wrap{
+    max-width:720px; margin:0 auto;
+    padding:32px 20px 48px;
+  }
+  .brand{
+    display:flex; align-items:center; gap:12px; margin-bottom:10px;
+  }
+  .brand img{ height:28px; filter:drop-shadow(0 0 12px rgba(100,179,77,.45)); }
+  .brand small{
+    color:var(--muted); font-size:10px; font-weight:800;
+    letter-spacing:.22em; text-transform:uppercase;
+  }
+  h1{
+    font-size:clamp(28px,5vw,40px); font-weight:900; letter-spacing:-.03em; line-height:1.05;
+  }
+  h1 .g{ color:var(--green); }
+  .hint{
+    margin-top:12px; color:var(--muted); font-size:14px; font-weight:600; line-height:1.45;
+  }
+  .hint code{
+    color:#eafff1; background:rgba(255,255,255,.06); padding:2px 7px; border-radius:8px;
+    font-size:12px;
+  }
+  .status{
+    margin-top:16px; display:inline-flex; align-items:center; gap:8px;
+    padding:8px 12px; border-radius:999px; border:1px solid var(--stroke);
+    background:var(--glass); font-size:12px; font-weight:800; color:var(--muted);
+  }
+  .status .dot{
+    width:8px; height:8px; border-radius:50%; background:var(--green);
+    box-shadow:0 0 10px rgba(100,179,77,.9);
   }
 
-  .grid{
-    position:fixed; inset:-2px; z-index:0; opacity:.35; pointer-events:none;
-    background-image:
-      linear-gradient(rgba(255,255,255,.045) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(255,255,255,.045) 1px, transparent 1px);
-    background-size:64px 64px;
-    mask-image:radial-gradient(circle at 50% 45%, #000 28%, transparent 78%);
-    animation:drift 18s linear infinite;
-  }
-  @keyframes drift{ to{ background-position:64px 64px, 64px 64px; } }
-  .vignette{
-    position:fixed; inset:0; z-index:1; pointer-events:none;
-    background:radial-gradient(120% 120% at 50% 40%, transparent 55%, rgba(0,0,0,.55) 100%);
+  .block{ margin-top:28px; }
+  .block-title{
+    font-size:11px; font-weight:900; letter-spacing:.18em; text-transform:uppercase;
+    color:var(--muted); margin-bottom:12px;
   }
 
-  .app{
-    position:relative; z-index:2;
-    height:100%;
-    display:grid;
-    grid-template-rows:1fr auto;
-  }
-
-  /* ===== slides ===== */
-  .stage{ position:relative; min-height:0; overflow:hidden; }
-  .slide{
-    position:absolute; inset:0;
-    display:flex; align-items:center; justify-content:center;
-    padding:36px 40px 24px;
-    opacity:0; pointer-events:none;
-    transform:scale(.985);
-    transition:opacity .55s ease, transform .55s ease;
-  }
-  .slide.on{
-    opacity:1; pointer-events:auto; transform:scale(1);
-  }
-
-  .inner{ width:min(1120px,100%); }
-
-  .eyebrow{
-    display:inline-flex; align-items:center; gap:8px;
-    margin-bottom:18px;
-    padding:8px 14px; border-radius:999px;
-    border:1px solid rgba(100,179,77,.4);
-    background:rgba(100,179,77,.1);
-    color:var(--green);
-    font-size:11px; font-weight:900; letter-spacing:.2em; text-transform:uppercase;
-  }
-  .title{
-    font-size:clamp(34px,5.2vw,64px);
-    font-weight:900; letter-spacing:-.035em; line-height:1.02;
-  }
-  .title .g{ color:var(--green); position:relative; }
-  .sub{
-    margin-top:14px; max-width:720px;
-    color:var(--muted); font-size:clamp(15px,1.5vw,18px); font-weight:600; line-height:1.45;
-  }
-
-  .slide.on .anim{ animation:rise .7s cubic-bezier(.2,1,.3,1) both; }
-  .slide.on .d1{ animation-delay:.08s; }
-  .slide.on .d2{ animation-delay:.18s; }
-  .slide.on .d3{ animation-delay:.28s; }
-  .slide.on .d4{ animation-delay:.38s; }
-  .slide.on .d5{ animation-delay:.48s; }
-  @keyframes rise{
-    from{ opacity:0; transform:translateY(22px) scale(.98); }
-    to{ opacity:1; transform:none; }
-  }
-
-  /* Mercado cards */
-  .pillars{ display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:18px; margin-top:36px; }
-  @media (max-width:900px){ .pillars{ grid-template-columns:1fr; } }
-  .pillar{
-    position:relative;
-    padding:28px 24px; border-radius:28px;
-    background:var(--glass); border:1px solid var(--stroke);
-    overflow:hidden;
-  }
-  .pillar::before{
-    content:""; position:absolute; inset:-40% auto auto -20%; width:180px; height:180px;
-    background:radial-gradient(circle, rgba(100,179,77,.25), transparent 70%);
-    filter:blur(8px); pointer-events:none;
-  }
-  .pillar.hot{
-    border-color:rgba(100,179,77,.7);
-    box-shadow:0 0 40px rgba(100,179,77,.28), inset 0 0 30px rgba(100,179,77,.06);
-  }
-  .pillar .tag{ position:relative; font-size:12px; font-weight:900; letter-spacing:.18em; text-transform:uppercase; color:var(--green); }
-  .pillar .value{
-    position:relative; margin-top:14px;
-    font-size:clamp(42px,5vw,64px); font-weight:900; letter-spacing:-.04em;
-    text-shadow:0 0 30px rgba(100,179,77,.25);
-  }
-  .pillar.hot .value{ color:var(--green); text-shadow:0 0 40px rgba(100,179,77,.55); }
-  .pillar p{ position:relative; margin-top:12px; color:var(--muted); font-size:14px; font-weight:600; line-height:1.45; }
-
-  /* Concorrência — cards de valor, não tabela densa */
-  .vs{
-    display:grid; grid-template-columns:1.1fr 1.4fr; gap:20px; margin-top:34px; align-items:stretch;
-  }
-  @media (max-width:900px){ .vs{ grid-template-columns:1fr; } }
-  .stack{ display:grid; gap:12px; }
-  .comp{
-    padding:16px 18px; border-radius:18px;
-    background:rgba(255,255,255,.03); border:1px solid var(--stroke);
-  }
-  .comp .name{ font-size:13px; font-weight:800; color:rgba(255,255,255,.75); }
-  .comp .price{ margin-top:4px; font-size:22px; font-weight:900; color:rgba(255,255,255,.9); }
-  .comp .hint{ margin-top:4px; font-size:12px; color:var(--muted); font-weight:600; }
-  .hero-card{
-    padding:28px 26px; border-radius:28px;
-    background:linear-gradient(160deg, rgba(100,179,77,.22), rgba(255,255,255,.03));
-    border:1px solid rgba(100,179,77,.65);
-    box-shadow:0 0 50px rgba(100,179,77,.28);
-    display:flex; flex-direction:column; justify-content:center;
-  }
-  .hero-card .who{ font-size:12px; font-weight:900; letter-spacing:.18em; text-transform:uppercase; color:var(--green); }
-  .hero-card .price{
-    margin-top:10px; font-size:clamp(40px,5vw,58px); font-weight:900; letter-spacing:-.04em;
-  }
-  .hero-card .price small{ font-size:.4em; color:var(--muted); font-weight:700; }
-  .hero-card .line{ margin-top:14px; color:rgba(255,255,255,.88); font-size:15px; font-weight:700; line-height:1.4; }
-  .chips{ display:flex; flex-wrap:wrap; gap:8px; margin-top:18px; }
-  .chip{
-    padding:8px 12px; border-radius:999px;
-    background:rgba(0,0,0,.25); border:1px solid rgba(100,179,77,.35);
-    font-size:12px; font-weight:800; color:#eafff1;
-  }
-
-  /* Margens — número hero */
-  .margin-layout{
-    display:grid; grid-template-columns:1.2fr .9fr; gap:22px; margin-top:28px; align-items:center;
-  }
-  @media (max-width:900px){ .margin-layout{ grid-template-columns:1fr; } }
-  .mega{
-    text-align:center; padding:40px 24px; border-radius:36px;
-    background:radial-gradient(circle at 50% 30%, rgba(100,179,77,.28), transparent 55%), var(--glass);
-    border:1px solid rgba(100,179,77,.55);
-    box-shadow:0 0 60px rgba(100,179,77,.3);
-  }
-  .mega .label{ font-size:12px; font-weight:900; letter-spacing:.2em; text-transform:uppercase; color:var(--muted); }
-  .mega .num{
-    margin-top:8px; font-size:clamp(72px,12vw,140px); font-weight:900; letter-spacing:-.05em; line-height:.95;
-    color:var(--green);
-    text-shadow:0 0 50px rgba(100,179,77,.65);
-  }
-  .mega .cap{ margin-top:10px; color:rgba(255,255,255,.8); font-size:16px; font-weight:700; }
-  .side{ display:grid; gap:14px; }
-  .side .box{
-    padding:22px 20px; border-radius:22px; background:var(--glass); border:1px solid var(--stroke);
-  }
-  .side .box .k{ font-size:11px; font-weight:900; letter-spacing:.16em; text-transform:uppercase; color:var(--muted); }
-  .side .box .v{ margin-top:8px; font-size:clamp(28px,3.5vw,42px); font-weight:900; letter-spacing:-.03em; }
-  .side .box .n{ margin-top:6px; color:var(--muted); font-size:13px; font-weight:600; }
-  .footnote{ margin-top:18px; color:rgba(255,255,255,.38); font-size:12px; font-weight:600; line-height:1.4; }
-
-  /* Roadmap */
-  .quarters{ display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:14px; margin-top:32px; }
-  @media (max-width:980px){ .quarters{ grid-template-columns:1fr 1fr; } }
-  @media (max-width:560px){ .quarters{ grid-template-columns:1fr; } }
-  .q{
-    padding:22px 18px; border-radius:24px;
-    background:var(--glass); border:1px solid var(--stroke);
-    min-height:220px; display:flex; flex-direction:column;
-  }
-  .q .ql{ font-size:12px; font-weight:900; letter-spacing:.16em; text-transform:uppercase; color:var(--green); }
-  .q .qp{ margin-top:4px; font-size:12px; color:var(--muted); font-weight:700; }
-  .q h3{ margin-top:14px; font-size:16px; font-weight:900; line-height:1.2; }
-  .q .rev{
-    margin-top:auto; padding-top:16px;
-    font-size:clamp(22px,2.2vw,28px); font-weight:900; letter-spacing:-.02em;
-  }
-  .q .rev small{ display:block; margin-top:4px; font-size:11px; color:var(--muted); font-weight:700; letter-spacing:.08em; text-transform:uppercase; }
-  .total{
-    margin-top:20px; padding:22px 24px; border-radius:24px;
-    display:flex; flex-wrap:wrap; gap:18px; justify-content:space-between; align-items:center;
-    border:1px solid rgba(100,179,77,.55);
-    background:linear-gradient(120deg, rgba(100,179,77,.18), rgba(255,255,255,.03));
-    box-shadow:0 0 40px rgba(100,179,77,.22);
-  }
-  .total .k{ font-size:11px; font-weight:900; letter-spacing:.16em; text-transform:uppercase; color:var(--muted); }
-  .total .v{ margin-top:6px; font-size:clamp(28px,4vw,40px); font-weight:900; color:var(--green); }
-
-  /* ===== Pitch Next bar — só botões ===== */
-  .pitchnext-bar{
-    z-index:20;
-    display:flex; align-items:center; justify-content:center; gap:10px; flex-wrap:wrap;
-    padding:16px 18px calc(16px + env(safe-area-inset-bottom));
-    background:rgba(5,7,10,.9);
-    border-top:1px solid var(--stroke);
-    backdrop-filter:blur(16px);
-  }
-  .pitchnext-bar button{
-    appearance:none; cursor:pointer;
-    display:inline-flex; align-items:center; gap:8px;
-    padding:12px 18px; border-radius:999px;
+  .btn{
+    appearance:none; cursor:pointer; width:100%;
+    display:flex; align-items:center; gap:14px; text-align:left;
+    padding:18px 18px; border-radius:20px;
     border:1px solid var(--stroke); background:var(--glass);
-    color:var(--muted); font:inherit; font-size:13px; font-weight:800;
-    transition:.2s;
+    color:#fff; font:inherit; transition:.2s;
   }
-  .pitchnext-bar button:hover{ color:#fff; border-color:rgba(255,255,255,.28); }
-  .pitchnext-bar button.on{
-    color:#fff; border-color:rgba(100,179,77,.75);
+  .btn:hover{ border-color:rgba(255,255,255,.28); transform:translateY(-1px); }
+  .btn.on{
+    border-color:rgba(100,179,77,.75);
     background:rgba(100,179,77,.14);
-    box-shadow:0 0 24px rgba(100,179,77,.32);
+    box-shadow:0 0 28px rgba(100,179,77,.28);
   }
-  .pitchnext-bar button b{ font-weight:900; opacity:.4; color:#fff; }
-  .pitchnext-bar button.on b{ opacity:1; color:var(--green); }
-
-  @media (max-width:640px){
-    .slide{ padding:24px 18px 12px; }
-    .pitchnext-bar button .lbl{ display:none; }
+  .btn .n{
+    flex:none; width:42px; height:42px; border-radius:14px;
+    display:flex; align-items:center; justify-content:center;
+    background:rgba(255,255,255,.06); font-weight:900; color:var(--muted);
   }
+  .btn.on .n{ background:rgba(100,179,77,.2); color:var(--green); }
+  .btn .t{ font-size:16px; font-weight:900; }
+  .btn .d{ margin-top:3px; font-size:12px; font-weight:600; color:var(--muted); }
 
-  /* modo controle: só a barra (outra janela / notebook) */
-  body.control .grid,
-  body.control .vignette,
-  body.control .stage{ display:none; }
-  body.control .app{ grid-template-rows:1fr; align-items:center; justify-items:center; }
-  body.control .pitchnext-bar{
-    border:1px solid var(--stroke); border-radius:28px; margin:24px;
-    padding:28px; gap:14px; max-width:920px;
-    box-shadow:0 0 50px rgba(100,179,77,.15);
+  .grid-btns{ display:grid; gap:10px; }
+  .grid-btns.two{ grid-template-columns:1fr 1fr; }
+  @media (max-width:560px){ .grid-btns.two{ grid-template-columns:1fr; } }
+
+  .valores{ opacity:.45; pointer-events:none; transition:.25s; }
+  .valores.active{ opacity:1; pointer-events:auto; }
+
+  .open-pitch{
+    margin-top:28px; display:inline-flex; align-items:center; gap:8px;
+    padding:14px 18px; border-radius:14px; text-decoration:none;
+    background:#fff; color:#05070a; font-weight:900; font-size:14px;
   }
-  body.control .pitchnext-bar button{ padding:16px 22px; font-size:15px; }
-  body.control .pitchnext-bar button .lbl{ display:inline; }
-
-  /* modo display: só slides (projetor) */
-  body.display .pitchnext-bar{ display:none; }
-  body.display .app{ grid-template-rows:1fr; }
 </style>
 </head>
 <body>
-  <div class="grid"></div>
-  <div class="vignette"></div>
+  <div class="wrap">
+    <div class="brand">
+      <img src="/logo.png" alt="Wagoo" />
+      <small>Pitch Next · Controle</small>
+    </div>
+    <h1>Central de<br><span class="g">controle</span></h1>
+    <p class="hint">
+      Abra <code>/pitch</code> no projetor (ou outra aba). Os botões abaixo mudam essa tela em tempo real.
+    </p>
+    <div class="status"><span class="dot"></span> <span id="live">Enviando para /pitch…</span></div>
 
-  <div class="app">
-    <main class="stage" id="stage">
+    <div class="block">
+      <div class="block-title">Escolher apresentação</div>
+      <div class="grid-btns">
+        <button type="button" class="btn on" id="btn-fluxo" data-mode="fluxo">
+          <span class="n">A</span>
+          <span>
+            <div class="t">Fluxo Wagoo</div>
+            <div class="d">Página inicial — animação do produto</div>
+          </span>
+        </button>
+        <button type="button" class="btn" id="btn-valores" data-mode="valores">
+          <span class="n">B</span>
+          <span>
+            <div class="t">Valores &amp; números</div>
+            <div class="d">Mercado, concorrência, margem e roadmap</div>
+          </span>
+        </button>
+      </div>
+    </div>
 
-      <!-- SLIDE 1: MERCADO -->
-      <section class="slide on" data-slide="mercado">
-        <div class="inner">
-          <div class="eyebrow anim d1">Mercado · TAM / SAM / SOM</div>
-          <h1 class="title anim d2">O tamanho do<br><span class="g">jogo.</span></h1>
-          <p class="sub anim d3">Público-alvo viável no Brasil — e a fatia mínima que buscamos no Ano 1.</p>
-          <div class="pillars">
-            <article class="pillar anim d3">
-              <div class="tag">TAM</div>
-              <div class="value">5M+</div>
-              <p>Profissionais liberais e autônomos que dependem de agendamento no Brasil.</p>
-            </article>
-            <article class="pillar anim d4">
-              <div class="tag">SAM</div>
-              <div class="value">3,5M</div>
-              <p>70% já usam canais digitais — sobretudo WhatsApp — para marcar horário.</p>
-            </article>
-            <article class="pillar hot anim d5">
-              <div class="tag">SOM · Ano 1</div>
-              <div class="value">270</div>
-              <p>Clientes ativos no plano padrão — menos de 0,01% do mercado digital.</p>
-            </article>
-          </div>
-        </div>
-      </section>
+    <div class="block valores" id="valores-panel">
+      <div class="block-title">Slides de valor</div>
+      <div class="grid-btns two">
+        <button type="button" class="btn slide-btn" data-slide="mercado">
+          <span class="n">01</span>
+          <span><div class="t">Mercado</div><div class="d">TAM · SAM · SOM</div></span>
+        </button>
+        <button type="button" class="btn slide-btn" data-slide="concorrencia">
+          <span class="n">02</span>
+          <span><div class="t">Concorrência</div><div class="d">Tabela 2026</div></span>
+        </button>
+        <button type="button" class="btn slide-btn" data-slide="margens">
+          <span class="n">03</span>
+          <span><div class="t">Margens</div><div class="d">88,4% · Unit economics</div></span>
+        </button>
+        <button type="button" class="btn slide-btn" data-slide="roadmap">
+          <span class="n">04</span>
+          <span><div class="t">Roadmap</div><div class="d">Ano 1 · R$ 210.834</div></span>
+        </button>
+      </div>
+    </div>
 
-      <!-- SLIDE 2: CONCORRÊNCIA -->
-      <section class="slide" data-slide="concorrencia">
-        <div class="inner">
-          <div class="eyebrow anim d1">Concorrência · 2026</div>
-          <h1 class="title anim d2">Preço justo.<br><span class="g">Experiência nativa.</span></h1>
-          <p class="sub anim d3">Enquanto o mercado empurra o cliente para fora do WhatsApp, o Wagoo marca dentro do chat.</p>
-          <div class="vs">
-            <div class="stack">
-              <div class="comp anim d3">
-                <div class="name">Sistemas tradicionais</div>
-                <div class="price">R$ 50 – 120</div>
-                <div class="hint">Links passivos · UX rígida e fria</div>
-              </div>
-              <div class="comp anim d4">
-                <div class="name">Robôs de menu</div>
-                <div class="price">R$ 69 – 99</div>
-                <div class="hint">“Digite 1…” · trava fora do padrão</div>
-              </div>
-              <div class="comp anim d5">
-                <div class="name">Plataformas com IA</div>
-                <div class="price">R$ 89 – 450+</div>
-                <div class="hint">Setup complexo · taxas por volume</div>
-              </div>
-            </div>
-            <div class="hero-card anim d4">
-              <div class="who">Wagoo · nosso sistema</div>
-              <div class="price">R$ 59 <small>a</small> 259</div>
-              <div class="line">Agente de IA conversacional nativo no WhatsApp — consulta a agenda em tempo real e confirma sem sair do chat.</div>
-              <div class="chips">
-                <span class="chip">Fluido e humano</span>
-                <span class="chip">Simples de configurar</span>
-                <span class="chip">Sem fidelidade</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <!-- SLIDE 3: MARGENS -->
-      <section class="slide" data-slide="margens">
-        <div class="inner">
-          <div class="eyebrow anim d1">Unit economics · Plano Basic</div>
-          <h1 class="title anim d2">Margem que<br><span class="g">escala.</span></h1>
-          <div class="margin-layout">
-            <div class="mega anim d3">
-              <div class="label">Margem bruta vs. IA</div>
-              <div class="num">88,4%</div>
-              <div class="cap">Indicador principal de viabilidade</div>
-            </div>
-            <div class="side">
-              <div class="box anim d4">
-                <div class="k">Custo de servir (COGS)</div>
-                <div class="v">R$ 6,85</div>
-                <div class="n">/mês · IA por profissional</div>
-              </div>
-              <div class="box anim d5">
-                <div class="k">Preço da assinatura</div>
-                <div class="v">R$ 59</div>
-                <div class="n">/mês · Plano Básico</div>
-              </div>
-            </div>
-          </div>
-          <p class="footnote anim d5">Simulação no limite máximo de slots por profissional. Infraestrutura e gateway fora do cálculo direto da margem da IA.</p>
-        </div>
-      </section>
-
-      <!-- SLIDE 4: ROADMAP -->
-      <section class="slide" data-slide="roadmap">
-        <div class="inner">
-          <div class="eyebrow anim d1">Roadmap · Ano 1</div>
-          <h1 class="title anim d2">Tração com<br><span class="g">números claros.</span></h1>
-          <p class="sub anim d3">Do primeiro cliente ao break-even — e escala com receita recorrente.</p>
-          <div class="quarters">
-            <article class="q anim d3">
-              <div class="ql">Q1</div>
-              <div class="qp">Meses 1–3</div>
-              <h3>Validação</h3>
-              <div class="rev">R$ 11.175<small>meta de faturamento</small></div>
-            </article>
-            <article class="q anim d4">
-              <div class="ql">Q2</div>
-              <div class="qp">Meses 4–6</div>
-              <h3>Break-even</h3>
-              <div class="rev">R$ 33.525<small>PIX/cartão no chat</small></div>
-            </article>
-            <article class="q anim d4">
-              <div class="ql">Q3</div>
-              <div class="qp">Meses 7–9</div>
-              <h3>Tração GTM</h3>
-              <div class="rev">R$ 64.815<small>Instagram + voz</small></div>
-            </article>
-            <article class="q anim d5">
-              <div class="ql">Q4</div>
-              <div class="qp">Meses 10–12</div>
-              <h3>Escala</h3>
-              <div class="rev">270<small>clientes · R$ 149/mês</small></div>
-            </article>
-          </div>
-          <div class="total anim d5">
-            <div>
-              <div class="k">Faturamento total do Ano 1</div>
-              <div class="v">R$ 210.834</div>
-            </div>
-            <div>
-              <div class="k">Clientes ativos (meta)</div>
-              <div class="v" style="color:#fff">270</div>
-            </div>
-          </div>
-        </div>
-      </section>
-    </main>
-
-    <nav class="pitchnext-bar" aria-label="Pitch Next">
-      <button type="button" class="on" data-go="mercado"><b>01</b> <span class="lbl">Mercado</span></button>
-      <button type="button" data-go="concorrencia"><b>02</b> <span class="lbl">Concorrência</span></button>
-      <button type="button" data-go="margens"><b>03</b> <span class="lbl">Margens</span></button>
-      <button type="button" data-go="roadmap"><b>04</b> <span class="lbl">Roadmap</span></button>
-    </nav>
+    <a class="open-pitch" href="/pitch" target="_blank" rel="noopener">Abrir /pitch no projetor →</a>
   </div>
 
 <script>
   const CHANNEL = "wagoo-pitchnext";
-  const order = ["mercado","concorrencia","margens","roadmap"];
-  const buttons = [...document.querySelectorAll(".pitchnext-bar button")];
-  const slides = [...document.querySelectorAll(".slide")];
-  const params = new URLSearchParams(location.search);
-  const isControl = params.has("control");
-  const isDisplay = params.has("display");
-  if(isControl) document.body.classList.add("control");
-  if(isDisplay) document.body.classList.add("display");
-
+  const STORAGE = "wagoo-pitchnext-state";
   const bc = ("BroadcastChannel" in window) ? new BroadcastChannel(CHANNEL) : null;
+  const live = document.getElementById("live");
+  const valoresPanel = document.getElementById("valores-panel");
+  const btnFluxo = document.getElementById("btn-fluxo");
+  const btnValores = document.getElementById("btn-valores");
+  const slideBtns = [...document.querySelectorAll(".slide-btn")];
 
-  function go(id, broadcast = true){
-    if(!order.includes(id)) return;
-    slides.forEach((s) => {
-      const on = s.dataset.slide === id;
-      // reinicia animações ao entrar no slide
-      if(on){
-        s.classList.remove("on");
-        void s.offsetWidth;
-      }
-      s.classList.toggle("on", on);
-    });
-    buttons.forEach((b) => b.classList.toggle("on", b.dataset.go === id));
-    history.replaceState(null, "", `${location.pathname}${location.search}#${id}`);
-    if(broadcast && bc) bc.postMessage({ type:"slide", id });
+  let state = { mode: "fluxo", slide: "mercado" };
+
+  function persist(){
+    localStorage.setItem(STORAGE, JSON.stringify(state));
+    if(bc) bc.postMessage({ type: "pitch", ...state });
+    // storage event for same-origin tabs without BroadcastChannel
+    localStorage.setItem(STORAGE + ":tick", String(Date.now()));
   }
 
-  buttons.forEach((b) => b.addEventListener("click", () => go(b.dataset.go)));
-
-  if(bc){
-    bc.onmessage = (ev) => {
-      if(ev.data?.type === "slide") go(ev.data.id, false);
-    };
+  function paint(){
+    btnFluxo.classList.toggle("on", state.mode === "fluxo");
+    btnValores.classList.toggle("on", state.mode === "valores");
+    valoresPanel.classList.toggle("active", state.mode === "valores");
+    slideBtns.forEach((b) => b.classList.toggle("on", state.mode === "valores" && b.dataset.slide === state.slide));
+    live.textContent = state.mode === "fluxo"
+      ? "Projetor: Fluxo Wagoo"
+      : `Projetor: Valores → ${state.slide}`;
   }
+
+  function setMode(mode){
+    state.mode = mode;
+    if(mode === "valores" && !state.slide) state.slide = "mercado";
+    paint();
+    persist();
+  }
+
+  function setSlide(slide){
+    state.mode = "valores";
+    state.slide = slide;
+    paint();
+    persist();
+  }
+
+  btnFluxo.addEventListener("click", () => setMode("fluxo"));
+  btnValores.addEventListener("click", () => {
+    setMode("valores");
+    setSlide(state.slide || "mercado");
+  });
+  slideBtns.forEach((b) => b.addEventListener("click", () => setSlide(b.dataset.slide)));
 
   addEventListener("keydown", (e) => {
-    const cur = order.indexOf(document.querySelector(".slide.on")?.dataset.slide);
-    if(e.key === "ArrowRight" || e.key === "PageDown" || e.key === " "){
-      e.preventDefault();
-      go(order[Math.min(order.length - 1, Math.max(0, cur) + 1)]);
+    if(e.key.toLowerCase() === "a" || e.key === "0") setMode("fluxo");
+    if(e.key.toLowerCase() === "b") { setMode("valores"); setSlide(state.slide || "mercado"); }
+    const map = { "1":"mercado", "2":"concorrencia", "3":"margens", "4":"roadmap" };
+    if(map[e.key]) setSlide(map[e.key]);
+    if(state.mode === "valores" && (e.key === "ArrowRight" || e.key === "ArrowLeft")){
+      const order = ["mercado","concorrencia","margens","roadmap"];
+      const i = order.indexOf(state.slide);
+      const next = e.key === "ArrowRight"
+        ? order[Math.min(order.length - 1, i + 1)]
+        : order[Math.max(0, i - 1)];
+      setSlide(next);
     }
-    if(e.key === "ArrowLeft" || e.key === "PageUp"){
-      e.preventDefault();
-      go(order[Math.max(0, cur - 1)]);
-    }
-    if(/^[1-4]$/.test(e.key)) go(order[+e.key - 1]);
   });
 
-  const hash = location.hash.replace("#","");
-  go(order.includes(hash) ? hash : "mercado", !isDisplay);
+  try{
+    const saved = JSON.parse(localStorage.getItem(STORAGE) || "null");
+    if(saved?.mode) state = { mode: saved.mode, slide: saved.slide || "mercado" };
+  }catch{}
+  paint();
+  persist();
 </script>
 </body>
 </html>
