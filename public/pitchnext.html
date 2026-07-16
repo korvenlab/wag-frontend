@@ -3,115 +3,200 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Wagoo — Pitch Next (Controle)</title>
+<title>Wagoo — Pitch Next</title>
 <meta name="robots" content="noindex" />
 <style>
   :root{
     --green:#64b34d;
     --green-deep:#4d8f3b;
     --ink:#05070a;
+    --neon:#eafff1;
     --muted:rgba(255,255,255,.55);
-    --glass:rgba(255,255,255,.05);
-    --stroke:rgba(255,255,255,.12);
+    --glass:rgba(255,255,255,.04);
+    --stroke:rgba(255,255,255,.10);
   }
   *{ box-sizing:border-box; margin:0; padding:0; }
   html,body{ min-height:100%; }
   body{
     background:
-      radial-gradient(900px 500px at 20% 0%, rgba(100,179,77,.16), transparent 55%),
-      radial-gradient(800px 600px at 100% 100%, rgba(100,179,77,.08), transparent 50%),
+      radial-gradient(1200px 700px at 18% 12%, rgba(100,179,77,.14), transparent 60%),
+      radial-gradient(1000px 800px at 88% 88%, rgba(100,179,77,.10), transparent 55%),
+      radial-gradient(900px 900px at 50% 50%, rgba(255,255,255,.03), transparent 60%),
       var(--ink);
     color:#fff;
     font-family:"Inter","Segoe UI",system-ui,-apple-system,Arial,sans-serif;
     letter-spacing:-.01em;
     -webkit-font-smoothing:antialiased;
   }
+
+  .grid{
+    position:fixed; inset:-2px; z-index:0; opacity:.35; pointer-events:none;
+    background-image:
+      linear-gradient(rgba(255,255,255,.045) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,.045) 1px, transparent 1px);
+    background-size:64px 64px;
+    mask-image:radial-gradient(circle at 50% 45%, #000 28%, transparent 78%);
+    animation:drift 18s linear infinite;
+  }
+  @keyframes drift{ to{ background-position:64px 64px, 64px 64px; } }
+  .vignette{
+    position:fixed; inset:0; z-index:1; pointer-events:none;
+    background:radial-gradient(120% 120% at 50% 40%, transparent 55%, rgba(0,0,0,.55) 100%);
+  }
+
   .wrap{
-    max-width:720px; margin:0 auto;
-    padding:32px 20px 48px;
+    position:relative; z-index:2;
+    max-width:760px; margin:0 auto;
+    padding:36px 22px 56px;
   }
-  .brand{
-    display:flex; align-items:center; gap:12px; margin-bottom:10px;
+
+  .hud{
+    display:flex; align-items:center; justify-content:space-between; gap:16px;
+    margin-bottom:36px;
   }
-  .brand img{ height:28px; filter:drop-shadow(0 0 12px rgba(100,179,77,.45)); }
+  .brand{ display:flex; align-items:center; gap:12px; }
+  .brand img{
+    height:30px; width:auto; display:block;
+    filter:drop-shadow(0 0 12px rgba(100,179,77,.45));
+  }
   .brand small{
-    color:var(--muted); font-size:10px; font-weight:800;
-    letter-spacing:.22em; text-transform:uppercase;
-  }
-  h1{
-    font-size:clamp(28px,5vw,40px); font-weight:900; letter-spacing:-.03em; line-height:1.05;
-  }
-  h1 .g{ color:var(--green); }
-  .hint{
-    margin-top:12px; color:var(--muted); font-size:14px; font-weight:600; line-height:1.45;
-  }
-  .hint code{
-    color:#eafff1; background:rgba(255,255,255,.06); padding:2px 7px; border-radius:8px;
-    font-size:12px;
+    font-weight:700; color:var(--muted);
+    letter-spacing:.28em; text-transform:uppercase; font-size:11px;
   }
   .status{
-    margin-top:16px; display:inline-flex; align-items:center; gap:8px;
-    padding:8px 12px; border-radius:999px; border:1px solid var(--stroke);
-    background:var(--glass); font-size:12px; font-weight:800; color:var(--muted);
+    display:inline-flex; align-items:center; gap:8px;
+    padding:10px 14px; border-radius:999px;
+    border:1px solid var(--stroke); background:var(--glass);
+    backdrop-filter:blur(8px);
+    font-size:12px; font-weight:800; color:var(--muted);
   }
   .status .dot{
     width:8px; height:8px; border-radius:50%; background:var(--green);
-    box-shadow:0 0 10px rgba(100,179,77,.9);
+    box-shadow:0 0 12px rgba(100,179,77,.95);
   }
 
-  .block{ margin-top:28px; }
-  .block-title{
-    font-size:11px; font-weight:900; letter-spacing:.18em; text-transform:uppercase;
-    color:var(--muted); margin-bottom:12px;
+  .logo-wrap{
+    position:relative; display:flex; justify-content:center; margin:8px 0 22px;
   }
+  .logo-wrap::before{
+    content:""; position:absolute; width:70%; height:180%;
+    background:radial-gradient(circle, rgba(100,179,77,.28), transparent 65%);
+    filter:blur(10px); z-index:-1;
+  }
+  .logo-mark{
+    width:min(280px,58vw); height:auto; display:block;
+    filter:drop-shadow(0 12px 40px rgba(100,179,77,.45));
+  }
+
+  .eyebrow{
+    display:inline-flex; margin-bottom:14px; padding:8px 14px; border-radius:999px;
+    border:1px solid rgba(100,179,77,.4); background:rgba(100,179,77,.1);
+    color:var(--green); font-size:11px; font-weight:900; letter-spacing:.2em; text-transform:uppercase;
+  }
+  h1{
+    font-size:clamp(34px,5.5vw,56px); font-weight:900;
+    letter-spacing:-.035em; line-height:1.02; text-align:center;
+  }
+  h1 .g{ color:var(--green); position:relative; }
+  h1 .g::after{
+    content:""; position:absolute; left:0; right:0; bottom:.08em; height:4px; border-radius:9px;
+    background:rgba(100,179,77,.55); box-shadow:0 0 14px rgba(100,179,77,.7);
+  }
+  .hint{
+    margin:14px auto 0; max-width:520px; text-align:center;
+    color:var(--muted); font-size:15px; font-weight:600; line-height:1.45;
+  }
+  .hint code{
+    color:var(--neon); background:rgba(255,255,255,.06);
+    border:1px solid var(--stroke); padding:2px 8px; border-radius:8px; font-size:12px;
+  }
+
+  .block{ margin-top:34px; }
+  .block-title{
+    font-size:11px; font-weight:900; letter-spacing:.2em; text-transform:uppercase;
+    color:var(--muted); margin-bottom:14px; text-align:center;
+  }
+
+  .grid-btns{ display:grid; gap:12px; }
+  .grid-btns.two{ grid-template-columns:1fr 1fr; }
+  @media (max-width:560px){ .grid-btns.two{ grid-template-columns:1fr; } }
 
   .btn{
     appearance:none; cursor:pointer; width:100%;
     display:flex; align-items:center; gap:14px; text-align:left;
-    padding:18px 18px; border-radius:20px;
+    padding:18px 18px; border-radius:24px;
     border:1px solid var(--stroke); background:var(--glass);
-    color:#fff; font:inherit; transition:.2s;
+    color:#fff; font:inherit;
+    backdrop-filter:blur(8px);
+    transition:border-color .2s, box-shadow .2s, transform .2s, background .2s;
   }
-  .btn:hover{ border-color:rgba(255,255,255,.28); transform:translateY(-1px); }
+  .btn:hover{
+    border-color:rgba(255,255,255,.28);
+    transform:translateY(-2px);
+    box-shadow:0 12px 30px rgba(0,0,0,.35);
+  }
   .btn.on{
     border-color:rgba(100,179,77,.75);
     background:rgba(100,179,77,.14);
-    box-shadow:0 0 28px rgba(100,179,77,.28);
+    box-shadow:0 0 32px rgba(100,179,77,.32), inset 0 0 24px rgba(100,179,77,.06);
   }
   .btn .n{
-    flex:none; width:42px; height:42px; border-radius:14px;
+    flex:none; width:44px; height:44px; border-radius:16px;
     display:flex; align-items:center; justify-content:center;
-    background:rgba(255,255,255,.06); font-weight:900; color:var(--muted);
+    background:rgba(255,255,255,.05); border:1px solid var(--stroke);
+    font-weight:900; color:var(--muted);
   }
-  .btn.on .n{ background:rgba(100,179,77,.2); color:var(--green); }
-  .btn .t{ font-size:16px; font-weight:900; }
+  .btn.on .n{
+    background:rgba(100,179,77,.2); border-color:rgba(100,179,77,.45); color:var(--green);
+    box-shadow:0 0 16px rgba(100,179,77,.35);
+  }
+  .btn .t{ font-size:16px; font-weight:900; letter-spacing:-.02em; }
   .btn .d{ margin-top:3px; font-size:12px; font-weight:600; color:var(--muted); }
 
-  .grid-btns{ display:grid; gap:10px; }
-  .grid-btns.two{ grid-template-columns:1fr 1fr; }
-  @media (max-width:560px){ .grid-btns.two{ grid-template-columns:1fr; } }
-
-  .valores{ opacity:.45; pointer-events:none; transition:.25s; }
-  .valores.active{ opacity:1; pointer-events:auto; }
-
-  .open-pitch{
-    margin-top:28px; display:inline-flex; align-items:center; gap:8px;
-    padding:14px 18px; border-radius:14px; text-decoration:none;
-    background:#fff; color:#05070a; font-weight:900; font-size:14px;
+  .valores{
+    opacity:.4; pointer-events:none; transition:opacity .35s ease, transform .35s ease;
+    transform:translateY(6px);
   }
+  .valores.active{ opacity:1; pointer-events:auto; transform:none; }
+
+  .foot{
+    margin-top:36px; display:flex; justify-content:center;
+  }
+  .open-pitch{
+    display:inline-flex; align-items:center; gap:10px;
+    padding:16px 28px; border-radius:16px; text-decoration:none;
+    background:#fff; color:#05070a; font-weight:900; font-size:15px;
+    box-shadow:0 0 30px rgba(255,255,255,.22);
+    transition:transform .2s, box-shadow .2s;
+  }
+  .open-pitch:hover{ transform:translateY(-1px); box-shadow:0 0 36px rgba(255,255,255,.32); }
 </style>
 </head>
 <body>
+  <div class="grid"></div>
+  <div class="vignette"></div>
+
   <div class="wrap">
-    <div class="brand">
-      <img src="/logo.png" alt="Wagoo" />
-      <small>Pitch Next · Controle</small>
+    <div class="hud">
+      <div class="brand">
+        <img src="/logo.png" alt="Wagoo" />
+        <small>by Korven Lab</small>
+      </div>
+      <div class="status"><span class="dot"></span> <span id="live">Pronto para controlar /pitch</span></div>
     </div>
-    <h1>Central de<br><span class="g">controle</span></h1>
-    <p class="hint">
-      Abra <code>/pitch</code> no projetor (ou outra aba). Os botões abaixo mudam essa tela em tempo real.
-    </p>
-    <div class="status"><span class="dot"></span> <span id="live">Enviando para /pitch…</span></div>
+
+    <div class="logo-wrap">
+      <img class="logo-mark" src="/logo.png" alt="Wagoo" />
+    </div>
+
+    <div style="text-align:center">
+      <div class="eyebrow">Pitch Next · Controle</div>
+      <h1>Central de<br><span class="g">controle.</span></h1>
+      <p class="hint">
+        Abra <code>/pitch</code> no projetor. Os botões abaixo mudam essa tela em tempo real —
+        mesmo visual, só o comando.
+      </p>
+    </div>
 
     <div class="block">
       <div class="block-title">Escolher apresentação</div>
@@ -120,7 +205,7 @@
           <span class="n">A</span>
           <span>
             <div class="t">Fluxo Wagoo</div>
-            <div class="d">Página inicial — animação do produto</div>
+            <div class="d">Animação — “Sua agenda no automático”</div>
           </span>
         </button>
         <button type="button" class="btn" id="btn-valores" data-mode="valores">
@@ -155,7 +240,9 @@
       </div>
     </div>
 
-    <a class="open-pitch" href="/pitch" target="_blank" rel="noopener">Abrir /pitch no projetor →</a>
+    <div class="foot">
+      <a class="open-pitch" href="/pitch" target="_blank" rel="noopener">Abrir /pitch no projetor →</a>
+    </div>
   </div>
 
 <script>
@@ -173,7 +260,6 @@
   function persist(){
     localStorage.setItem(STORAGE, JSON.stringify(state));
     if(bc) bc.postMessage({ type: "pitch", ...state });
-    // storage event for same-origin tabs without BroadcastChannel
     localStorage.setItem(STORAGE + ":tick", String(Date.now()));
   }
 
@@ -184,7 +270,7 @@
     slideBtns.forEach((b) => b.classList.toggle("on", state.mode === "valores" && b.dataset.slide === state.slide));
     live.textContent = state.mode === "fluxo"
       ? "Projetor: Fluxo Wagoo"
-      : `Projetor: Valores → ${state.slide}`;
+      : `Projetor: ${({mercado:"Mercado",concorrencia:"Concorrência",margens:"Margens",roadmap:"Roadmap"})[state.slide] || state.slide}`;
   }
 
   function setMode(mode){
