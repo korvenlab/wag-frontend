@@ -550,6 +550,8 @@
 <script>
   const CHANNEL = "wagoo-pitchnext";
   const STORAGE = "wagoo-pitchnext-state";
+  const API_BASE = "https://wag-backend.onrender.com";
+  const REMOTE_URL = `${API_BASE}/api/pitch/remote`;
   const SCENES = [
     { name:"intro", dur:4.5 },
     { name:"demo",  dur:13.5 },
@@ -568,6 +570,7 @@
   let pausedAt = 0;
   let mode = "fluxo";
   let valueSlide = "mercado";
+  let lastKey = "fluxo|mercado";
 
   function stepForDemo(t){
     if(t < 2.9) return 0;
@@ -583,10 +586,16 @@
     });
   }
 
-  function applyState(next){
+  function applyState(next, force){
+    const nextMode = next.mode === "valores" ? "valores" : "fluxo";
+    const nextSlide = VALUE_SLIDES.includes(next.slide) ? next.slide : "mercado";
+    const key = `${nextMode}|${nextSlide}`;
+    if(!force && key === lastKey) return;
+    lastKey = key;
+
     const prevMode = mode;
-    mode = next.mode === "valores" ? "valores" : "fluxo";
-    valueSlide = VALUE_SLIDES.includes(next.slide) ? next.slide : "mercado";
+    mode = nextMode;
+    valueSlide = nextSlide;
     body.dataset.mode = mode;
 
     if(mode === "valores"){
@@ -600,7 +609,6 @@
         paused = false;
         body.dataset.scene = "intro";
       } else if(paused){
-        // resume if we were only space-paused while already in fluxo
         paused = false;
         start += performance.now() - pausedAt;
       }
@@ -612,6 +620,17 @@
       const saved = JSON.parse(localStorage.getItem(STORAGE) || "null");
       if(saved?.mode) applyState(saved);
     }catch{}
+  }
+
+  async function pollRemote(){
+    try{
+      const res = await fetch(REMOTE_URL, { headers: { Accept: "application/json" }, cache: "no-store" });
+      if(!res.ok) return;
+      const data = await res.json();
+      if(data?.mode) applyState(data);
+    }catch{
+      /* cold start Render / rede — próximo poll tenta de novo */
+    }
   }
 
   function frame(now){
@@ -637,7 +656,6 @@
   }
   requestAnimationFrame(frame);
 
-  // Remote control from /pitchnext
   if("BroadcastChannel" in window){
     const bc = new BroadcastChannel(CHANNEL);
     bc.onmessage = (ev) => {
@@ -648,6 +666,8 @@
     if(e.key === STORAGE || e.key === STORAGE + ":tick") readStored();
   });
   readStored();
+  void pollRemote();
+  setInterval(() => { void pollRemote(); }, 700);
 
   addEventListener("keydown", (e)=>{
     if(mode !== "fluxo") return;
