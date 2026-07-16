@@ -6,7 +6,11 @@
     },
     {
       "source": "/pitch/financas",
-      "destination": "/pitch-financas.html"
+      "destination": "/pitchnext.html"
+    },
+    {
+      "source": "/pitchnext",
+      "destination": "/pitchnext.html"
     },
     {
       "source": "/(.*)",

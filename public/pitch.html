@@ -271,6 +271,11 @@
 
   /* ---------- help / controls ---------- */
   body.paused *{ animation-play-state:paused !important; }
+
+  /* Modo embed dentro do Pitch Next: esconde chrome de navegação */
+  body.embed .hud-right .tabs,
+  body.embed .hud-right .finance-btn{ display:none !important; }
+  body.embed .progress{ width:220px; display:block !important; }
 </style>
 </head>
 <body data-scene="intro">
@@ -282,9 +287,9 @@
     <div class="hud-right">
       <nav class="tabs" aria-label="Abas do pitch">
         <a class="tab on" href="/pitch" aria-current="page"><b>01</b> Fluxo</a>
-        <a class="tab" href="/pitch/financas"><b>02</b> Finanças &amp; Margem</a>
+        <a class="tab" href="/pitchnext"><b>02</b> Pitch Next</a>
       </nav>
-      <a class="finance-btn" href="/pitch/financas">Tabela de valor <span>→</span></a>
+      <a class="finance-btn" href="/pitchnext">Abrir Pitch Next <span>→</span></a>
       <div class="progress"><i id="bar"></i></div>
     </div>
   </div>
@@ -366,10 +371,10 @@
         <div class="plan"><div class="n">Pro+</div><div class="p">R$259<small>/mês</small></div><div class="u">até 5 usuários</div></div>
       </div>
       <div class="cta-row">
-        <a class="cta" href="/pitch/financas">Tabela de valor →</a>
+        <a class="cta" href="/pitchnext">Abrir Pitch Next →</a>
         <a class="cta ghost" href="https://wagoobot.com/#precos">Começar agora</a>
       </div>
-      <div class="site">wagoobot.com/pitch/financas</div>
+      <div class="site">wagoobot.com/pitchnext</div>
     </section>
 
   </div>
@@ -390,6 +395,9 @@
   const TOTAL = SCENES.reduce((a,s)=>a+s.dur,0);
 
   const body = document.body;
+  if(new URLSearchParams(location.search).has("embed")){
+    body.classList.add("embed");
+  }
   const bar  = document.getElementById("bar");
   const pills= [...document.querySelectorAll(".pill")];
 
