@@ -241,7 +241,10 @@
   .site{ color:var(--muted); font-weight:700; font-size:13px; letter-spacing:.2em; text-transform:uppercase; }
 
   /* ---------- help / controls ---------- */
-  body.paused *{ animation-play-state:paused !important; }
+  /* Só pausa o fluxo animado — nunca os slides de valor (senão ficam em opacity:0). */
+  body.fluxo-paused .stage *,
+  body.fluxo-paused .steps *,
+  body.fluxo-paused .progress *{ animation-play-state:paused !important; }
 
   /* HUD limpo no projetor — estilos base já definidos acima */
 
@@ -600,16 +603,17 @@
 
     if(mode === "valores"){
       paused = true;
-      body.classList.add("paused");
+      body.classList.remove("fluxo-paused");
       showValueSlide(valueSlide);
     } else {
-      body.classList.remove("paused");
       if(prevMode !== "fluxo"){
         start = performance.now();
         paused = false;
+        body.classList.remove("fluxo-paused");
         body.dataset.scene = "intro";
       } else if(paused){
         paused = false;
+        body.classList.remove("fluxo-paused");
         start += performance.now() - pausedAt;
       }
     }
@@ -674,12 +678,14 @@
     if(e.code === "Space"){
       e.preventDefault();
       paused = !paused;
-      body.classList.toggle("paused", paused);
+      body.classList.toggle("fluxo-paused", paused);
       if(paused){ pausedAt = performance.now(); }
       else { start += performance.now() - pausedAt; }
     }
     if(e.key.toLowerCase() === "r"){
-      start = performance.now(); paused = false; body.classList.remove("paused");
+      start = performance.now();
+      paused = false;
+      body.classList.remove("fluxo-paused");
     }
   });
 </script>
