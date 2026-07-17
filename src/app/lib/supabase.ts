@@ -1,8 +1,22 @@
-import { createClient } from '@supabase/supabase-js';
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
-// Puxa as chaves secretas que vamos configurar de forma segura na Vercel
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || "";
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || "";
+const supabaseUrl = (import.meta.env.VITE_SUPABASE_URL as string | undefined)?.trim() || "";
+const supabaseAnonKey =
+  (import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined)?.trim() || "";
 
-// Cria e exporta o cliente oficial do Supabase para o resto do site utilizar
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+export const hasSupabaseConfig = Boolean(supabaseUrl && supabaseAnonKey);
+
+if (!hasSupabaseConfig) {
+  console.error(
+    "[Wagoo] Defina VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY no ambiente de build (Vercel → Settings → Environment Variables) e faça Redeploy.",
+  );
+}
+
+/**
+ * Cliente Supabase. Sem env no build, usa placeholder para a landing não quebrar;
+ * login/API só funcionam com as variáveis reais.
+ */
+export const supabase: SupabaseClient = createClient(
+  supabaseUrl || "https://placeholder.supabase.co",
+  supabaseAnonKey || "public-anon-key-placeholder",
+);
