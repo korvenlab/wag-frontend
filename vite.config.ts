@@ -10,6 +10,8 @@ export default defineConfig({
     react(),
     tailwindcss(),
   ],
+  /** Expoe VITE_* e NEXT_PUBLIC_* (legado Vercel) no bundle do browser. */
+  envPrefix: ["VITE_", "NEXT_PUBLIC_"],
   resolve: {
     alias: {
       // Alias @ to the src directory
