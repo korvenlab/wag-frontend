@@ -11,6 +11,8 @@ export type DashboardProfileCache = {
   appointments_made: number;
   service_duration: number;
   working_hours: Record<string, unknown> | null;
+  reminders_enabled: boolean;
+  remind_before_minutes: number;
 };
 
 export type TeamMemberCache = {

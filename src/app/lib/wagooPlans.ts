@@ -7,6 +7,8 @@ export type WagooPlanCard = {
   maxUsers: number;
   description: string;
   highlight?: boolean;
+  /** Diferenciais além dos recursos compartilhados */
+  extras: string[];
 };
 
 export const WAGOO_PLAN_CARDS: WagooPlanCard[] = [
@@ -16,6 +18,7 @@ export const WAGOO_PLAN_CARDS: WagooPlanCard[] = [
     priceBrl: 59,
     maxUsers: 1,
     description: "1 usuário — ideal para profissional autônomo",
+    extras: [],
   },
   {
     tier: "pro",
@@ -24,6 +27,7 @@ export const WAGOO_PLAN_CARDS: WagooPlanCard[] = [
     maxUsers: 3,
     description: "Até 3 usuários na equipe com o mesmo WhatsApp",
     highlight: true,
+    extras: ["Lembretes automáticos no WhatsApp antes do horário", "Gerenciar equipe de profissionais"],
   },
   {
     tier: "pro_plus",
@@ -31,6 +35,7 @@ export const WAGOO_PLAN_CARDS: WagooPlanCard[] = [
     priceBrl: 259,
     maxUsers: 5,
     description: "Até 5 usuários para negócios em crescimento",
+    extras: ["Lembretes automáticos no WhatsApp antes do horário", "Gerenciar equipe de profissionais"],
   },
 ];
 
@@ -46,4 +51,14 @@ export const WAGOO_SHARED_FEATURES = [
 export function planLabel(tier: WagooPlanTier | null | undefined): string {
   if (!tier) return "Sem plano";
   return WAGOO_PLAN_CARDS.find((p) => p.tier === tier)?.name ?? tier;
+}
+
+/** Lembretes WhatsApp — só Pro e Pro+. */
+export function tierSupportsReminders(tier: WagooPlanTier | null | undefined): boolean {
+  return tier === "pro" || tier === "pro_plus";
+}
+
+/** Gerenciar equipe (múltiplos profissionais) — só Pro e Pro+. */
+export function tierSupportsTeamManagement(tier: WagooPlanTier | null | undefined): boolean {
+  return tier === "pro" || tier === "pro_plus";
 }

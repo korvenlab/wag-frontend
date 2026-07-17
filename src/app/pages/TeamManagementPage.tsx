@@ -29,6 +29,7 @@ import {
 import { useAuth } from "../context/AuthContext";
 import { DashboardSidebar } from "../components/DashboardSidebar";
 import { FeedbackFab } from "../components/FeedbackFab";
+import { PlanFeatureGate } from "../components/PlanFeatureGate";
 import { supabase } from "../lib/supabase";
 import { apiFetch } from "../lib/apiFetch";
 import {
@@ -36,7 +37,11 @@ import {
   setCachedTeam,
   invalidateTeamCache,
 } from "../lib/dashboardCache";
-import { planLabel, type WagooPlanTier } from "../lib/wagooPlans";
+import {
+  planLabel,
+  tierSupportsTeamManagement,
+  type WagooPlanTier,
+} from "../lib/wagooPlans";
 
 type Barbeiro = {
   id: string;
@@ -108,12 +113,16 @@ export function TeamManagementPage() {
       navigate("/#precos");
       return;
     }
+    if (!tierSupportsTeamManagement(user.subscriptionTier)) {
+      setLoadingTeam(false);
+      return;
+    }
     if (user.storeName) setStoreName(user.storeName);
     const background =
       teamLoadStateRef.current.userId === user.id && teamLoadStateRef.current.loaded;
     void loadTeam({ background });
     teamLoadStateRef.current = { userId: user.id, loaded: true };
-  }, [user?.id, user?.hasPaid, user?.storeName, loading, navigate, loadTeam]);
+  }, [user?.id, user?.hasPaid, user?.storeName, user?.subscriptionTier, loading, navigate, loadTeam]);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -250,10 +259,11 @@ export function TeamManagementPage() {
   const maxTeamUsers = user.maxTeamUsers;
   const teamUsersUsed = user.teamUsersUsed;
   const canAddTeamMember =
-    subscriptionTier !== null && teamUsersUsed < maxTeamUsers;
+    tierSupportsTeamManagement(subscriptionTier) && teamUsersUsed < maxTeamUsers;
 
   /** Plano definido no login (`/api/user/profile`); evita paywall a piscar em cada visita. */
   const showNoPlanPaywall = !subscriptionTier;
+  const showBasicTeamGate = subscriptionTier === "basic";
   const atLimit = subscriptionTier !== null && teamUsersUsed >= maxTeamUsers;
   const upgradeTarget: WagooPlanTier | null =
     subscriptionTier === "basic" ? "pro" : subscriptionTier === "pro" ? "pro_plus" : null;
@@ -262,7 +272,7 @@ export function TeamManagementPage() {
     <div className="min-h-screen bg-[#F8FAFC] relative">
       <DashboardSidebar
         active="team"
-        storeName={storeName}
+        storeName={storeName || user.storeName || ""}
         userEmail={user.email}
         onLogout={() => {
           void logout();
@@ -272,6 +282,18 @@ export function TeamManagementPage() {
 
       <main className="lg:ml-72 p-6 lg:p-10 pb-24">
         <div className="max-w-4xl mx-auto mt-20 lg:mt-10 space-y-8">
+        {showBasicTeamGate ? (
+          <div className="pt-6">
+            <PlanFeatureGate
+              icon={Users}
+              title="Equipe disponível no Pro e Pro+"
+              description="No plano Basic esta aba não está inclusa. Faça upgrade para o Pro (até 3 usuários) ou Pro+ (até 5) e gerencie profissionais com agendas próprias."
+              onUpgrade={() => void handleUpgradeCheckout("pro")}
+              upgrading={upgrading === "pro"}
+            />
+          </div>
+        ) : (
+          <>
         <div className="mb-2 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div className="space-y-2">
             <div className="flex items-center gap-3 flex-wrap">
@@ -470,6 +492,8 @@ export function TeamManagementPage() {
             </div>
           ) : null}
         </div>
+          </>
+        )}
         </div>
       </main>
 

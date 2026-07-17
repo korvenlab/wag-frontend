@@ -166,6 +166,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         appointments_made?: number;
         service_duration?: number;
         working_hours?: Record<string, unknown> | null;
+        reminders_enabled?: boolean;
+        remind_before_minutes?: number;
       };
       const hasPaid =
         typeof profileData.has_access === "boolean"
@@ -206,6 +208,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           profileData.working_hours && Object.keys(profileData.working_hours).length > 0
             ? profileData.working_hours
             : null,
+        reminders_enabled: !!profileData.reminders_enabled,
+        remind_before_minutes:
+          typeof profileData.remind_before_minutes === "number"
+            ? profileData.remind_before_minutes
+            : 60,
       };
       setCachedDashboardProfile(authUser.id, cachePayload);
 

@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import {
   QrCode,
-  Bot, Phone, MessageSquare,
+  Bot, Phone, MessageSquare, Bell,
   CalendarCheck, Zap, Loader2, Check, Coffee, Moon, Sun, Copy
 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/card";
@@ -14,8 +14,9 @@ import { useAuth } from "../context/AuthContext";
 import { useNavigate, useLocation } from "react-router";
 import { FeedbackFab } from "../components/FeedbackFab";
 import { DashboardSidebar } from "../components/DashboardSidebar";
+import { PlanFeatureGate } from "../components/PlanFeatureGate";
 import { apiFetch } from "../lib/apiFetch";
-import { planLabel } from "../lib/wagooPlans";
+import { planLabel, tierSupportsReminders } from "../lib/wagooPlans";
 import {
   BUSINESS_NICHE_OPTIONS,
   isBusinessNicheId,
@@ -26,6 +27,8 @@ import {
   setCachedDashboardProfile,
   setCachedTeam,
 } from "../lib/dashboardCache";
+
+const REMIND_PRESETS = [15, 30, 60, 120] as const;
 
 const DAYS_OF_WEEK = ["Segunda-feira", "Terça-feira", "Quarta-feira", "Quinta-feira", "Sexta-feira", "Sábado", "Domingo"];
 
@@ -70,6 +73,10 @@ export function Dashboard() {
   const [messagesAnswered, setMessagesAnswered] = useState(0);
   const [appointmentsMade, setAppointmentsMade] = useState(0);
   const [profileHydrating, setProfileHydrating] = useState(true);
+  const [remindersEnabled, setRemindersEnabled] = useState(false);
+  const [remindBeforeMinutes, setRemindBeforeMinutes] = useState(60);
+  const [isSavingReminders, setIsSavingReminders] = useState(false);
+  const [showRemindersSuccess, setShowRemindersSuccess] = useState(false);
 
   const { user, loading, logout, refreshProfile } = useAuth();
   const navigate = useNavigate();
@@ -95,6 +102,8 @@ export function Dashboard() {
         setAppointmentsMade(cached.appointments_made || 0);
         setServiceDuration(cached.service_duration || 30);
         setIsGoogleConnected(!!cached.google_connected);
+        setRemindersEnabled(!!cached.reminders_enabled);
+        setRemindBeforeMinutes(cached.remind_before_minutes || 60);
         if (cached.working_hours && Object.keys(cached.working_hours).length > 0) {
           setWorkingHours(cached.working_hours);
         }
@@ -131,6 +140,10 @@ export function Dashboard() {
           setAppointmentsMade(data.appointments_made || 0);
           setServiceDuration(data.service_duration || 30);
           setIsGoogleConnected(!!data.google_connected);
+          setRemindersEnabled(!!data.reminders_enabled);
+          setRemindBeforeMinutes(
+            typeof data.remind_before_minutes === "number" ? data.remind_before_minutes : 60,
+          );
 
           if (data.working_hours && Object.keys(data.working_hours).length > 0) {
             setWorkingHours(data.working_hours);
@@ -157,6 +170,9 @@ export function Dashboard() {
               data.working_hours && Object.keys(data.working_hours).length > 0
                 ? data.working_hours
                 : null,
+            reminders_enabled: !!data.reminders_enabled,
+            remind_before_minutes:
+              typeof data.remind_before_minutes === "number" ? data.remind_before_minutes : 60,
           });
         }
       } catch (error) {
@@ -287,6 +303,51 @@ export function Dashboard() {
     }
   };
 
+  const handleSaveReminders = async () => {
+    setIsSavingReminders(true);
+    setShowRemindersSuccess(false);
+    try {
+      const response = await apiFetch("/api/settings/reminders", {
+        method: "POST",
+        body: JSON.stringify({
+          remindersEnabled,
+          remindBeforeMinutes,
+        }),
+      });
+      if (!response.ok) {
+        const body = (await response.json().catch(() => null)) as { error?: string } | null;
+        alert(body?.error || "Não foi possível salvar os lembretes.");
+        return;
+      }
+      const data = await response.json();
+      setRemindersEnabled(!!data.reminders_enabled);
+      setRemindBeforeMinutes(
+        typeof data.remind_before_minutes === "number"
+          ? data.remind_before_minutes
+          : remindBeforeMinutes,
+      );
+      if (user?.id) {
+        const cached = getCachedDashboardProfile(user.id);
+        if (cached) {
+          setCachedDashboardProfile(user.id, {
+            ...cached,
+            reminders_enabled: !!data.reminders_enabled,
+            remind_before_minutes:
+              typeof data.remind_before_minutes === "number"
+                ? data.remind_before_minutes
+                : remindBeforeMinutes,
+          });
+        }
+      }
+      setShowRemindersSuccess(true);
+      window.setTimeout(() => setShowRemindersSuccess(false), 2500);
+    } catch {
+      alert("Erro de rede ao salvar lembretes.");
+    } finally {
+      setIsSavingReminders(false);
+    }
+  };
+
   const updateDayField = (day: string, field: string, value: any) => {
     setWorkingHours(prev => ({
       ...prev,
@@ -388,6 +449,7 @@ export function Dashboard() {
     activeSection === "overview" ||
     activeSection === "analytics" ||
     activeSection === "hours" ||
+    activeSection === "reminders" ||
     activeSection === "settings"
       ? activeSection
       : "overview";
@@ -523,6 +585,77 @@ export function Dashboard() {
                   </Card>
                 </div>
               </>
+            )}
+
+            {activeSection === "reminders" && (
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="lg:col-span-3">
+                {tierSupportsReminders(user.subscriptionTier) ? (
+                  <Card className="rounded-[32px] border-none shadow-wg-elevated bg-white p-8 md:p-10 space-y-6 max-w-xl">
+                    <div className="flex items-center justify-between">
+                      <div className="w-12 h-12 rounded-2xl bg-green-50 border border-green-100 flex items-center justify-center text-[#64b34d]">
+                        <Bell size={22} />
+                      </div>
+                      <Switch
+                        checked={remindersEnabled}
+                        onCheckedChange={setRemindersEnabled}
+                        disabled={isSavingReminders}
+                        className="data-[state=checked]:bg-[#64b34d]"
+                      />
+                    </div>
+                    <div>
+                      <h3 className="font-black text-2xl text-slate-900 tracking-tight">
+                        Lembretes no WhatsApp
+                      </h3>
+                      <p className="text-slate-500 text-sm font-medium mt-2 leading-relaxed">
+                        Avisa o cliente antes do horário marcado. Requer WhatsApp conectado.
+                      </p>
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">
+                        Antecedência
+                      </Label>
+                      <div className="flex flex-wrap gap-2">
+                        {REMIND_PRESETS.map((m) => (
+                          <button
+                            key={m}
+                            type="button"
+                            disabled={!remindersEnabled || isSavingReminders}
+                            onClick={() => setRemindBeforeMinutes(m)}
+                            className={`px-3 py-2 rounded-xl text-xs font-black transition-all disabled:opacity-40 ${
+                              remindBeforeMinutes === m
+                                ? "bg-[#64b34d] text-white shadow-wg-subtle"
+                                : "bg-slate-50 text-slate-600 border border-slate-100 hover:border-slate-200"
+                            }`}
+                          >
+                            {m} min
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                    <div className="relative">
+                      <Button
+                        type="button"
+                        onClick={() => void handleSaveReminders()}
+                        disabled={isSavingReminders}
+                        className="w-full h-12 rounded-2xl bg-slate-900 hover:bg-[#64b34d] text-white font-black"
+                      >
+                        {isSavingReminders ? <Loader2 className="animate-spin" /> : "Salvar lembretes"}
+                      </Button>
+                      {showRemindersSuccess ? (
+                        <p className="absolute -bottom-6 left-0 right-0 text-center text-emerald-600 text-[10px] font-black uppercase tracking-[0.2em]">
+                          ✓ Salvo
+                        </p>
+                      ) : null}
+                    </div>
+                  </Card>
+                ) : (
+                  <PlanFeatureGate
+                    icon={Bell}
+                    title="Lembretes disponíveis no Pro e Pro+"
+                    description="No plano Basic esta função não está inclusa. Faça upgrade para o Pro ou Pro+ e avise seus clientes automaticamente minutos antes do horário."
+                  />
+                )}
+              </motion.div>
             )}
 
             {activeSection === "hours" && (

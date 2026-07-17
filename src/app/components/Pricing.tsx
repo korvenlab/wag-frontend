@@ -1,5 +1,5 @@
 import { motion, useInView } from "framer-motion";
-import { Check, Shield, Loader2, Sparkles, Users } from "lucide-react";
+import { Check, Shield, Loader2, Sparkles, Users, MessageCircle } from "lucide-react";
 import { useRef, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../lib/supabase";
@@ -8,6 +8,8 @@ import {
   WAGOO_SHARED_FEATURES,
   type WagooPlanTier,
 } from "../lib/wagooPlans";
+
+const SUPPORT_WHATSAPP_URL = "https://wa.me/5582999450453";
 
 export function Pricing() {
   const ref = useRef(null);
@@ -87,6 +89,23 @@ export function Pricing() {
                     <Check className="w-4 h-4 text-[#64b34d] shrink-0 mt-0.5" strokeWidth={3} />{text}
                   </li>
                 ))}
+                {plan.extras.map((text) => (
+                  <li key={text} className="flex items-start gap-3 text-sm font-semibold text-slate-800">
+                    <Check className="w-4 h-4 text-[#64b34d] shrink-0 mt-0.5" strokeWidth={3} />
+                    <span>
+                      {text}
+                      <span className="ml-1.5 inline-block text-[10px] font-black uppercase tracking-wider text-[#4d8f3b] bg-green-50 border border-green-100 px-1.5 py-0.5 rounded-md align-middle">
+                        Exclusivo
+                      </span>
+                    </span>
+                  </li>
+                ))}
+                {plan.tier === "basic" ? (
+                  <li className="flex items-start gap-3 text-sm font-medium text-slate-400">
+                    <span className="w-4 h-4 shrink-0 mt-0.5 text-center leading-none">–</span>
+                    Sem lembretes e sem gerenciar equipe (Pro / Pro+)
+                  </li>
+                ) : null}
               </ul>
               <button type="button" onClick={() => void handleCheckout(plan.tier)} disabled={loadingTier !== null} className={"w-full py-4 rounded-2xl font-black text-base flex items-center justify-center gap-2 disabled:opacity-70 " + (plan.highlight ? "bg-gradient-to-r from-[#64b34d] to-[#4d8f3b] text-white shadow-wg-green-cta" : "bg-slate-900 text-white hover:bg-[#64b34d]")}>
                 {loadingTier === plan.tier ? <Loader2 className="animate-spin w-5 h-5" /> : "Assinar " + plan.name}
@@ -94,6 +113,37 @@ export function Pricing() {
             </motion.article>
           ))}
         </motion.div>
+
+        <motion.article
+          initial={{ opacity: 0, y: 24 }}
+          animate={isInView ? { opacity: 1, y: 0 } : {}}
+          transition={{ duration: 0.6, delay: 0.35 }}
+          className="mt-8 rounded-[28px] border border-slate-200 bg-slate-900 text-white shadow-wg-elevated overflow-hidden"
+        >
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6 p-8 md:px-10 md:py-9">
+            <div className="space-y-2 max-w-2xl">
+              <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#64b34d]">
+                Sob medida
+              </p>
+              <h3 className="text-2xl md:text-3xl font-black tracking-tight">
+                Plano Personalizado
+              </h3>
+              <p className="text-sm md:text-base text-slate-300 font-medium leading-relaxed">
+                Precisa de mais usuários, condições especiais ou uma estrutura diferente? Fale com a gente e montamos a solução ideal para o seu negócio.
+              </p>
+            </div>
+            <a
+              href={SUPPORT_WHATSAPP_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center justify-center gap-2 shrink-0 h-14 px-8 rounded-2xl bg-[#64b34d] hover:bg-[#4d8f3b] text-white font-black text-base shadow-wg-green-cta transition-[background-color]"
+            >
+              <MessageCircle size={20} strokeWidth={2.5} />
+              Entrar em contato
+            </a>
+          </div>
+        </motion.article>
+
         <p className="mt-12 flex flex-col items-center gap-2 text-center">
           <span className="flex items-center gap-2 text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em]"><Shield size={12} /> Pagamento seguro via Stripe</span>
           <span className="text-xs text-slate-400 font-medium">Cancele quando quiser · Sem fidelidade</span>

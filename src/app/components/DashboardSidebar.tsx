@@ -11,6 +11,7 @@ import {
   Users,
   CalendarDays,
   ChevronRight,
+  Bell,
 } from "lucide-react";
 import { Button } from "./ui/button";
 import { useNavigate } from "react-router";
@@ -19,6 +20,7 @@ export type DashboardNavId =
   | "overview"
   | "analytics"
   | "hours"
+  | "reminders"
   | "team"
   | "calendar"
   | "settings";
@@ -141,6 +143,12 @@ export function DashboardSidebar({
                 label="Horários"
                 active={active === "hours"}
                 onClick={() => goDashboard("hours")}
+              />
+              <NavItem
+                icon={<Bell size={20} />}
+                label="Lembretes"
+                active={active === "reminders"}
+                onClick={() => goDashboard("reminders")}
               />
               <NavItem
                 icon={<Users size={20} />}
