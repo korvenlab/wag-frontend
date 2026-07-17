@@ -3,6 +3,7 @@ import { Header } from "./components/Header";
 import { HeroSection } from "./components/HeroSection";
 import { HowItWorks } from "./components/HowItWorks";
 import { Pricing } from "./components/Pricing";
+import { TrustSafety } from "./components/TrustSafety";
 import { FAQ } from "./components/FAQ";
 import { Footer } from "./components/Footer";
 import { RouterProvider } from "react-router";
@@ -36,6 +37,7 @@ export function HomePage() {
         <HeroSection />
         <HowItWorks />
         <Pricing />
+        <TrustSafety />
         <FAQ />
       </main>
       <Footer />
