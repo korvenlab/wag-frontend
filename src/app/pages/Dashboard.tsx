@@ -607,7 +607,9 @@ export function Dashboard() {
                         Lembretes no WhatsApp
                       </h3>
                       <p className="text-slate-500 text-sm font-medium mt-2 leading-relaxed">
-                        Avisa o cliente antes do horário marcado. Requer WhatsApp conectado.
+                        Configure aqui quando avisar o cliente. O envio só acontece com o WhatsApp
+                        conectado na Visão Geral — não é obrigatório conectar só para salvar esta
+                        opção.
                       </p>
                     </div>
                     <div className="space-y-2">
