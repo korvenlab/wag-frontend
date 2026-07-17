@@ -202,7 +202,10 @@ export function Dashboard() {
 
   useEffect(() => {
     const section = (location.state as { section?: string } | null)?.section;
-    if (section && ["overview", "analytics", "hours", "settings"].includes(section)) {
+    if (
+      section &&
+      ["overview", "analytics", "hours", "reminders", "settings"].includes(section)
+    ) {
       setActiveSection(section);
     }
   }, [location.state]);
