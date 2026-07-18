@@ -1044,36 +1044,32 @@
   const API_BASE = "https://wag-backend.onrender.com";
   const REMOTE_URL = `${API_BASE}/api/pitch/remote`;
   const CLIENT_ID = "pitch-" + Math.random().toString(36).slice(2, 10);
-  const SCENES = [
-    { name:"dor-cliente" },
-    { name:"dor-negocio" },
-    { name:"canal" },
-    { name:"solucao" },
-    { name:"demo" },
-    { name:"setup" },
-    { name:"seguranca" },
-    { name:"outro" },
+  const FLUXO_SCENES = [
+    "dor-cliente","dor-negocio","canal","solucao","demo","setup","seguranca","outro",
   ];
   const VALUE_SLIDES = ["mercado","concorrencia","margens","roadmap"];
-  const FLUXO_SCENES = SCENES.map((s) => s.name);
 
   const body = document.body;
   const bar  = document.getElementById("bar");
   const pills= [...document.querySelectorAll(".pill")];
   const valueSlides = [...document.querySelectorAll(".v-slide")];
+  const bc = ("BroadcastChannel" in window) ? new BroadcastChannel(CHANNEL) : null;
 
   let mode = "fluxo";
   let valueSlide = "mercado";
   let fluxoScene = "dor-cliente";
-  let lastKey = "";
+  let lastKey = "fluxo|dor-cliente";
   let knownRev = 0;
-  let knownUpdatedAt = 0;
-  let pendingLocal = null; // { mode, slide, at }
-  let writeQueued = null;
+  let knownIntentAt = 0;
+  let localIntentAt = 0;
+  let writeTimer = null;
   let writing = false;
-  let pollGen = 0;
-  let stepLock = false;
-  const bc = ("BroadcastChannel" in window) ? new BroadcastChannel(CHANNEL) : null;
+  let pollInFlight = false;
+  let quietUntil = 0; // não aplica poll enquanto lideramos a navegação
+
+  function stateKey(m, s){ return `${m}|${s}`; }
+  function orderFor(m){ return m === "valores" ? VALUE_SLIDES : FLUXO_SCENES; }
+  function currentSlide(){ return mode === "valores" ? valueSlide : fluxoScene; }
 
   function pillForScene(name){
     if(name === "dor-cliente" || name === "dor-negocio" || name === "canal") return 0;
@@ -1087,44 +1083,42 @@
     const idx = Math.max(0, FLUXO_SCENES.indexOf(name));
     const scene = FLUXO_SCENES[idx] || "dor-cliente";
     const changed = body.dataset.scene !== scene;
-
     body.classList.remove("fluxo-paused");
 
-    if(changed || forceReplay){
+    // forceReplay só no demo (recomeça animação). Trocas normais sem flash.
+    if(forceReplay && (changed || scene === "demo")){
       body.dataset.scene = "";
       void body.offsetWidth;
-      body.dataset.scene = scene;
-    } else {
-      body.dataset.scene = scene;
     }
-
+    body.dataset.scene = scene;
     fluxoScene = scene;
-    const step = pillForScene(scene);
-    pills.forEach(p => p.classList.toggle("on", +p.dataset.step === step));
+    pills.forEach(p => p.classList.toggle("on", +p.dataset.step === pillForScene(scene)));
     bar.style.width = (((idx + 1) / FLUXO_SCENES.length) * 100).toFixed(2) + "%";
   }
 
   function showValueSlide(id){
     valueSlides.forEach((s) => {
       const on = s.dataset.slide === id;
-      if(on){ s.classList.remove("on"); void s.offsetWidth; }
       s.classList.toggle("on", on);
     });
   }
 
-  function stateKey(nextMode, slide){
-    return `${nextMode}|${slide}`;
+  function paintLocal(nextMode, nextSlide, forceReplay){
+    const key = stateKey(nextMode, nextSlide);
+    const same = key === lastKey;
+    lastKey = key;
+    mode = nextMode;
+    body.dataset.mode = mode;
+    if(mode === "valores"){
+      valueSlide = nextSlide;
+      body.classList.remove("fluxo-paused");
+      showValueSlide(valueSlide);
+    } else {
+      jumpToFluxoScene(nextSlide, !!forceReplay && !same);
+    }
   }
 
-  function broadcastLocal(nextMode, slide){
-    const payload = {
-      type: "pitch",
-      mode: nextMode,
-      slide,
-      updatedAt: Date.now(),
-      rev: knownRev,
-      from: CLIENT_ID,
-    };
+  function broadcast(payload){
     try{
       localStorage.setItem(STORAGE, JSON.stringify(payload));
       localStorage.setItem(STORAGE + ":tick", String(Date.now()));
@@ -1143,168 +1137,119 @@
     return res.json();
   }
 
-  async function flushWrites(){
+  function schedulePublish(){
+    quietUntil = Date.now() + 2500;
+    const intentAt = localIntentAt;
+    const payload = {
+      type: "pitch",
+      mode,
+      slide: currentSlide(),
+      intentAt,
+      rev: knownRev,
+      from: CLIENT_ID,
+    };
+    broadcast(payload);
+    clearTimeout(writeTimer);
+    writeTimer = setTimeout(() => { void flushWrite(intentAt); }, 120);
+  }
+
+  async function flushWrite(intentAt){
     if(writing) return;
+    // Se o usuário já avançou de novo, o timer mais novo cuida.
+    if(intentAt !== localIntentAt) return;
     writing = true;
+    const payload = { mode, slide: currentSlide(), intentAt };
     try{
-      while(writeQueued){
-        const payload = writeQueued;
-        writeQueued = null;
-        let lastErr = null;
-        for(let i = 0; i < 3; i++){
-          try{
-            const data = await postRemote(payload);
-            if(typeof data.rev === "number") knownRev = Math.max(knownRev, data.rev);
-            if(typeof data.updatedAt === "number") knownUpdatedAt = Math.max(knownUpdatedAt, data.updatedAt);
-            if(
-              pendingLocal &&
-              pendingLocal.mode === payload.mode &&
-              pendingLocal.slide === payload.slide
-            ){
-              pendingLocal = null;
-            }
-            lastErr = null;
-            break;
-          }catch(err){
-            lastErr = err;
-            await new Promise((r) => setTimeout(r, 350 * (i + 1)));
-          }
+      for(let i = 0; i < 3; i++){
+        try{
+          const data = await postRemote(payload);
+          if(typeof data.rev === "number") knownRev = Math.max(knownRev, data.rev);
+          if(typeof data.intentAt === "number") knownIntentAt = Math.max(knownIntentAt, data.intentAt);
+          quietUntil = Date.now() + 800;
+          break;
+        }catch{
+          await new Promise((r) => setTimeout(r, 300 * (i + 1)));
         }
-        if(lastErr) break;
       }
     }finally{
       writing = false;
-      if(writeQueued) void flushWrites();
+      if(localIntentAt !== intentAt) schedulePublish();
     }
   }
 
-  function publishState(nextMode, slide){
-    lastKey = stateKey(nextMode, slide);
-    pendingLocal = { mode: nextMode, slide, at: Date.now() };
-    broadcastLocal(nextMode, slide);
-    writeQueued = { mode: nextMode, slide };
-    void flushWrites();
+  function commitLocal(nextMode, nextSlide, forceReplay){
+    const order = orderFor(nextMode);
+    if(!order.includes(nextSlide)) nextSlide = order[0];
+    if(stateKey(nextMode, nextSlide) === lastKey && !forceReplay) return;
+    localIntentAt = Date.now();
+    knownIntentAt = Math.max(knownIntentAt, localIntentAt);
+    paintLocal(nextMode, nextSlide, forceReplay);
+    schedulePublish();
   }
 
-  function applyState(next, force){
-    const nextMode = next.mode === "valores" ? "valores" : "fluxo";
-    const rawSlide = typeof next.slide === "string" ? next.slide : "";
-    const nextSlide = nextMode === "valores"
-      ? (VALUE_SLIDES.includes(rawSlide) ? rawSlide : "mercado")
-      : (FLUXO_SCENES.includes(rawSlide) ? rawSlide : "dor-cliente");
-    const key = stateKey(nextMode, nextSlide);
-    if(!force && key === lastKey) return;
-    lastKey = key;
+  function step(delta){
+    const order = orderFor(mode);
+    const i = Math.max(0, order.indexOf(currentSlide()));
+    const next = order[Math.min(order.length - 1, Math.max(0, i + delta))];
+    if(next === currentSlide()) return;
+    commitLocal(mode, next, next === "demo");
+  }
 
-    mode = nextMode;
-    body.dataset.mode = mode;
+  function ingestRemote(raw){
+    if(!raw || typeof raw !== "object" || !raw.mode) return;
+    if(raw.from === CLIENT_ID) return;
 
-    if(mode === "valores"){
-      valueSlide = nextSlide;
-      body.classList.remove("fluxo-paused");
-      showValueSlide(valueSlide);
-    } else {
-      jumpToFluxoScene(nextSlide, force);
+    const nextMode = raw.mode === "valores" ? "valores" : "fluxo";
+    const order = orderFor(nextMode);
+    const rawSlide = typeof raw.slide === "string" ? raw.slide : "";
+    const nextSlide = order.includes(rawSlide) ? rawSlide : order[0];
+    const rev = typeof raw.rev === "number" ? raw.rev : null;
+    const intentAt = typeof raw.intentAt === "number" ? raw.intentAt : null;
+
+    // Enquanto navegamos localmente, só aceita se for intenção mais nova.
+    if(Date.now() < quietUntil){
+      if(intentAt == null || intentAt <= localIntentAt) return;
     }
-  }
+    if(rev != null && rev < knownRev) return;
+    if(intentAt != null && intentAt < knownIntentAt) return;
 
-  function isStaleRemote(data){
-    const from = typeof data.from === "string" ? data.from : null;
-    if(from === CLIENT_ID) return true;
+    if(rev != null) knownRev = Math.max(knownRev, rev);
+    if(intentAt != null) knownIntentAt = Math.max(knownIntentAt, intentAt);
 
-    const rev = typeof data.rev === "number" ? data.rev : null;
-    const updatedAt = typeof data.updatedAt === "number" ? data.updatedAt : null;
-    if(rev != null && rev < knownRev) return true;
-    if(rev == null && updatedAt != null && updatedAt < knownUpdatedAt) return true;
-
-    if(pendingLocal){
-      const age = Date.now() - pendingLocal.at;
-      const remoteKey = stateKey(
-        data.mode === "valores" ? "valores" : "fluxo",
-        typeof data.slide === "string" ? data.slide : "",
-      );
-      const pendingKey = stateKey(pendingLocal.mode, pendingLocal.slide);
-      if(remoteKey !== pendingKey && age < 4000) return true;
-    }
-    return false;
-  }
-
-  function ingestRemote(data, force){
-    if(!data?.mode) return;
-    if(isStaleRemote(data)) return;
-
-    if(typeof data.rev === "number" && data.rev >= knownRev) knownRev = data.rev;
-    if(typeof data.updatedAt === "number" && data.updatedAt >= knownUpdatedAt) knownUpdatedAt = data.updatedAt;
-
-    const nextMode = data.mode === "valores" ? "valores" : "fluxo";
-    const rawSlide = typeof data.slide === "string" ? data.slide : "";
-    const nextSlide = nextMode === "valores"
-      ? (VALUE_SLIDES.includes(rawSlide) ? rawSlide : "mercado")
-      : (FLUXO_SCENES.includes(rawSlide) ? rawSlide : "dor-cliente");
-
-    if(
-      pendingLocal &&
-      pendingLocal.mode === nextMode &&
-      pendingLocal.slide === nextSlide
-    ){
-      pendingLocal = null;
-    }
-
-    applyState({ mode: nextMode, slide: nextSlide }, force);
-  }
-
-  function stepFluxo(delta){
-    if(stepLock) return;
-    stepLock = true;
-    try{
-      const i = Math.max(0, FLUXO_SCENES.indexOf(fluxoScene));
-      const next = Math.min(FLUXO_SCENES.length - 1, Math.max(0, i + delta));
-      const scene = FLUXO_SCENES[next];
-      if(scene === fluxoScene && mode === "fluxo") return;
-      jumpToFluxoScene(scene, scene === "demo");
-      mode = "fluxo";
-      body.dataset.mode = "fluxo";
-      publishState("fluxo", scene);
-    }finally{
-      setTimeout(() => { stepLock = false; }, 180);
-    }
-  }
-
-  function readStored(){
-    try{
-      const saved = JSON.parse(localStorage.getItem(STORAGE) || "null");
-      if(saved?.mode) ingestRemote(saved);
-    }catch{}
+    if(stateKey(nextMode, nextSlide) === lastKey) return;
+    paintLocal(nextMode, nextSlide, nextSlide === "demo");
   }
 
   async function pollRemote(){
-    const gen = ++pollGen;
+    if(pollInFlight) return;
+    if(Date.now() < quietUntil) return;
+    pollInFlight = true;
     try{
       const res = await fetch(REMOTE_URL, { headers: { Accept: "application/json" }, cache: "no-store" });
-      if(!res.ok || gen !== pollGen) return;
-      const data = await res.json();
-      if(gen !== pollGen) return;
-      ingestRemote(data);
+      if(!res.ok) return;
+      ingestRemote(await res.json());
     }catch{
-      /* cold start Render / rede — próximo poll tenta de novo */
+      /* cold start / rede */
+    }finally{
+      pollInFlight = false;
     }
   }
 
   if(bc){
-    bc.onmessage = (ev) => {
-      if(ev.data?.type !== "pitch") return;
-      ingestRemote(ev.data);
-    };
+    bc.onmessage = (ev) => { if(ev.data?.type === "pitch") ingestRemote(ev.data); };
   }
   addEventListener("storage", (e) => {
-    if(e.key === STORAGE || e.key === STORAGE + ":tick") readStored();
+    if(e.key !== STORAGE && e.key !== STORAGE + ":tick") return;
+    try{ ingestRemote(JSON.parse(localStorage.getItem(STORAGE) || "null")); }catch{}
   });
 
   jumpToFluxoScene("dor-cliente");
-  lastKey = "fluxo|dor-cliente";
-  readStored();
+  try{
+    const saved = JSON.parse(localStorage.getItem(STORAGE) || "null");
+    if(saved?.mode) ingestRemote(saved);
+  }catch{}
   void pollRemote();
-  setInterval(() => { void pollRemote(); }, 900);
+  setInterval(() => { void pollRemote(); }, 1000);
 
   const fsBtn = document.getElementById("fs-btn");
   function isFullscreen(){
@@ -1337,21 +1282,18 @@
   syncFsUi();
 
   addEventListener("keydown", (e)=>{
-    if(mode !== "fluxo") return;
     if(e.key === "ArrowRight"){
       e.preventDefault();
-      stepFluxo(1);
+      step(1);
     }
     if(e.key === "ArrowLeft"){
       e.preventDefault();
-      stepFluxo(-1);
+      step(-1);
     }
     if(e.key.toLowerCase() === "r" || e.key === "Home"){
       e.preventDefault();
-      jumpToFluxoScene("dor-cliente", true);
-      mode = "fluxo";
-      body.dataset.mode = "fluxo";
-      publishState("fluxo", "dor-cliente");
+      if(mode === "valores") commitLocal("valores", "mercado", true);
+      else commitLocal("fluxo", "dor-cliente", true);
     }
   });
 </script>

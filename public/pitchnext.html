@@ -229,13 +229,13 @@
 
   let state = { mode: "fluxo", slide: "dor-cliente" };
   let knownRev = 0;
-  let knownUpdatedAt = 0;
-  let pendingLocal = null; // { mode, slide, at }
-  let writeQueued = null;
+  let knownIntentAt = 0;
+  let localIntentAt = 0;
+  let writeTimer = null;
   let writing = false;
-  let pollGen = 0;
+  let pollInFlight = false;
+  let quietUntil = 0;
   let apiOk = null;
-  let stepLock = false;
 
   function buzz(){ try{ if(navigator.vibrate) navigator.vibrate(12); }catch{} }
 
@@ -246,25 +246,12 @@
     live.textContent = text;
   }
 
-  function orderForMode(){
-    return state.mode === "fluxo" ? FLUXO_ORDER : VALORES_ORDER;
-  }
-
-  function normalizeIncoming(raw){
-    if(!raw || typeof raw !== "object") return null;
-    const mode = raw.mode === "valores" ? "valores" : raw.mode === "fluxo" ? "fluxo" : null;
-    if(!mode) return null;
-    const slideRaw = typeof raw.slide === "string" ? raw.slide : "";
-    const order = mode === "fluxo" ? FLUXO_ORDER : VALORES_ORDER;
-    const slide = order.includes(slideRaw) ? slideRaw : order[0];
-    const rev = typeof raw.rev === "number" ? raw.rev : null;
-    const updatedAt = typeof raw.updatedAt === "number" ? raw.updatedAt : null;
-    const from = typeof raw.from === "string" ? raw.from : null;
-    return { mode, slide, rev, updatedAt, from };
+  function orderFor(mode){
+    return mode === "fluxo" ? FLUXO_ORDER : VALORES_ORDER;
   }
 
   function paint(){
-    const order = orderForMode();
+    const order = orderFor(state.mode);
     const idx = Math.max(0, order.indexOf(state.slide));
     const isFluxo = state.mode === "fluxo";
 
@@ -273,12 +260,11 @@
     deckLabel.textContent = isFluxo ? "Fluxo Wagoo" : "Valores & números";
     slideTitle.textContent = LABELS[state.slide] || state.slide;
     slideMeta.textContent = `${idx + 1} / ${order.length}`;
-
     dotsEl.innerHTML = order.map((_, i) => `<i class="${i === idx ? "on" : ""}"></i>`).join("");
     stepPrev.disabled = idx <= 0;
     stepNext.disabled = idx >= order.length - 1;
 
-    if(writing || writeQueued){
+    if(writing || writeTimer){
       setStatus("warn", "Enviando…");
     } else if(apiOk === false){
       setStatus("err", "Sem API — sync local");
@@ -287,56 +273,12 @@
     }
   }
 
-  function broadcastLocal(){
-    const payload = {
-      type: "pitch",
-      mode: state.mode,
-      slide: state.slide,
-      updatedAt: Date.now(),
-      rev: knownRev,
-      from: CLIENT_ID,
-    };
+  function broadcast(payload){
     try{
       localStorage.setItem(STORAGE, JSON.stringify(payload));
       localStorage.setItem(STORAGE + ":tick", String(Date.now()));
     }catch{}
     if(bc) bc.postMessage(payload);
-  }
-
-  function isStaleRemote(next){
-    if(next.from === CLIENT_ID) return true;
-    if(next.rev != null && next.rev < knownRev) return true;
-    if(next.rev == null && next.updatedAt != null && next.updatedAt < knownUpdatedAt) return true;
-    if(pendingLocal){
-      const age = Date.now() - pendingLocal.at;
-      const matches =
-        next.mode === pendingLocal.mode && next.slide === pendingLocal.slide;
-      // Enquanto o POST local não confirma, ignora snapshots diferentes (poll atrasado).
-      if(!matches && age < 4000) return true;
-    }
-    return false;
-  }
-
-  function applyIncoming(raw){
-    const next = normalizeIncoming(raw);
-    if(!next) return;
-    if(isStaleRemote(next)) return;
-
-    if(next.rev != null && next.rev >= knownRev) knownRev = next.rev;
-    if(next.updatedAt != null && next.updatedAt >= knownUpdatedAt) knownUpdatedAt = next.updatedAt;
-
-    if(pendingLocal && next.mode === pendingLocal.mode && next.slide === pendingLocal.slide){
-      pendingLocal = null;
-    }
-
-    if(next.mode === state.mode && next.slide === state.slide){
-      paint();
-      return;
-    }
-
-    state = { mode: next.mode, slide: next.slide };
-    paint();
-    try{ localStorage.setItem(STORAGE, JSON.stringify({ ...state, rev: knownRev, updatedAt: knownUpdatedAt, from: CLIENT_ID })); }catch{}
   }
 
   async function postRemote(payload){
@@ -350,91 +292,122 @@
     return res.json();
   }
 
-  async function flushWrites(){
+  function schedulePublish(){
+    quietUntil = Date.now() + 2500;
+    const intentAt = localIntentAt;
+    broadcast({
+      type: "pitch",
+      mode: state.mode,
+      slide: state.slide,
+      intentAt,
+      rev: knownRev,
+      from: CLIENT_ID,
+    });
+    clearTimeout(writeTimer);
+    writeTimer = setTimeout(() => {
+      writeTimer = null;
+      void flushWrite(intentAt);
+      paint();
+    }, 120);
+    paint();
+  }
+
+  async function flushWrite(intentAt){
     if(writing) return;
+    if(intentAt !== localIntentAt) return;
     writing = true;
     paint();
+    const payload = { mode: state.mode, slide: state.slide, intentAt };
     try{
-      while(writeQueued){
-        const payload = writeQueued;
-        writeQueued = null;
-        let lastErr = null;
-        for(let i = 0; i < 3; i++){
-          try{
-            const data = await postRemote(payload);
-            if(typeof data.rev === "number") knownRev = Math.max(knownRev, data.rev);
-            if(typeof data.updatedAt === "number") knownUpdatedAt = Math.max(knownUpdatedAt, data.updatedAt);
-            if(
-              pendingLocal &&
-              pendingLocal.mode === payload.mode &&
-              pendingLocal.slide === payload.slide
-            ){
-              pendingLocal = null;
-            }
-            apiOk = true;
-            lastErr = null;
-            break;
-          }catch(err){
-            lastErr = err;
-            await new Promise((r) => setTimeout(r, 350 * (i + 1)));
-          }
-        }
-        if(lastErr){
-          apiOk = false;
+      let ok = false;
+      for(let i = 0; i < 3; i++){
+        try{
+          const data = await postRemote(payload);
+          if(typeof data.rev === "number") knownRev = Math.max(knownRev, data.rev);
+          if(typeof data.intentAt === "number") knownIntentAt = Math.max(knownIntentAt, data.intentAt);
+          apiOk = true;
+          quietUntil = Date.now() + 800;
+          ok = true;
           break;
+        }catch{
+          await new Promise((r) => setTimeout(r, 300 * (i + 1)));
         }
       }
+      if(!ok) apiOk = false;
     }finally{
       writing = false;
       paint();
-      if(writeQueued) void flushWrites();
+      if(localIntentAt !== intentAt) schedulePublish();
     }
   }
 
   function commitLocal(nextMode, nextSlide){
+    const order = orderFor(nextMode);
+    if(!order.includes(nextSlide)) nextSlide = order[0];
+    if(nextMode === state.mode && nextSlide === state.slide) return;
     state = { mode: nextMode, slide: nextSlide };
-    pendingLocal = { mode: nextMode, slide: nextSlide, at: Date.now() };
-    broadcastLocal();
-    paint();
-    writeQueued = { mode: nextMode, slide: nextSlide };
-    void flushWrites();
+    localIntentAt = Date.now();
+    knownIntentAt = Math.max(knownIntentAt, localIntentAt);
+    buzz();
+    schedulePublish();
   }
 
   function setMode(mode){
-    const order = mode === "fluxo" ? FLUXO_ORDER : VALORES_ORDER;
+    const order = orderFor(mode);
     const slide = order.includes(state.slide) ? state.slide : order[0];
-    if(mode === state.mode && slide === state.slide) return;
-    buzz();
     commitLocal(mode, slide);
   }
 
   function step(delta){
-    if(stepLock) return;
-    stepLock = true;
-    try{
-      const order = orderForMode();
-      const i = Math.max(0, order.indexOf(state.slide));
-      const next = order[Math.min(order.length - 1, Math.max(0, i + delta))];
-      if(next === state.slide) return;
-      buzz();
-      commitLocal(state.mode, next);
-    }finally{
-      // Liberação curta evita double-tap acidental, mas permite avanço rápido.
-      setTimeout(() => { stepLock = false; }, 180);
+    const order = orderFor(state.mode);
+    const i = Math.max(0, order.indexOf(state.slide));
+    const next = order[Math.min(order.length - 1, Math.max(0, i + delta))];
+    if(next === state.slide) return;
+    commitLocal(state.mode, next);
+  }
+
+  function ingestRemote(raw){
+    if(!raw || typeof raw !== "object" || !raw.mode) return;
+    if(raw.from === CLIENT_ID) return;
+
+    const nextMode = raw.mode === "valores" ? "valores" : "fluxo";
+    const order = orderFor(nextMode);
+    const rawSlide = typeof raw.slide === "string" ? raw.slide : "";
+    const nextSlide = order.includes(rawSlide) ? rawSlide : order[0];
+    const rev = typeof raw.rev === "number" ? raw.rev : null;
+    const intentAt = typeof raw.intentAt === "number" ? raw.intentAt : null;
+
+    if(Date.now() < quietUntil){
+      if(intentAt == null || intentAt <= localIntentAt) return;
     }
+    if(rev != null && rev < knownRev) return;
+    if(intentAt != null && intentAt < knownIntentAt) return;
+
+    if(rev != null) knownRev = Math.max(knownRev, rev);
+    if(intentAt != null) knownIntentAt = Math.max(knownIntentAt, intentAt);
+
+    if(nextMode === state.mode && nextSlide === state.slide){
+      if(apiOk === false) apiOk = true;
+      paint();
+      return;
+    }
+
+    state = { mode: nextMode, slide: nextSlide };
+    paint();
   }
 
   async function pollRemote(){
-    const gen = ++pollGen;
+    if(pollInFlight) return;
+    if(Date.now() < quietUntil) return;
+    pollInFlight = true;
     try{
       const res = await fetch(REMOTE_URL, { headers: { Accept: "application/json" }, cache: "no-store" });
-      if(!res.ok || gen !== pollGen) return;
-      const data = await res.json();
-      if(gen !== pollGen) return;
-      applyIncoming(data);
+      if(!res.ok) return;
+      ingestRemote(await res.json());
       if(apiOk === false) apiOk = true;
-      if(!writing && !writeQueued) paint();
+      paint();
     }catch{}
+    finally{ pollInFlight = false; }
   }
 
   btnFluxo.addEventListener("click", () => setMode("fluxo"));
@@ -458,21 +431,28 @@
     if(dx < 0) step(1); else step(-1);
   }, { passive: true });
 
+  addEventListener("keydown", (e) => {
+    if(e.key === "ArrowRight"){ e.preventDefault(); step(1); }
+    if(e.key === "ArrowLeft"){ e.preventDefault(); step(-1); }
+  });
+
   if(bc){
-    bc.onmessage = (ev) => { if(ev.data?.type === "pitch") applyIncoming(ev.data); };
+    bc.onmessage = (ev) => { if(ev.data?.type === "pitch") ingestRemote(ev.data); };
   }
   addEventListener("storage", (e) => {
     if(e.key !== STORAGE && e.key !== STORAGE + ":tick") return;
-    try{ applyIncoming(JSON.parse(localStorage.getItem(STORAGE) || "null")); }catch{}
+    try{ ingestRemote(JSON.parse(localStorage.getItem(STORAGE) || "null")); }catch{}
   });
 
   try{
     const saved = JSON.parse(localStorage.getItem(STORAGE) || "null");
-    const n = normalizeIncoming(saved);
-    if(n){
-      state = { mode: n.mode, slide: n.slide };
-      if(n.rev != null) knownRev = n.rev;
-      if(n.updatedAt != null) knownUpdatedAt = n.updatedAt;
+    if(saved?.mode){
+      const m = saved.mode === "valores" ? "valores" : "fluxo";
+      const order = orderFor(m);
+      const s = order.includes(saved.slide) ? saved.slide : order[0];
+      state = { mode: m, slide: s };
+      if(typeof saved.rev === "number") knownRev = saved.rev;
+      if(typeof saved.intentAt === "number") knownIntentAt = saved.intentAt;
     }
   }catch{}
   paint();
@@ -480,15 +460,15 @@
     try{
       const res = await fetch(REMOTE_URL, { headers: { Accept: "application/json" }, cache: "no-store" });
       if(res.ok){
-        applyIncoming(await res.json());
+        ingestRemote(await res.json());
         apiOk = true;
         paint();
         return;
       }
     }catch{}
-    commitLocal(state.mode, state.slide);
+    schedulePublish();
   })();
-  setInterval(() => { void pollRemote(); }, 900);
+  setInterval(() => { void pollRemote(); }, 1000);
 </script>
 </body>
 </html>
