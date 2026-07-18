@@ -906,16 +906,15 @@
   const API_BASE = "https://wag-backend.onrender.com";
   const REMOTE_URL = `${API_BASE}/api/pitch/remote`;
   const SCENES = [
-    { name:"dor-cliente", dur:9 },
-    { name:"dor-negocio", dur:9 },
-    { name:"canal", dur:8 },
-    { name:"solucao", dur:7 },
-    { name:"demo", dur:13.5 },
-    { name:"setup", dur:8 },
-    { name:"seguranca", dur:9 },
-    { name:"outro", dur:8 },
+    { name:"dor-cliente" },
+    { name:"dor-negocio" },
+    { name:"canal" },
+    { name:"solucao" },
+    { name:"demo" },
+    { name:"setup" },
+    { name:"seguranca" },
+    { name:"outro" },
   ];
-  const TOTAL = SCENES.reduce((a,s)=>a+s.dur,0);
   const VALUE_SLIDES = ["mercado","concorrencia","margens","roadmap"];
   const FLUXO_SCENES = SCENES.map((s) => s.name);
 
@@ -924,36 +923,39 @@
   const pills= [...document.querySelectorAll(".pill")];
   const valueSlides = [...document.querySelectorAll(".v-slide")];
 
-  let start = performance.now();
-  let paused = false;
-  let pausedAt = 0;
   let mode = "fluxo";
   let valueSlide = "mercado";
   let fluxoScene = "dor-cliente";
-  let lastKey = "fluxo|dor-cliente";
+  let lastKey = "";
 
   function pillForScene(name){
     if(name === "dor-cliente" || name === "dor-negocio" || name === "canal") return 0;
     if(name === "solucao") return 1;
     if(name === "demo" || name === "setup") return 2;
     if(name === "seguranca") return 3;
-    return 4; // outro
+    return 4;
   }
 
-  function jumpToFluxoScene(name){
+  function jumpToFluxoScene(name, forceReplay){
     const idx = Math.max(0, FLUXO_SCENES.indexOf(name));
     const scene = FLUXO_SCENES[idx] || "dor-cliente";
-    let jump = 0;
-    for(let i=0;i<idx;i++) jump += SCENES[i].dur;
-    start = performance.now() - jump*1000;
-    paused = true;
-    pausedAt = performance.now();
-    body.classList.add("fluxo-paused");
-    body.dataset.scene = scene;
+    const changed = body.dataset.scene !== scene;
+
+    // Manual only — never autoplay scenes. Don't use fluxo-paused (freeze demo anims).
+    body.classList.remove("fluxo-paused");
+
+    if(changed || forceReplay){
+      body.dataset.scene = "";
+      void body.offsetWidth;
+      body.dataset.scene = scene;
+    } else {
+      body.dataset.scene = scene;
+    }
+
     fluxoScene = scene;
     const step = pillForScene(scene);
     pills.forEach(p => p.classList.toggle("on", +p.dataset.step === step));
-    bar.style.width = (jump/TOTAL*100).toFixed(2) + "%";
+    bar.style.width = (((idx + 1) / FLUXO_SCENES.length) * 100).toFixed(2) + "%";
   }
 
   function showValueSlide(id){
@@ -979,12 +981,18 @@
 
     if(mode === "valores"){
       valueSlide = nextSlide;
-      paused = true;
       body.classList.remove("fluxo-paused");
       showValueSlide(valueSlide);
     } else {
-      jumpToFluxoScene(nextSlide);
+      jumpToFluxoScene(nextSlide, force);
     }
+  }
+
+  function stepFluxo(delta){
+    const i = Math.max(0, FLUXO_SCENES.indexOf(fluxoScene));
+    const next = Math.min(FLUXO_SCENES.length - 1, Math.max(0, i + delta));
+    jumpToFluxoScene(FLUXO_SCENES[next], true);
+    lastKey = `fluxo|${FLUXO_SCENES[next]}`;
   }
 
   function readStored(){
@@ -1005,27 +1013,6 @@
     }
   }
 
-  function frame(now){
-    if(mode === "fluxo" && !paused){
-      let elapsed = (now - start)/1000;
-      if(elapsed >= TOTAL){ start = now; elapsed = 0; }
-      bar.style.width = (elapsed/TOTAL*100).toFixed(2) + "%";
-
-      let acc = 0, current = SCENES[0];
-      for(const s of SCENES){
-        if(elapsed < acc + s.dur){ current = s; break; }
-        acc += s.dur;
-      }
-      if(body.dataset.scene !== current.name){ body.dataset.scene = current.name; }
-      fluxoScene = current.name;
-
-      const step = pillForScene(current.name);
-      pills.forEach(p => p.classList.toggle("on", +p.dataset.step === step));
-    }
-    requestAnimationFrame(frame);
-  }
-  requestAnimationFrame(frame);
-
   if("BroadcastChannel" in window){
     const bc = new BroadcastChannel(CHANNEL);
     bc.onmessage = (ev) => {
@@ -1035,40 +1022,28 @@
   addEventListener("storage", (e) => {
     if(e.key === STORAGE || e.key === STORAGE + ":tick") readStored();
   });
+
+  // Arranque: primeira cena, parado — só setas ou /pitchnext avançam.
+  jumpToFluxoScene("dor-cliente");
+  lastKey = "fluxo|dor-cliente";
   readStored();
   void pollRemote();
   setInterval(() => { void pollRemote(); }, 700);
 
   addEventListener("keydown", (e)=>{
     if(mode !== "fluxo") return;
-    if(e.code === "Space"){
+    if(e.key === "ArrowRight"){
       e.preventDefault();
-      paused = !paused;
-      body.classList.toggle("fluxo-paused", paused);
-      if(paused){ pausedAt = performance.now(); }
-      else { start += performance.now() - pausedAt; }
+      stepFluxo(1);
     }
-    if(e.key.toLowerCase() === "r"){
-      start = performance.now();
-      paused = false;
-      body.classList.remove("fluxo-paused");
-      lastKey = "fluxo|_auto";
-    }
-    if(e.key === "ArrowRight" || e.key === "ArrowLeft"){
+    if(e.key === "ArrowLeft"){
       e.preventDefault();
-      let elapsed = (performance.now() - start)/1000;
-      if(paused) elapsed = (pausedAt - start)/1000;
-      let acc = 0, idx = 0;
-      for(let i=0;i<SCENES.length;i++){
-        if(elapsed < acc + SCENES[i].dur){ idx = i; break; }
-        acc += SCENES[i].dur;
-        if(i === SCENES.length-1) idx = i;
-      }
-      const next = e.key === "ArrowRight"
-        ? Math.min(SCENES.length-1, idx+1)
-        : Math.max(0, idx-1);
-      jumpToFluxoScene(SCENES[next].name);
-      lastKey = `fluxo|${SCENES[next].name}`;
+      stepFluxo(-1);
+    }
+    if(e.key.toLowerCase() === "r" || e.key === "Home"){
+      e.preventDefault();
+      jumpToFluxoScene("dor-cliente", true);
+      lastKey = "fluxo|dor-cliente";
     }
   });
 </script>
