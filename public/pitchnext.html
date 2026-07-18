@@ -194,6 +194,7 @@
   const STORAGE = "wagoo-pitchnext-state";
   const API_BASE = "https://wag-backend.onrender.com";
   const REMOTE_URL = `${API_BASE}/api/pitch/remote`;
+  const CLIENT_ID = "pitchnext-" + Math.random().toString(36).slice(2, 10);
 
   const FLUXO_ORDER = [
     "dor-cliente","dor-negocio","canal","solucao","demo","setup","seguranca","outro",
@@ -227,8 +228,14 @@
   const stepNext = document.getElementById("step-next");
 
   let state = { mode: "fluxo", slide: "dor-cliente" };
-  let syncing = false;
+  let knownRev = 0;
+  let knownUpdatedAt = 0;
+  let pendingLocal = null; // { mode, slide, at }
+  let writeQueued = null;
+  let writing = false;
+  let pollGen = 0;
   let apiOk = null;
+  let stepLock = false;
 
   function buzz(){ try{ if(navigator.vibrate) navigator.vibrate(12); }catch{} }
 
@@ -250,7 +257,10 @@
     const slideRaw = typeof raw.slide === "string" ? raw.slide : "";
     const order = mode === "fluxo" ? FLUXO_ORDER : VALORES_ORDER;
     const slide = order.includes(slideRaw) ? slideRaw : order[0];
-    return { mode, slide };
+    const rev = typeof raw.rev === "number" ? raw.rev : null;
+    const updatedAt = typeof raw.updatedAt === "number" ? raw.updatedAt : null;
+    const from = typeof raw.from === "string" ? raw.from : null;
+    return { mode, slide, rev, updatedAt, from };
   }
 
   function paint(){
@@ -268,85 +278,162 @@
     stepPrev.disabled = idx <= 0;
     stepNext.disabled = idx >= order.length - 1;
 
-    if(!syncing){
-      if(apiOk === false) setStatus("err", "Sem API — sync local");
-      else setStatus(apiOk ? "ok" : "warn", apiOk ? "Projetor sincronizado" : "Conectando…");
-    }
-  }
-
-  async function postRemote(){
-    const res = await fetch(REMOTE_URL, {
-      method: "POST",
-      headers: { "Content-Type": "application/json", Accept: "application/json" },
-      body: JSON.stringify(state),
-    });
-    if(!res.ok) throw new Error(String(res.status));
-    return res.json();
-  }
-
-  async function persist(){
-    localStorage.setItem(STORAGE, JSON.stringify(state));
-    if(bc) bc.postMessage({ type: "pitch", ...state });
-    localStorage.setItem(STORAGE + ":tick", String(Date.now()));
-    syncing = true;
-    setStatus("warn", "Enviando…");
-    paint();
-    try{
-      let lastErr;
-      for(let i = 0; i < 3; i++){
-        try{ await postRemote(); lastErr = null; break; }
-        catch(err){ lastErr = err; await new Promise((r) => setTimeout(r, 400 * (i + 1))); }
-      }
-      if(lastErr) throw lastErr;
-      apiOk = true;
-      syncing = false;
-      setStatus("ok", "Projetor sincronizado");
-      paint();
-    }catch{
-      apiOk = false;
-      syncing = false;
+    if(writing || writeQueued){
+      setStatus("warn", "Enviando…");
+    } else if(apiOk === false){
       setStatus("err", "Sem API — sync local");
-      paint();
+    } else {
+      setStatus(apiOk ? "ok" : "warn", apiOk ? "Projetor sincronizado" : "Conectando…");
     }
+  }
+
+  function broadcastLocal(){
+    const payload = {
+      type: "pitch",
+      mode: state.mode,
+      slide: state.slide,
+      updatedAt: Date.now(),
+      rev: knownRev,
+      from: CLIENT_ID,
+    };
+    try{
+      localStorage.setItem(STORAGE, JSON.stringify(payload));
+      localStorage.setItem(STORAGE + ":tick", String(Date.now()));
+    }catch{}
+    if(bc) bc.postMessage(payload);
+  }
+
+  function isStaleRemote(next){
+    if(next.from === CLIENT_ID) return true;
+    if(next.rev != null && next.rev < knownRev) return true;
+    if(next.rev == null && next.updatedAt != null && next.updatedAt < knownUpdatedAt) return true;
+    if(pendingLocal){
+      const age = Date.now() - pendingLocal.at;
+      const matches =
+        next.mode === pendingLocal.mode && next.slide === pendingLocal.slide;
+      // Enquanto o POST local não confirma, ignora snapshots diferentes (poll atrasado).
+      if(!matches && age < 4000) return true;
+    }
+    return false;
   }
 
   function applyIncoming(raw){
     const next = normalizeIncoming(raw);
     if(!next) return;
-    if(next.mode === state.mode && next.slide === state.slide) return;
-    if(syncing) return;
-    state = next;
+    if(isStaleRemote(next)) return;
+
+    if(next.rev != null && next.rev >= knownRev) knownRev = next.rev;
+    if(next.updatedAt != null && next.updatedAt >= knownUpdatedAt) knownUpdatedAt = next.updatedAt;
+
+    if(pendingLocal && next.mode === pendingLocal.mode && next.slide === pendingLocal.slide){
+      pendingLocal = null;
+    }
+
+    if(next.mode === state.mode && next.slide === state.slide){
+      paint();
+      return;
+    }
+
+    state = { mode: next.mode, slide: next.slide };
     paint();
-    try{ localStorage.setItem(STORAGE, JSON.stringify(state)); }catch{}
+    try{ localStorage.setItem(STORAGE, JSON.stringify({ ...state, rev: knownRev, updatedAt: knownUpdatedAt, from: CLIENT_ID })); }catch{}
+  }
+
+  async function postRemote(payload){
+    const res = await fetch(REMOTE_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Accept: "application/json" },
+      body: JSON.stringify(payload),
+      cache: "no-store",
+    });
+    if(!res.ok) throw new Error(String(res.status));
+    return res.json();
+  }
+
+  async function flushWrites(){
+    if(writing) return;
+    writing = true;
+    paint();
+    try{
+      while(writeQueued){
+        const payload = writeQueued;
+        writeQueued = null;
+        let lastErr = null;
+        for(let i = 0; i < 3; i++){
+          try{
+            const data = await postRemote(payload);
+            if(typeof data.rev === "number") knownRev = Math.max(knownRev, data.rev);
+            if(typeof data.updatedAt === "number") knownUpdatedAt = Math.max(knownUpdatedAt, data.updatedAt);
+            if(
+              pendingLocal &&
+              pendingLocal.mode === payload.mode &&
+              pendingLocal.slide === payload.slide
+            ){
+              pendingLocal = null;
+            }
+            apiOk = true;
+            lastErr = null;
+            break;
+          }catch(err){
+            lastErr = err;
+            await new Promise((r) => setTimeout(r, 350 * (i + 1)));
+          }
+        }
+        if(lastErr){
+          apiOk = false;
+          break;
+        }
+      }
+    }finally{
+      writing = false;
+      paint();
+      if(writeQueued) void flushWrites();
+    }
+  }
+
+  function commitLocal(nextMode, nextSlide){
+    state = { mode: nextMode, slide: nextSlide };
+    pendingLocal = { mode: nextMode, slide: nextSlide, at: Date.now() };
+    broadcastLocal();
+    paint();
+    writeQueued = { mode: nextMode, slide: nextSlide };
+    void flushWrites();
   }
 
   function setMode(mode){
-    state.mode = mode;
-    const order = orderForMode();
-    if(!order.includes(state.slide)) state.slide = order[0];
+    const order = mode === "fluxo" ? FLUXO_ORDER : VALORES_ORDER;
+    const slide = order.includes(state.slide) ? state.slide : order[0];
+    if(mode === state.mode && slide === state.slide) return;
     buzz();
-    paint();
-    void persist();
+    commitLocal(mode, slide);
   }
 
   function step(delta){
-    const order = orderForMode();
-    const i = Math.max(0, order.indexOf(state.slide));
-    const next = order[Math.min(order.length - 1, Math.max(0, i + delta))];
-    if(next === state.slide) return;
-    state.slide = next;
-    buzz();
-    paint();
-    void persist();
+    if(stepLock) return;
+    stepLock = true;
+    try{
+      const order = orderForMode();
+      const i = Math.max(0, order.indexOf(state.slide));
+      const next = order[Math.min(order.length - 1, Math.max(0, i + delta))];
+      if(next === state.slide) return;
+      buzz();
+      commitLocal(state.mode, next);
+    }finally{
+      // Liberação curta evita double-tap acidental, mas permite avanço rápido.
+      setTimeout(() => { stepLock = false; }, 180);
+    }
   }
 
   async function pollRemote(){
+    const gen = ++pollGen;
     try{
       const res = await fetch(REMOTE_URL, { headers: { Accept: "application/json" }, cache: "no-store" });
-      if(!res.ok) return;
-      applyIncoming(await res.json());
+      if(!res.ok || gen !== pollGen) return;
+      const data = await res.json();
+      if(gen !== pollGen) return;
+      applyIncoming(data);
       if(apiOk === false) apiOk = true;
-      if(!syncing) setStatus("ok", "Projetor sincronizado");
+      if(!writing && !writeQueued) paint();
     }catch{}
   }
 
@@ -382,7 +469,11 @@
   try{
     const saved = JSON.parse(localStorage.getItem(STORAGE) || "null");
     const n = normalizeIncoming(saved);
-    if(n) state = n;
+    if(n){
+      state = { mode: n.mode, slide: n.slide };
+      if(n.rev != null) knownRev = n.rev;
+      if(n.updatedAt != null) knownUpdatedAt = n.updatedAt;
+    }
   }catch{}
   paint();
   void (async () => {
@@ -391,13 +482,13 @@
       if(res.ok){
         applyIncoming(await res.json());
         apiOk = true;
-        setStatus("ok", "Projetor sincronizado");
+        paint();
         return;
       }
     }catch{}
-    void persist();
+    commitLocal(state.mode, state.slide);
   })();
-  setInterval(() => { void pollRemote(); }, 700);
+  setInterval(() => { void pollRemote(); }, 900);
 </script>
 </body>
 </html>
