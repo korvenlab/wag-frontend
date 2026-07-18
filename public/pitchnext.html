@@ -570,6 +570,46 @@
     }
   }
 
+  function normalizeIncoming(raw){
+    if(!raw || typeof raw !== "object") return null;
+    const mode = raw.mode === "valores" ? "valores" : raw.mode === "fluxo" ? "fluxo" : null;
+    if(!mode) return null;
+    const slideRaw = typeof raw.slide === "string" ? raw.slide : "";
+    let slide;
+    if(mode === "fluxo"){
+      slide = FLUXO_ORDER.includes(slideRaw) ? slideRaw : "dor-cliente";
+    } else {
+      slide = VALORES_ORDER.includes(slideRaw) ? slideRaw : "mercado";
+    }
+    return { mode, slide };
+  }
+
+  /** Atualiza UI a partir do projetor / outra aba — sem reenviar (evita loop). */
+  function applyIncoming(raw){
+    const next = normalizeIncoming(raw);
+    if(!next) return;
+    if(next.mode === state.mode && next.slide === state.slide) return;
+    state = next;
+    paint();
+    try{ localStorage.setItem(STORAGE, JSON.stringify(state)); }catch{}
+  }
+
+  async function pollRemote(){
+    try{
+      const res = await fetch(REMOTE_URL, {
+        headers: { Accept: "application/json" },
+        cache: "no-store",
+      });
+      if(!res.ok) return;
+      const data = await res.json();
+      applyIncoming(data);
+      if(apiOk === false) apiOk = true;
+      if(!syncing) setStatus("ok", statusLabel());
+    }catch{
+      /* ignore — próximo poll */
+    }
+  }
+
   function setMode(mode){
     state.mode = mode;
     if(mode === "fluxo"){
@@ -638,19 +678,30 @@
     else step(-1);
   }, { passive: true });
 
+  if(bc){
+    bc.onmessage = (ev) => {
+      if(ev.data?.type === "pitch") applyIncoming(ev.data);
+    };
+  }
+  addEventListener("storage", (e) => {
+    if(e.key !== STORAGE && e.key !== STORAGE + ":tick") return;
+    try{
+      const saved = JSON.parse(localStorage.getItem(STORAGE) || "null");
+      applyIncoming(saved);
+    }catch{}
+  });
+
   try{
     const saved = JSON.parse(localStorage.getItem(STORAGE) || "null");
     if(saved?.mode){
-      state = {
-        mode: saved.mode === "valores" ? "valores" : "fluxo",
-        slide: saved.slide || (saved.mode === "valores" ? "mercado" : "dor-cliente"),
-      };
-      if(state.mode === "fluxo" && !FLUXO_ORDER.includes(state.slide)) state.slide = "dor-cliente";
-      if(state.mode === "valores" && !VALORES_ORDER.includes(state.slide)) state.slide = "mercado";
+      const n = normalizeIncoming(saved);
+      if(n) state = n;
     }
   }catch{}
   paint();
   void persist();
+  void pollRemote();
+  setInterval(() => { void pollRemote(); }, 700);
 </script>
 </body>
 </html>
