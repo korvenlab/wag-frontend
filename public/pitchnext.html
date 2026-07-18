@@ -14,21 +14,18 @@
     --green:#64b34d;
     --green-deep:#4d8f3b;
     --ink:#05070a;
-    --neon:#eafff1;
     --muted:rgba(255,255,255,.55);
     --glass:rgba(255,255,255,.04);
     --stroke:rgba(255,255,255,.10);
     --safe-top: env(safe-area-inset-top, 0px);
     --safe-bottom: env(safe-area-inset-bottom, 0px);
-    --dock-h: 132px;
   }
   *{ box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent; }
   html,body{ min-height:100%; min-height:100dvh; }
   body{
     background:
-      radial-gradient(1200px 700px at 18% 12%, rgba(100,179,77,.14), transparent 60%),
-      radial-gradient(1000px 800px at 88% 88%, rgba(100,179,77,.10), transparent 55%),
-      radial-gradient(900px 900px at 50% 50%, rgba(255,255,255,.03), transparent 60%),
+      radial-gradient(900px 600px at 20% 10%, rgba(100,179,77,.16), transparent 55%),
+      radial-gradient(800px 700px at 90% 80%, rgba(100,179,77,.1), transparent 50%),
       var(--ink);
     color:#fff;
     font-family:"Segoe UI",system-ui,-apple-system,sans-serif;
@@ -36,64 +33,45 @@
     -webkit-font-smoothing:antialiased;
     touch-action:manipulation;
     overscroll-behavior-y:contain;
-    overflow-x:hidden;
+    overflow:hidden;
   }
-
   .grid{
-    position:fixed; inset:-2px; z-index:0; opacity:.35; pointer-events:none;
+    position:fixed; inset:-2px; z-index:0; opacity:.3; pointer-events:none;
     background-image:
       linear-gradient(rgba(255,255,255,.045) 1px, transparent 1px),
       linear-gradient(90deg, rgba(255,255,255,.045) 1px, transparent 1px);
-    background-size:64px 64px;
-    mask-image:radial-gradient(circle at 50% 45%, #000 28%, transparent 78%);
-    animation:drift 18s linear infinite;
+    background-size:56px 56px;
+    mask-image:radial-gradient(circle at 50% 40%, #000 25%, transparent 75%);
+    animation:drift 16s linear infinite;
   }
-  @keyframes drift{ to{ background-position:64px 64px, 64px 64px; } }
-  .vignette{
-    position:fixed; inset:0; z-index:1; pointer-events:none;
-    background:radial-gradient(120% 120% at 50% 40%, transparent 55%, rgba(0,0,0,.55) 100%);
-  }
+  @keyframes drift{ to{ background-position:56px 56px, 56px 56px; } }
 
   .app{
     position:relative; z-index:2;
     min-height:100dvh;
     display:flex; flex-direction:column;
     padding:
-      calc(14px + var(--safe-top))
-      14px
-      calc(var(--dock-h) + var(--safe-bottom) + 18px);
-  }
-
-  .wrap{
-    width:min(760px,100%);
-    margin:0 auto;
-    flex:1;
+      calc(16px + var(--safe-top))
+      16px
+      calc(18px + var(--safe-bottom));
+    gap:14px;
   }
 
   .hud{
     display:flex; align-items:center; justify-content:space-between; gap:10px;
-    margin-bottom:14px;
   }
   .brand{ display:flex; align-items:center; gap:10px; min-width:0; }
   .brand img{
-    height:26px; width:auto; display:block; flex:none;
+    height:26px; width:auto; display:block;
     filter:drop-shadow(0 0 12px rgba(100,179,77,.45));
   }
-  .brand small{
-    font-weight:700; color:var(--muted);
-    letter-spacing:.2em; text-transform:uppercase; font-size:10px;
-    white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
-  }
   .status{
-    display:inline-flex; align-items:center; gap:8px; max-width:62%;
+    display:inline-flex; align-items:center; gap:8px; max-width:58%;
     padding:8px 12px; border-radius:999px;
     border:1px solid var(--stroke); background:var(--glass);
-    backdrop-filter:blur(8px);
     font-size:11px; font-weight:800; color:var(--muted);
   }
-  .status span#live{
-    overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
-  }
+  .status #live{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .status .dot{
     flex:none; width:8px; height:8px; border-radius:50%; background:var(--green);
     box-shadow:0 0 12px rgba(100,179,77,.95);
@@ -101,333 +79,114 @@
   .status.warn .dot{ background:#f59e0b; box-shadow:0 0 12px rgba(245,158,11,.9); }
   .status.err .dot{ background:#ef4444; box-shadow:0 0 12px rgba(239,68,68,.9); }
 
-  .hero{ text-align:center; margin-bottom:4px; }
-  .logo-wrap{
-    position:relative; display:flex; justify-content:center; margin:2px 0 10px;
+  .modes{
+    display:grid; grid-template-columns:1fr 1fr; gap:10px;
   }
-  .logo-wrap::before{
-    content:""; position:absolute; width:70%; height:180%;
-    background:radial-gradient(circle, rgba(100,179,77,.28), transparent 65%);
-    filter:blur(10px); z-index:-1;
-  }
-  .logo-mark{
-    width:min(180px,42vw); height:auto; display:block;
-    filter:drop-shadow(0 12px 40px rgba(100,179,77,.45));
-  }
-  .eyebrow{
-    display:inline-flex; margin-bottom:8px; padding:7px 12px; border-radius:999px;
-    border:1px solid rgba(100,179,77,.4); background:rgba(100,179,77,.1);
-    color:var(--green); font-size:10px; font-weight:900; letter-spacing:.18em; text-transform:uppercase;
-  }
-  h1{
-    font-size:clamp(26px,7.5vw,44px); font-weight:900;
-    letter-spacing:-.035em; line-height:1.02;
-  }
-  h1 .g{ color:var(--green); position:relative; }
-  h1 .g::after{
-    content:""; position:absolute; left:0; right:0; bottom:.08em; height:3px; border-radius:9px;
-    background:rgba(100,179,77,.55); box-shadow:0 0 14px rgba(100,179,77,.7);
-  }
-  .hint{
-    margin:8px auto 0; max-width:520px;
-    color:var(--muted); font-size:13px; font-weight:600; line-height:1.45;
-  }
-  .hint code{
-    color:var(--neon); background:rgba(255,255,255,.06);
-    border:1px solid var(--stroke); padding:2px 7px; border-radius:8px; font-size:11px;
-  }
-
-  .block{ margin-top:18px; }
-  .block-title{
-    font-size:10px; font-weight:900; letter-spacing:.18em; text-transform:uppercase;
-    color:var(--muted); margin-bottom:10px; text-align:center;
-  }
-
-  .grid-btns{ display:grid; gap:10px; }
-  .grid-btns.two{ grid-template-columns:1fr 1fr; }
-
-  .btn{
-    appearance:none; cursor:pointer; width:100%;
-    display:flex; align-items:center; gap:12px; text-align:left;
-    min-height:64px;
-    padding:14px; border-radius:18px;
-    border:1px solid var(--stroke); background:var(--glass);
-    color:#fff; font:inherit;
-    backdrop-filter:blur(8px);
-    transition:border-color .15s, box-shadow .15s, transform .15s, background .15s, opacity .15s;
-    touch-action:manipulation; user-select:none;
-  }
-  .btn:active{ transform:scale(.97); }
-  .btn.on{
-    border-color:rgba(100,179,77,.75);
-    background:rgba(100,179,77,.14);
-    box-shadow:0 0 28px rgba(100,179,77,.32), inset 0 0 20px rgba(100,179,77,.06);
-  }
-  .btn .n{
-    flex:none; width:42px; height:42px; border-radius:14px;
-    display:flex; align-items:center; justify-content:center;
-    background:rgba(255,255,255,.05); border:1px solid var(--stroke);
-    font-weight:900; color:var(--muted); font-size:14px;
-  }
-  .btn.on .n{
-    background:rgba(100,179,77,.2); border-color:rgba(100,179,77,.45); color:var(--green);
-    box-shadow:0 0 16px rgba(100,179,77,.35);
-  }
-  .btn .copy{ min-width:0; flex:1; }
-  .btn .t{ font-size:15px; font-weight:900; letter-spacing:-.02em; }
-  .btn .d{ margin-top:2px; font-size:11px; font-weight:600; color:var(--muted); line-height:1.3; }
-
-  .deck{
-    opacity:.38; pointer-events:none;
-    transition:opacity .3s ease, transform .3s ease;
-    transform:translateY(6px);
-  }
-  .deck.active{ opacity:1; pointer-events:auto; transform:none; }
-
-  .swipe-hint{
-    display:none;
-    margin-top:12px; text-align:center;
-    font-size:11px; font-weight:700; color:var(--muted);
-    letter-spacing:.06em; text-transform:uppercase;
-  }
-  .deck.active .swipe-hint{ display:block; }
-
-  .dock-nav.fluxo-chips{
-    display:none;
-    grid-template-columns:repeat(4,minmax(0,1fr));
-  }
-  .dock-nav.fluxo-chips.show{ display:grid; }
-  .dock-nav.valores-chips.show{ display:grid; }
-
-  .open-pitch{
-    display:flex; align-items:center; justify-content:center; gap:8px;
-    margin-top:16px; width:100%; min-height:48px;
-    padding:12px 16px; border-radius:14px; text-decoration:none;
-    border:1px solid var(--stroke); background:var(--glass);
-    color:var(--muted); font-weight:800; font-size:13px;
-    touch-action:manipulation;
-  }
-
-  /* Dock fixo — polegar no celular */
-  .dock{
-    position:fixed; left:0; right:0; bottom:0; z-index:30;
-    padding:10px 14px calc(10px + var(--safe-bottom));
-    background:linear-gradient(180deg, transparent, rgba(5,7,10,.88) 22%, rgba(5,7,10,.96));
-    backdrop-filter:blur(14px);
-    -webkit-backdrop-filter:blur(14px);
-  }
-  .dock-inner{
-    width:min(760px,100%); margin:0 auto;
-    display:grid; grid-template-columns:1fr 1fr; gap:8px;
-  }
-  .dock .btn{
-    min-height:52px; justify-content:center; text-align:center;
-    border-radius:14px; padding:10px;
-  }
-  .dock .btn .n,
-  .dock .btn .d{ display:none; }
-  .dock-nav{
-    display:none;
-    width:min(760px,100%); margin:8px auto 0;
-    grid-template-columns:repeat(4, 1fr); gap:8px;
-  }
-  .dock-nav.show{ display:grid; }
-  .dock-nav.fluxo-chips{ grid-template-columns:repeat(4,minmax(0,1fr)); }
-  .dock-nav .chip{
+  .mode{
     appearance:none; cursor:pointer;
-    min-height:48px; border-radius:12px;
-    border:1px solid var(--stroke); background:rgba(255,255,255,.05);
-    color:var(--muted); font:inherit; font-size:12px; font-weight:900;
-    touch-action:manipulation;
+    min-height:76px; padding:14px 12px; border-radius:18px;
+    border:1px solid var(--stroke); background:var(--glass);
+    color:#fff; font:inherit; text-align:center;
+    transition:border-color .15s, background .15s, box-shadow .15s, transform .15s;
   }
-  .dock-nav .chip:active{ transform:scale(.96); }
-  .dock-nav .chip.on{
-    color:#fff; border-color:rgba(100,179,77,.75);
+  .mode:active{ transform:scale(.97); }
+  .mode.on{
+    border-color:rgba(100,179,77,.8);
     background:rgba(100,179,77,.16);
-    box-shadow:0 0 18px rgba(100,179,77,.28);
+    box-shadow:0 0 28px rgba(100,179,77,.3);
   }
-  .dock-step{
-    display:none;
-    width:min(760px,100%); margin:8px auto 0;
-    grid-template-columns:1fr 1fr; gap:8px;
+  .mode .t{ display:block; font-size:15px; font-weight:900; letter-spacing:-.02em; }
+  .mode .d{ display:block; margin-top:4px; font-size:11px; font-weight:650; color:var(--muted); }
+
+  .now{
+    flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center;
+    text-align:center; gap:10px; padding:8px 6px;
   }
-  .dock-step.show{ display:grid; }
-  .dock-step .step{
+  .now .eyebrow{
+    font-size:11px; font-weight:900; letter-spacing:.22em; text-transform:uppercase; color:var(--green);
+  }
+  .now .title{
+    font-size:clamp(28px,8vw,40px); font-weight:900; letter-spacing:-.03em; line-height:1.05;
+  }
+  .now .meta{
+    font-size:13px; font-weight:700; color:var(--muted);
+  }
+  .dots{
+    display:flex; gap:7px; flex-wrap:wrap; justify-content:center; margin-top:6px;
+  }
+  .dots i{
+    width:8px; height:8px; border-radius:50%;
+    background:rgba(255,255,255,.18);
+    transition:background .2s, transform .2s, box-shadow .2s;
+  }
+  .dots i.on{
+    background:var(--green);
+    transform:scale(1.25);
+    box-shadow:0 0 12px rgba(100,179,77,.8);
+  }
+
+  .nav{
+    display:grid; grid-template-columns:1fr 1fr; gap:12px;
+  }
+  .nav .step{
     appearance:none; cursor:pointer;
-    min-height:48px; border-radius:12px;
-    border:1px solid var(--stroke); background:rgba(255,255,255,.05);
-    color:#fff; font:inherit; font-size:14px; font-weight:900;
-    touch-action:manipulation;
+    min-height:92px; border-radius:22px;
+    border:1px solid rgba(100,179,77,.45);
+    background:linear-gradient(180deg, rgba(100,179,77,.22), rgba(100,179,77,.08));
+    color:#fff; font:inherit;
+    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px;
+    box-shadow:0 12px 40px rgba(0,0,0,.35), 0 0 24px rgba(100,179,77,.18);
+    transition:transform .15s, box-shadow .15s, opacity .15s;
   }
-  .dock-step .step:active{ transform:scale(.97); }
+  .nav .step:active{ transform:scale(.96); }
+  .nav .step:disabled{ opacity:.35; pointer-events:none; }
+  .nav .step .arrow{ font-size:28px; font-weight:900; line-height:1; color:var(--green); }
+  .nav .step .label{ font-size:14px; font-weight:900; letter-spacing:-.01em; }
 
-  @media (min-width:720px){
-    :root{ --dock-h: 120px; }
-    .app{ padding-left:22px; padding-right:22px; padding-top:calc(24px + var(--safe-top)); }
-    .logo-mark{ width:min(240px,36vw); }
-    .hint{ font-size:15px; }
-    .btn{ min-height:68px; padding:16px 18px; }
-    .btn .t{ font-size:16px; }
-    .btn .d{ font-size:12px; }
-  }
-
-  @media (max-width:420px){
-    .brand small{ display:none; }
-    .grid-btns.two{ grid-template-columns:1fr; }
-    .logo-wrap{ margin-bottom:6px; }
-    .logo-mark{ width:min(150px,40vw); }
-    h1{ font-size:clamp(24px,8.5vw,34px); }
-    .status{ max-width:70%; font-size:10px; padding:7px 10px; }
-  }
-
-  @media (max-height:720px){
-    .logo-wrap{ display:none; }
-    .hero .hint{ display:none; }
-  }
-
-  @media (max-height:560px){
-    .hero h1{ font-size:22px; }
-    .eyebrow{ display:none; }
-    .block{ margin-top:12px; }
+  .hint{
+    text-align:center; font-size:11px; font-weight:700; color:var(--muted);
+    letter-spacing:.04em;
   }
 </style>
 </head>
 <body>
   <div class="grid"></div>
-  <div class="vignette"></div>
-
   <div class="app">
-    <div class="wrap">
-      <div class="hud">
-        <div class="brand">
-          <img src="/logo.png" alt="Wagoo" />
-          <small>by Korven Lab</small>
-        </div>
-        <div class="status" id="status"><span class="dot"></span> <span id="live">Conectando…</span></div>
-      </div>
-
-      <div class="hero">
-        <div class="logo-wrap">
-          <img class="logo-mark" src="/logo.png" alt="Wagoo" />
-        </div>
-        <div class="eyebrow">Pitch Next · Controle</div>
-        <h1>Central de<br><span class="g">controle.</span></h1>
-        <p class="hint">
-          Projetor em <code>/pitch</code>. Celular manda o sinal em tempo real.
-        </p>
-      </div>
-
-      <div class="block">
-        <div class="block-title">Escolher apresentação</div>
-        <div class="grid-btns">
-          <button type="button" class="btn on" id="btn-fluxo">
-            <span class="n">A</span>
-            <span class="copy">
-              <div class="t">Fluxo Wagoo</div>
-              <div class="d">Dor → solução → demo → preço</div>
-            </span>
-          </button>
-          <button type="button" class="btn" id="btn-valores">
-            <span class="n">B</span>
-            <span class="copy">
-              <div class="t">Valores &amp; números</div>
-              <div class="d">Mercado, concorrência, margem e roadmap</div>
-            </span>
-          </button>
-        </div>
-      </div>
-
-      <div class="block deck active" id="fluxo-panel">
-        <div class="block-title">Cenas do fluxo</div>
-        <div class="grid-btns two">
-          <button type="button" class="btn fluxo-btn" data-slide="dor-cliente">
-            <span class="n">01</span>
-            <span class="copy"><div class="t">Dor · cliente</div><div class="d">Horas esperando no WhatsApp</div></span>
-          </button>
-          <button type="button" class="btn fluxo-btn" data-slide="dor-negocio">
-            <span class="n">02</span>
-            <span class="copy"><div class="t">Dor · negócio</div><div class="d">Cliente perdido</div></span>
-          </button>
-          <button type="button" class="btn fluxo-btn" data-slide="canal">
-            <span class="n">03</span>
-            <span class="copy"><div class="t">Canal</div><div class="d">WhatsApp × custo de gente</div></span>
-          </button>
-          <button type="button" class="btn fluxo-btn" data-slide="solucao">
-            <span class="n">04</span>
-            <span class="copy"><div class="t">Solução</div><div class="d">Secretária 24h</div></span>
-          </button>
-          <button type="button" class="btn fluxo-btn" data-slide="demo">
-            <span class="n">05</span>
-            <span class="copy"><div class="t">Demo</div><div class="d">Chat + Calendar</div></span>
-          </button>
-          <button type="button" class="btn fluxo-btn" data-slide="setup">
-            <span class="n">06</span>
-            <span class="copy"><div class="t">Setup</div><div class="d">Horário + lembretes</div></span>
-          </button>
-          <button type="button" class="btn fluxo-btn" data-slide="seguranca">
-            <span class="n">07</span>
-            <span class="copy"><div class="t">Segurança</div><div class="d">Google + WhatsApp</div></span>
-          </button>
-          <button type="button" class="btn fluxo-btn" data-slide="outro">
-            <span class="n">08</span>
-            <span class="copy"><div class="t">Preço</div><div class="d">Basic · Pro · Pro+</div></span>
-          </button>
-        </div>
-        <p class="swipe-hint">Deslize ← → ou use ◀ ▶ no rodapé</p>
-      </div>
-
-      <div class="block deck" id="valores-panel">
-        <div class="block-title">Slides de valor</div>
-        <div class="grid-btns two">
-          <button type="button" class="btn valor-btn" data-slide="mercado">
-            <span class="n">01</span>
-            <span class="copy"><div class="t">Mercado</div><div class="d">TAM · SAM · SOM</div></span>
-          </button>
-          <button type="button" class="btn valor-btn" data-slide="concorrencia">
-            <span class="n">02</span>
-            <span class="copy"><div class="t">Concorrência</div><div class="d">Tabela 2026</div></span>
-          </button>
-          <button type="button" class="btn valor-btn" data-slide="margens">
-            <span class="n">03</span>
-            <span class="copy"><div class="t">Margens</div><div class="d">88,4% · Unit economics</div></span>
-          </button>
-          <button type="button" class="btn valor-btn" data-slide="roadmap">
-            <span class="n">04</span>
-            <span class="copy"><div class="t">Roadmap</div><div class="d">Ano 1 · R$ 210.834</div></span>
-          </button>
-        </div>
-        <p class="swipe-hint">Deslize ← → ou use ◀ ▶ no rodapé</p>
-      </div>
-
-      <a class="open-pitch" href="/pitch" target="_blank" rel="noopener">Abrir /pitch nesta tela →</a>
+    <div class="hud">
+      <div class="brand"><img src="/logo.png" alt="Wagoo" /></div>
+      <div class="status" id="status"><span class="dot"></span><span id="live">Conectando…</span></div>
     </div>
-  </div>
 
-  <div class="dock">
-    <div class="dock-inner">
-      <button type="button" class="btn on" id="dock-fluxo"><span class="copy"><div class="t">Fluxo</div></span></button>
-      <button type="button" class="btn" id="dock-valores"><span class="copy"><div class="t">Valores</div></span></button>
+    <div class="modes">
+      <button type="button" class="mode on" id="btn-fluxo">
+        <span class="t">Fluxo Wagoo</span>
+        <span class="d">Roteiro da apresentação</span>
+      </button>
+      <button type="button" class="mode" id="btn-valores">
+        <span class="t">Valores &amp; números</span>
+        <span class="d">Mercado e finanças</span>
+      </button>
     </div>
-    <div class="dock-nav fluxo-chips show" id="dock-nav-fluxo">
-      <button type="button" class="chip" data-slide="dor-cliente">01</button>
-      <button type="button" class="chip" data-slide="dor-negocio">02</button>
-      <button type="button" class="chip" data-slide="canal">03</button>
-      <button type="button" class="chip" data-slide="solucao">04</button>
-      <button type="button" class="chip" data-slide="demo">05</button>
-      <button type="button" class="chip" data-slide="setup">06</button>
-      <button type="button" class="chip" data-slide="seguranca">07</button>
-      <button type="button" class="chip" data-slide="outro">08</button>
+
+    <div class="now">
+      <div class="eyebrow" id="deck-label">Fluxo</div>
+      <div class="title" id="slide-title">Dor · cliente</div>
+      <div class="meta" id="slide-meta">1 / 8</div>
+      <div class="dots" id="dots" aria-hidden="true"></div>
     </div>
-    <div class="dock-nav valores-chips" id="dock-nav-valores">
-      <button type="button" class="chip" data-slide="mercado">01</button>
-      <button type="button" class="chip" data-slide="concorrencia">02</button>
-      <button type="button" class="chip" data-slide="margens">03</button>
-      <button type="button" class="chip" data-slide="roadmap">04</button>
+
+    <div class="nav">
+      <button type="button" class="step" id="step-prev">
+        <span class="arrow">◀</span>
+        <span class="label">Anterior</span>
+      </button>
+      <button type="button" class="step" id="step-next">
+        <span class="arrow">▶</span>
+        <span class="label">Próximo</span>
+      </button>
     </div>
-    <div class="dock-step show" id="dock-step">
-      <button type="button" class="step" id="step-prev">◀ Anterior</button>
-      <button type="button" class="step" id="step-next">Próximo ▶</button>
-    </div>
+
+    <p class="hint">Deslize ← → · controla o projetor em /pitch</p>
   </div>
 
 <script>
@@ -437,24 +196,16 @@
   const REMOTE_URL = `${API_BASE}/api/pitch/remote`;
 
   const FLUXO_ORDER = [
-    "dor-cliente",
-    "dor-negocio",
-    "canal",
-    "solucao",
-    "demo",
-    "setup",
-    "seguranca",
-    "outro",
+    "dor-cliente","dor-negocio","canal","solucao","demo","setup","seguranca","outro",
   ];
-  const VALORES_ORDER = ["mercado", "concorrencia", "margens", "roadmap"];
-
+  const VALORES_ORDER = ["mercado","concorrencia","margens","roadmap"];
   const LABELS = {
     "dor-cliente": "Dor · cliente",
     "dor-negocio": "Dor · negócio",
     canal: "Canal",
     solucao: "Solução",
-    demo: "Demo",
-    setup: "Setup",
+    demo: "Demo ao vivo",
+    setup: "Setup único",
     seguranca: "Segurança",
     outro: "Preço",
     mercado: "Mercado",
@@ -466,27 +217,20 @@
   const bc = ("BroadcastChannel" in window) ? new BroadcastChannel(CHANNEL) : null;
   const live = document.getElementById("live");
   const statusEl = document.getElementById("status");
-  const fluxoPanel = document.getElementById("fluxo-panel");
-  const valoresPanel = document.getElementById("valores-panel");
-  const dockNavFluxo = document.getElementById("dock-nav-fluxo");
-  const dockNavValores = document.getElementById("dock-nav-valores");
-  const dockStep = document.getElementById("dock-step");
   const btnFluxo = document.getElementById("btn-fluxo");
   const btnValores = document.getElementById("btn-valores");
-  const dockFluxo = document.getElementById("dock-fluxo");
-  const dockValores = document.getElementById("dock-valores");
-  const fluxoBtns = [...document.querySelectorAll(".fluxo-btn")];
-  const valorBtns = [...document.querySelectorAll(".valor-btn")];
-  const fluxoChips = [...dockNavFluxo.querySelectorAll(".chip")];
-  const valorChips = [...dockNavValores.querySelectorAll(".chip")];
+  const deckLabel = document.getElementById("deck-label");
+  const slideTitle = document.getElementById("slide-title");
+  const slideMeta = document.getElementById("slide-meta");
+  const dotsEl = document.getElementById("dots");
+  const stepPrev = document.getElementById("step-prev");
+  const stepNext = document.getElementById("step-next");
 
   let state = { mode: "fluxo", slide: "dor-cliente" };
   let syncing = false;
   let apiOk = null;
 
-  function buzz(){
-    try{ if(navigator.vibrate) navigator.vibrate(12); }catch{}
-  }
+  function buzz(){ try{ if(navigator.vibrate) navigator.vibrate(12); }catch{} }
 
   function setStatus(kind, text){
     statusEl.classList.remove("warn", "err");
@@ -495,37 +239,38 @@
     live.textContent = text;
   }
 
-  function statusLabel(){
-    const label = LABELS[state.slide] || state.slide;
-    return state.mode === "fluxo"
-      ? `Fluxo · ${label}`
-      : `Valores · ${label}`;
-  }
-
   function orderForMode(){
     return state.mode === "fluxo" ? FLUXO_ORDER : VALORES_ORDER;
   }
 
-  function paint(){
-    const isFluxo = state.mode === "fluxo";
-    const isValores = state.mode === "valores";
-    [btnFluxo, dockFluxo].forEach((b) => b.classList.toggle("on", isFluxo));
-    [btnValores, dockValores].forEach((b) => b.classList.toggle("on", isValores));
-    fluxoPanel.classList.toggle("active", isFluxo);
-    valoresPanel.classList.toggle("active", isValores);
-    dockNavFluxo.classList.toggle("show", isFluxo);
-    dockNavValores.classList.toggle("show", isValores);
-    dockStep.classList.add("show");
-    document.documentElement.style.setProperty("--dock-h", isFluxo ? "248px" : "200px");
+  function normalizeIncoming(raw){
+    if(!raw || typeof raw !== "object") return null;
+    const mode = raw.mode === "valores" ? "valores" : raw.mode === "fluxo" ? "fluxo" : null;
+    if(!mode) return null;
+    const slideRaw = typeof raw.slide === "string" ? raw.slide : "";
+    const order = mode === "fluxo" ? FLUXO_ORDER : VALORES_ORDER;
+    const slide = order.includes(slideRaw) ? slideRaw : order[0];
+    return { mode, slide };
+  }
 
-    fluxoBtns.forEach((b) => b.classList.toggle("on", isFluxo && b.dataset.slide === state.slide));
-    valorBtns.forEach((b) => b.classList.toggle("on", isValores && b.dataset.slide === state.slide));
-    fluxoChips.forEach((b) => b.classList.toggle("on", isFluxo && b.dataset.slide === state.slide));
-    valorChips.forEach((b) => b.classList.toggle("on", isValores && b.dataset.slide === state.slide));
+  function paint(){
+    const order = orderForMode();
+    const idx = Math.max(0, order.indexOf(state.slide));
+    const isFluxo = state.mode === "fluxo";
+
+    btnFluxo.classList.toggle("on", isFluxo);
+    btnValores.classList.toggle("on", !isFluxo);
+    deckLabel.textContent = isFluxo ? "Fluxo Wagoo" : "Valores & números";
+    slideTitle.textContent = LABELS[state.slide] || state.slide;
+    slideMeta.textContent = `${idx + 1} / ${order.length}`;
+
+    dotsEl.innerHTML = order.map((_, i) => `<i class="${i === idx ? "on" : ""}"></i>`).join("");
+    stepPrev.disabled = idx <= 0;
+    stepNext.disabled = idx >= order.length - 1;
 
     if(!syncing){
-      if(apiOk === false) setStatus("err", "Sem API — sync só nesta aba/PC");
-      else setStatus(apiOk ? "ok" : "warn", apiOk ? statusLabel() : "Conectando…");
+      if(apiOk === false) setStatus("err", "Sem API — sync local");
+      else setStatus(apiOk ? "ok" : "warn", apiOk ? "Projetor sincronizado" : "Conectando…");
     }
   }
 
@@ -543,101 +288,42 @@
     localStorage.setItem(STORAGE, JSON.stringify(state));
     if(bc) bc.postMessage({ type: "pitch", ...state });
     localStorage.setItem(STORAGE + ":tick", String(Date.now()));
-
     syncing = true;
-    setStatus("warn", "Enviando ao projetor…");
+    setStatus("warn", "Enviando…");
     paint();
     try{
       let lastErr;
       for(let i = 0; i < 3; i++){
-        try{
-          await postRemote();
-          lastErr = null;
-          break;
-        }catch(err){
-          lastErr = err;
-          await new Promise((r) => setTimeout(r, 400 * (i + 1)));
-        }
+        try{ await postRemote(); lastErr = null; break; }
+        catch(err){ lastErr = err; await new Promise((r) => setTimeout(r, 400 * (i + 1))); }
       }
       if(lastErr) throw lastErr;
       apiOk = true;
       syncing = false;
-      setStatus("ok", statusLabel());
+      setStatus("ok", "Projetor sincronizado");
+      paint();
     }catch{
       apiOk = false;
       syncing = false;
-      setStatus("err", "Sem API — sync só nesta aba/PC");
+      setStatus("err", "Sem API — sync local");
+      paint();
     }
   }
 
-  function normalizeIncoming(raw){
-    if(!raw || typeof raw !== "object") return null;
-    const mode = raw.mode === "valores" ? "valores" : raw.mode === "fluxo" ? "fluxo" : null;
-    if(!mode) return null;
-    const slideRaw = typeof raw.slide === "string" ? raw.slide : "";
-    let slide;
-    if(mode === "fluxo"){
-      slide = FLUXO_ORDER.includes(slideRaw) ? slideRaw : "dor-cliente";
-    } else {
-      slide = VALORES_ORDER.includes(slideRaw) ? slideRaw : "mercado";
-    }
-    return { mode, slide };
-  }
-
-  /** Atualiza UI a partir do projetor / outra aba — sem reenviar (evita loop). */
   function applyIncoming(raw){
     const next = normalizeIncoming(raw);
     if(!next) return;
     if(next.mode === state.mode && next.slide === state.slide) return;
-    // Durante envio local, não deixar um GET atrasado sobrescrever
     if(syncing) return;
     state = next;
     paint();
     try{ localStorage.setItem(STORAGE, JSON.stringify(state)); }catch{}
   }
 
-  async function pollRemote(){
-    try{
-      const res = await fetch(REMOTE_URL, {
-        headers: { Accept: "application/json" },
-        cache: "no-store",
-      });
-      if(!res.ok) return;
-      const data = await res.json();
-      applyIncoming(data);
-      if(apiOk === false) apiOk = true;
-      if(!syncing) setStatus("ok", statusLabel());
-    }catch{
-      /* ignore — próximo poll */
-    }
-  }
-
   function setMode(mode){
     state.mode = mode;
-    if(mode === "fluxo"){
-      if(!FLUXO_ORDER.includes(state.slide)) state.slide = "dor-cliente";
-    } else if(!VALORES_ORDER.includes(state.slide)){
-      state.slide = "mercado";
-    }
-    buzz();
-    paint();
-    void persist();
-    const panel = mode === "fluxo" ? fluxoPanel : valoresPanel;
-    panel.scrollIntoView({ behavior: "smooth", block: "nearest" });
-  }
-
-  function setSlide(slide){
-    const inFluxo = FLUXO_ORDER.includes(slide);
-    const inValores = VALORES_ORDER.includes(slide);
-    if(inFluxo){
-      state.mode = "fluxo";
-      state.slide = slide;
-    } else if(inValores){
-      state.mode = "valores";
-      state.slide = slide;
-    } else {
-      return;
-    }
+    const order = orderForMode();
+    if(!order.includes(state.slide)) state.slide = order[0];
     buzz();
     paint();
     void persist();
@@ -647,22 +333,29 @@
     const order = orderForMode();
     const i = Math.max(0, order.indexOf(state.slide));
     const next = order[Math.min(order.length - 1, Math.max(0, i + delta))];
-    setSlide(next);
+    if(next === state.slide) return;
+    state.slide = next;
+    buzz();
+    paint();
+    void persist();
+  }
+
+  async function pollRemote(){
+    try{
+      const res = await fetch(REMOTE_URL, { headers: { Accept: "application/json" }, cache: "no-store" });
+      if(!res.ok) return;
+      applyIncoming(await res.json());
+      if(apiOk === false) apiOk = true;
+      if(!syncing) setStatus("ok", "Projetor sincronizado");
+    }catch{}
   }
 
   btnFluxo.addEventListener("click", () => setMode("fluxo"));
-  dockFluxo.addEventListener("click", () => setMode("fluxo"));
   btnValores.addEventListener("click", () => setMode("valores"));
-  dockValores.addEventListener("click", () => setMode("valores"));
-  fluxoBtns.forEach((b) => b.addEventListener("click", () => setSlide(b.dataset.slide)));
-  valorBtns.forEach((b) => b.addEventListener("click", () => setSlide(b.dataset.slide)));
-  fluxoChips.forEach((b) => b.addEventListener("click", () => setSlide(b.dataset.slide)));
-  valorChips.forEach((b) => b.addEventListener("click", () => setSlide(b.dataset.slide)));
-  document.getElementById("step-prev").addEventListener("click", () => step(-1));
-  document.getElementById("step-next").addEventListener("click", () => step(1));
+  stepPrev.addEventListener("click", () => step(-1));
+  stepNext.addEventListener("click", () => step(1));
 
-  let touchX = null;
-  let touchY = null;
+  let touchX = null, touchY = null;
   addEventListener("touchstart", (e) => {
     const t = e.changedTouches[0];
     touchX = t?.clientX ?? null;
@@ -673,50 +366,35 @@
     const t = e.changedTouches[0];
     const dx = (t?.clientX ?? touchX) - touchX;
     const dy = (t?.clientY ?? touchY) - (touchY ?? 0);
-    touchX = null;
-    touchY = null;
+    touchX = null; touchY = null;
     if(Math.abs(dx) < 56 || Math.abs(dx) < Math.abs(dy) * 1.2) return;
-    if(dx < 0) step(1);
-    else step(-1);
+    if(dx < 0) step(1); else step(-1);
   }, { passive: true });
 
   if(bc){
-    bc.onmessage = (ev) => {
-      if(ev.data?.type === "pitch") applyIncoming(ev.data);
-    };
+    bc.onmessage = (ev) => { if(ev.data?.type === "pitch") applyIncoming(ev.data); };
   }
   addEventListener("storage", (e) => {
     if(e.key !== STORAGE && e.key !== STORAGE + ":tick") return;
-    try{
-      const saved = JSON.parse(localStorage.getItem(STORAGE) || "null");
-      applyIncoming(saved);
-    }catch{}
+    try{ applyIncoming(JSON.parse(localStorage.getItem(STORAGE) || "null")); }catch{}
   });
 
   try{
     const saved = JSON.parse(localStorage.getItem(STORAGE) || "null");
-    if(saved?.mode){
-      const n = normalizeIncoming(saved);
-      if(n) state = n;
-    }
+    const n = normalizeIncoming(saved);
+    if(n) state = n;
   }catch{}
   paint();
-  // Não POST no boot — só lê o estado do projetor (evita sobrescrever a seta).
   void (async () => {
     try{
-      const res = await fetch(REMOTE_URL, {
-        headers: { Accept: "application/json" },
-        cache: "no-store",
-      });
+      const res = await fetch(REMOTE_URL, { headers: { Accept: "application/json" }, cache: "no-store" });
       if(res.ok){
-        const data = await res.json();
-        applyIncoming(data);
+        applyIncoming(await res.json());
         apiOk = true;
-        setStatus("ok", statusLabel());
+        setStatus("ok", "Projetor sincronizado");
         return;
       }
     }catch{}
-    // Sem API: mantém estado local e tenta publicar para sync na mesma máquina
     void persist();
   })();
   setInterval(() => { void pollRemote(); }, 700);

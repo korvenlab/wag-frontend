@@ -73,17 +73,7 @@
     box-shadow:0 0 22px rgba(100,179,77,.35), inset 0 0 12px rgba(100,179,77,.12); }
   .pill.on b{ opacity:1; color:var(--green); }
 
-  /* ---------- generic scene visibility ---------- */
-  .scene{ position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
-    opacity:0; transform:scale(.98); transition:opacity .7s ease, transform .7s ease; pointer-events:none; }
-  body[data-scene="dor-cliente"] .s-dor-cliente,
-  body[data-scene="dor-negocio"] .s-dor-negocio,
-  body[data-scene="canal"] .s-canal,
-  body[data-scene="solucao"] .s-solucao,
-  body[data-scene="demo"]  .s-demo,
-  body[data-scene="setup"] .s-setup,
-  body[data-scene="seguranca"] .s-seguranca,
-  body[data-scene="outro"] .s-outro{ opacity:1; transform:scale(1); }
+  /* ---------- generic scene visibility (enhanced abaixo) ---------- */
 
   /* ---------- talk beats (roteiro) ---------- */
   .talk{
@@ -95,21 +85,29 @@
     display:inline-flex; align-items:center; gap:8px;
     font-size:11px; font-weight:800; letter-spacing:.28em; text-transform:uppercase;
     color:var(--green); margin-bottom:18px;
+    opacity:0;
   }
   .talk h2{
     font-size:clamp(32px,4.6vw,58px); font-weight:900; line-height:1.02;
     letter-spacing:-.03em; margin-bottom:18px;
+    opacity:0;
   }
-  .talk h2 .g{ color:var(--green); }
+  .talk h2 .g{ color:var(--green); position:relative; }
+  .talk h2 .g::after{
+    content:""; position:absolute; left:0; right:0; bottom:.06em; height:4px; border-radius:9px;
+    background:rgba(100,179,77,.55); transform:scaleX(0); transform-origin:left;
+    box-shadow:0 0 16px rgba(100,179,77,.75);
+  }
   .talk .lead{
     color:var(--muted); font-size:clamp(15px,1.5vw,19px); font-weight:600;
-    line-height:1.45; max-width:520px;
+    line-height:1.45; max-width:520px; opacity:0;
   }
   .talk.solo .lead{ max-width:680px; margin:0 auto; }
   .cue{
     margin-top:28px; padding:16px 18px; border-radius:16px;
     background:rgba(100,179,77,.08); border:1px solid rgba(100,179,77,.28);
-    text-align:left; max-width:540px;
+    text-align:left; max-width:540px; opacity:0;
+    box-shadow:0 0 0 rgba(100,179,77,0);
   }
   .talk.solo .cue{ margin-left:auto; margin-right:auto; }
   .cue b{
@@ -123,10 +121,19 @@
     background:var(--glass); border:1px solid var(--stroke);
     box-shadow:0 30px 80px rgba(0,0,0,.35);
     min-height:320px; display:flex; flex-direction:column; justify-content:center; gap:14px;
+    overflow:hidden; opacity:0; transform:translateX(28px) scale(.96);
   }
+  .viz::before{
+    content:""; position:absolute; inset:-40%;
+    background:conic-gradient(from 120deg, transparent, rgba(100,179,77,.12), transparent 40%);
+    animation:spinGlow 8s linear infinite; pointer-events:none;
+  }
+  @keyframes spinGlow{ to{ transform:rotate(360deg); } }
+  .viz > *{ position:relative; z-index:1; }
   .viz .row{
     display:flex; align-items:center; gap:14px; padding:14px 16px; border-radius:16px;
     background:rgba(255,255,255,.03); border:1px solid rgba(255,255,255,.06);
+    opacity:0; transform:translateY(14px);
   }
   .viz .ico{
     width:44px; height:44px; border-radius:14px; flex:none;
@@ -140,27 +147,93 @@
     border:3px solid rgba(100,179,77,.45);
     box-shadow:0 0 40px rgba(100,179,77,.25), inset 0 0 30px rgba(100,179,77,.08);
     display:flex; align-items:center; justify-content:center; flex-direction:column; gap:4px;
+    opacity:0; transform:scale(.7);
   }
   .viz .clock strong{ font-size:42px; font-weight:900; letter-spacing:-.04em; }
   .viz .clock em{ font-style:normal; font-size:12px; color:var(--muted); font-weight:700; letter-spacing:.12em; text-transform:uppercase; }
 
-  body[data-scene="dor-cliente"] .talk-copy,
-  body[data-scene="dor-negocio"] .talk-copy,
-  body[data-scene="canal"] .talk-copy,
-  body[data-scene="solucao"] .talk-copy,
-  body[data-scene="setup"] .talk-copy,
-  body[data-scene="seguranca"] .talk-copy{ animation:fadeUp .7s .1s ease both; }
+  /* Entradas vivas por cena */
+  body[data-scene="dor-cliente"] .talk .eyebrow,
+  body[data-scene="dor-negocio"] .talk .eyebrow,
+  body[data-scene="canal"] .talk .eyebrow,
+  body[data-scene="solucao"] .talk .eyebrow,
+  body[data-scene="setup"] .talk .eyebrow,
+  body[data-scene="seguranca"] .talk .eyebrow{ animation:fadeUp .55s .05s ease both; }
+  body[data-scene="dor-cliente"] .talk h2,
+  body[data-scene="dor-negocio"] .talk h2,
+  body[data-scene="canal"] .talk h2,
+  body[data-scene="solucao"] .talk h2,
+  body[data-scene="setup"] .talk h2,
+  body[data-scene="seguranca"] .talk h2{ animation:titleIn .7s .12s cubic-bezier(.2,1,.3,1) both; }
+  body[data-scene="dor-cliente"] .talk h2 .g::after,
+  body[data-scene="dor-negocio"] .talk h2 .g::after,
+  body[data-scene="canal"] .talk h2 .g::after,
+  body[data-scene="solucao"] .talk h2 .g::after,
+  body[data-scene="setup"] .talk h2 .g::after,
+  body[data-scene="seguranca"] .talk h2 .g::after{ animation:draw .65s .45s cubic-bezier(.2,1,.3,1) both; }
+  body[data-scene="dor-cliente"] .talk .lead,
+  body[data-scene="dor-negocio"] .talk .lead,
+  body[data-scene="canal"] .talk .lead,
+  body[data-scene="solucao"] .talk .lead,
+  body[data-scene="setup"] .talk .lead,
+  body[data-scene="seguranca"] .talk .lead{ animation:fadeUp .65s .28s ease both; }
+  body[data-scene="dor-cliente"] .cue,
+  body[data-scene="dor-negocio"] .cue,
+  body[data-scene="canal"] .cue,
+  body[data-scene="solucao"] .cue,
+  body[data-scene="setup"] .cue,
+  body[data-scene="seguranca"] .cue{
+    animation:cueIn .7s .42s ease both, cuePulse 2.8s 1.2s ease-in-out infinite;
+  }
   body[data-scene="dor-cliente"] .viz,
   body[data-scene="dor-negocio"] .viz,
   body[data-scene="canal"] .viz,
   body[data-scene="setup"] .viz,
-  body[data-scene="seguranca"] .viz{ animation:fadeUp .75s .25s ease both; }
-  body[data-scene="solucao"] .sol-mark{ animation:pop 1s cubic-bezier(.2,1,.3,1) both; }
+  body[data-scene="seguranca"] .viz{ animation:vizIn .75s .18s cubic-bezier(.2,1,.3,1) both; }
+  body[data-scene="dor-cliente"] .viz .clock{ animation:clockPop .8s .35s cubic-bezier(.2,1,.3,1) both, clockBeat 2.2s 1.2s ease-in-out infinite; }
+  body[data-scene="dor-cliente"] .viz .row:nth-child(2),
+  body[data-scene="dor-negocio"] .viz .row:nth-child(1),
+  body[data-scene="canal"] .viz .row:nth-child(1),
+  body[data-scene="seguranca"] .viz .row:nth-child(1){ animation:rowIn .55s .45s ease both; }
+  body[data-scene="dor-cliente"] .viz .row:nth-child(3),
+  body[data-scene="dor-negocio"] .viz .row:nth-child(2),
+  body[data-scene="canal"] .viz .row:nth-child(2),
+  body[data-scene="seguranca"] .viz .row:nth-child(2){ animation:rowIn .55s .6s ease both; }
+  body[data-scene="dor-negocio"] .viz .row:nth-child(3),
+  body[data-scene="canal"] .viz .row:nth-child(3),
+  body[data-scene="seguranca"] .viz .row:nth-child(3){ animation:rowIn .55s .75s ease both; }
+  body[data-scene="setup"] .setup-card:nth-child(1){ animation:rowIn .6s .4s ease both; }
+  body[data-scene="setup"] .setup-card:nth-child(2){ animation:rowIn .6s .55s ease both; }
+  body[data-scene="solucao"] .sol-mark{ animation:pop 1s cubic-bezier(.2,1,.3,1) both, solGlow 2.6s 1s ease-in-out infinite; }
+
+  @keyframes titleIn{ from{ opacity:0; transform:translateY(22px) scale(.97);} to{ opacity:1; transform:none;} }
+  @keyframes vizIn{ from{ opacity:0; transform:translateX(28px) scale(.96);} to{ opacity:1; transform:none;} }
+  @keyframes rowIn{ from{ opacity:0; transform:translateY(14px);} to{ opacity:1; transform:none;} }
+  @keyframes cueIn{ from{ opacity:0; transform:translateY(12px);} to{ opacity:1; transform:none;} }
+  @keyframes cuePulse{
+    0%,100%{ box-shadow:0 0 0 0 rgba(100,179,77,0); border-color:rgba(100,179,77,.28); }
+    50%{ box-shadow:0 0 28px rgba(100,179,77,.22); border-color:rgba(100,179,77,.55); }
+  }
+  @keyframes clockPop{ from{ opacity:0; transform:scale(.7);} to{ opacity:1; transform:scale(1);} }
+  @keyframes clockBeat{
+    0%,100%{ box-shadow:0 0 40px rgba(100,179,77,.25), inset 0 0 30px rgba(100,179,77,.08); }
+    50%{ box-shadow:0 0 60px rgba(100,179,77,.55), inset 0 0 40px rgba(100,179,77,.16); }
+  }
+  @keyframes solGlow{
+    0%,100%{ filter:drop-shadow(0 12px 40px rgba(100,179,77,.45)); }
+    50%{ filter:drop-shadow(0 16px 56px rgba(100,179,77,.85)); }
+  }
 
   .setup-grid{ display:grid; grid-template-columns:1fr 1fr; gap:16px; }
   .setup-card{
     padding:22px; border-radius:20px; background:rgba(255,255,255,.03);
     border:1px solid rgba(255,255,255,.08);
+    opacity:0; transform:translateY(14px);
+    transition:border-color .3s, box-shadow .3s;
+  }
+  body[data-scene="setup"] .setup-card{ box-shadow:0 0 0 rgba(100,179,77,0); }
+  body[data-scene="setup"] .setup-card:hover{
+    border-color:rgba(100,179,77,.4); box-shadow:0 0 24px rgba(100,179,77,.15);
   }
   .setup-card .n{ font-size:11px; font-weight:800; letter-spacing:.2em; text-transform:uppercase; color:var(--green); margin-bottom:10px; }
   .setup-card b{ display:block; font-size:20px; font-weight:900; margin-bottom:8px; }
@@ -168,6 +241,39 @@
 
   .trust-list{ display:flex; flex-direction:column; gap:12px; }
   .trust-list .row .ico.warn{ background:rgba(255,180,80,.12); color:#ffb450; }
+
+  body[data-scene="outro"] .punch{ animation:titleIn .75s .1s cubic-bezier(.2,1,.3,1) both; }
+  body[data-scene="outro"] .sub{ animation:fadeUp .6s .25s ease both; }
+  body[data-scene="outro"] .plan{ animation:planPop .65s cubic-bezier(.2,1,.3,1) both; }
+  body[data-scene="outro"] .plan:nth-child(1){ animation-delay:.3s; }
+  body[data-scene="outro"] .plan:nth-child(2){ animation-delay:.42s; }
+  body[data-scene="outro"] .plan:nth-child(3){ animation-delay:.54s; }
+  body[data-scene="outro"] .site{ animation:fadeUp .55s .7s ease both; }
+  @keyframes planPop{
+    from{ opacity:0; transform:translateY(24px) scale(.92); }
+    to{ opacity:1; transform:none; }
+  }
+
+  /* Transição de cena mais viva */
+  .scene{
+    position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+    opacity:0; transform:scale(.94) translateY(12px); filter:blur(6px);
+    transition:opacity .55s ease, transform .55s cubic-bezier(.2,1,.3,1), filter .55s ease;
+    pointer-events:none;
+  }
+  body[data-scene="dor-cliente"] .s-dor-cliente,
+  body[data-scene="dor-negocio"] .s-dor-negocio,
+  body[data-scene="canal"] .s-canal,
+  body[data-scene="solucao"] .s-solucao,
+  body[data-scene="demo"]  .s-demo,
+  body[data-scene="setup"] .s-setup,
+  body[data-scene="seguranca"] .s-seguranca,
+  body[data-scene="outro"] .s-outro{
+    opacity:1; transform:scale(1) translateY(0); filter:blur(0);
+  }
+
+  .pill{ transition:transform .35s cubic-bezier(.2,1,.3,1), box-shadow .35s, border-color .35s, color .35s; }
+  .pill.on{ transform:translateY(-3px) scale(1.04); }
 
   @media (max-width:900px){
     .talk{ grid-template-columns:1fr; gap:28px; }
