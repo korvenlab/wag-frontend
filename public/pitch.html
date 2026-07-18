@@ -76,9 +76,104 @@
   /* ---------- generic scene visibility ---------- */
   .scene{ position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
     opacity:0; transform:scale(.98); transition:opacity .7s ease, transform .7s ease; pointer-events:none; }
-  body[data-scene="intro"] .s-intro,
+  body[data-scene="dor-cliente"] .s-dor-cliente,
+  body[data-scene="dor-negocio"] .s-dor-negocio,
+  body[data-scene="canal"] .s-canal,
+  body[data-scene="solucao"] .s-solucao,
   body[data-scene="demo"]  .s-demo,
+  body[data-scene="setup"] .s-setup,
+  body[data-scene="seguranca"] .s-seguranca,
   body[data-scene="outro"] .s-outro{ opacity:1; transform:scale(1); }
+
+  /* ---------- talk beats (roteiro) ---------- */
+  .talk{
+    width:min(1100px,92vw); display:grid; grid-template-columns:1.15fr .95fr;
+    gap:48px; align-items:center;
+  }
+  .talk.solo{ grid-template-columns:1fr; text-align:center; justify-items:center; }
+  .talk .eyebrow{
+    display:inline-flex; align-items:center; gap:8px;
+    font-size:11px; font-weight:800; letter-spacing:.28em; text-transform:uppercase;
+    color:var(--green); margin-bottom:18px;
+  }
+  .talk h2{
+    font-size:clamp(32px,4.6vw,58px); font-weight:900; line-height:1.02;
+    letter-spacing:-.03em; margin-bottom:18px;
+  }
+  .talk h2 .g{ color:var(--green); }
+  .talk .lead{
+    color:var(--muted); font-size:clamp(15px,1.5vw,19px); font-weight:600;
+    line-height:1.45; max-width:520px;
+  }
+  .talk.solo .lead{ max-width:680px; margin:0 auto; }
+  .cue{
+    margin-top:28px; padding:16px 18px; border-radius:16px;
+    background:rgba(100,179,77,.08); border:1px solid rgba(100,179,77,.28);
+    text-align:left; max-width:540px;
+  }
+  .talk.solo .cue{ margin-left:auto; margin-right:auto; }
+  .cue b{
+    display:block; font-size:10px; letter-spacing:.22em; text-transform:uppercase;
+    color:var(--green); margin-bottom:8px; font-weight:800;
+  }
+  .cue p{ color:rgba(255,255,255,.88); font-size:14.5px; line-height:1.45; font-weight:600; }
+
+  .viz{
+    position:relative; border-radius:28px; padding:28px;
+    background:var(--glass); border:1px solid var(--stroke);
+    box-shadow:0 30px 80px rgba(0,0,0,.35);
+    min-height:320px; display:flex; flex-direction:column; justify-content:center; gap:14px;
+  }
+  .viz .row{
+    display:flex; align-items:center; gap:14px; padding:14px 16px; border-radius:16px;
+    background:rgba(255,255,255,.03); border:1px solid rgba(255,255,255,.06);
+  }
+  .viz .ico{
+    width:44px; height:44px; border-radius:14px; flex:none;
+    display:flex; align-items:center; justify-content:center;
+    background:rgba(100,179,77,.15); color:var(--green); font-weight:900; font-size:18px;
+  }
+  .viz .row b{ display:block; font-size:15px; font-weight:800; }
+  .viz .row span{ display:block; font-size:12.5px; color:var(--muted); margin-top:3px; font-weight:600; }
+  .viz .clock{
+    align-self:center; width:160px; height:160px; border-radius:50%;
+    border:3px solid rgba(100,179,77,.45);
+    box-shadow:0 0 40px rgba(100,179,77,.25), inset 0 0 30px rgba(100,179,77,.08);
+    display:flex; align-items:center; justify-content:center; flex-direction:column; gap:4px;
+  }
+  .viz .clock strong{ font-size:42px; font-weight:900; letter-spacing:-.04em; }
+  .viz .clock em{ font-style:normal; font-size:12px; color:var(--muted); font-weight:700; letter-spacing:.12em; text-transform:uppercase; }
+
+  body[data-scene="dor-cliente"] .talk-copy,
+  body[data-scene="dor-negocio"] .talk-copy,
+  body[data-scene="canal"] .talk-copy,
+  body[data-scene="solucao"] .talk-copy,
+  body[data-scene="setup"] .talk-copy,
+  body[data-scene="seguranca"] .talk-copy{ animation:fadeUp .7s .1s ease both; }
+  body[data-scene="dor-cliente"] .viz,
+  body[data-scene="dor-negocio"] .viz,
+  body[data-scene="canal"] .viz,
+  body[data-scene="setup"] .viz,
+  body[data-scene="seguranca"] .viz{ animation:fadeUp .75s .25s ease both; }
+  body[data-scene="solucao"] .sol-mark{ animation:pop 1s cubic-bezier(.2,1,.3,1) both; }
+
+  .setup-grid{ display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+  .setup-card{
+    padding:22px; border-radius:20px; background:rgba(255,255,255,.03);
+    border:1px solid rgba(255,255,255,.08);
+  }
+  .setup-card .n{ font-size:11px; font-weight:800; letter-spacing:.2em; text-transform:uppercase; color:var(--green); margin-bottom:10px; }
+  .setup-card b{ display:block; font-size:20px; font-weight:900; margin-bottom:8px; }
+  .setup-card p{ color:var(--muted); font-size:13.5px; line-height:1.4; font-weight:600; }
+
+  .trust-list{ display:flex; flex-direction:column; gap:12px; }
+  .trust-list .row .ico.warn{ background:rgba(255,180,80,.12); color:#ffb450; }
+
+  @media (max-width:900px){
+    .talk{ grid-template-columns:1fr; gap:28px; }
+    .viz{ min-height:auto; }
+    .setup-grid{ grid-template-columns:1fr; }
+  }
 
   /* ================= INTRO ================= */
   .s-intro{ flex-direction:column; text-align:center; gap:30px; }
@@ -518,7 +613,7 @@
   }
 </style>
 </head>
-<body data-scene="intro" data-mode="fluxo">
+<body data-scene="dor-cliente" data-mode="fluxo">
   <div class="grid"></div>
   <div class="vignette"></div>
 
@@ -529,16 +624,83 @@
 
   <div class="stage">
 
-    <!-- INTRO -->
-    <section class="scene s-intro">
-      <div class="logo-wrap">
-        <img class="logo-mark" src="/logo.png" alt="Wagoo" />
+    <!-- 1 · Dor do cliente -->
+    <section class="scene s-dor-cliente">
+      <div class="talk">
+        <div class="talk-copy">
+          <div class="eyebrow">01 · Ponto de partida</div>
+          <h2>Agendar no WhatsApp<br><span class="g">ainda é espera.</span></h2>
+          <p class="lead">O cliente manda a mensagem… e fica horas sem resposta. A experiência quebra antes do horário existir.</p>
+          <div class="cue">
+            <b>Fala</b>
+            <p>Quantas vezes vocês já tentaram agendar um serviço pelo WhatsApp e ficaram horas esperando a empresa responder?</p>
+          </div>
+        </div>
+        <div class="viz">
+          <div class="clock"><strong>3h+</strong><em>sem resposta</em></div>
+          <div class="row"><div class="ico">WA</div><div><b>“Tem horário amanhã?”</b><span>Cliente enviou · 14:32</span></div></div>
+          <div class="row"><div class="ico">…</div><div><b>Silêncio</b><span>Empresa ocupada · cliente esperando</span></div></div>
+        </div>
       </div>
-      <h1 class="title fade-up">Sua agenda<br><span class="g">no automático.</span></h1>
-      <p class="sub fade-up d2">Do WhatsApp do cliente para o seu Google Calendar — em segundos, 24 horas por dia, com IA.</p>
     </section>
 
-    <!-- DEMO -->
+    <!-- 2 · Dor do empreendedor -->
+    <section class="scene s-dor-negocio">
+      <div class="talk">
+        <div class="talk-copy">
+          <div class="eyebrow">02 · Lado do negócio</div>
+          <h2>Cada atraso<br><span class="g">é um cliente perdido.</span></h2>
+          <p class="lead">Sem tempo de responder na hora, o cliente procura outra empresa. A agenda esvazia sem você perceber.</p>
+          <div class="cue">
+            <b>Fala</b>
+            <p>Quantos clientes você já perdeu porque não tinha tempo de responder na hora — e o cliente foi para o concorrente?</p>
+          </div>
+        </div>
+        <div class="viz">
+          <div class="row"><div class="ico">1</div><div><b>Mensagem chega</b><span>Cliente quente, pronto para marcar</span></div></div>
+          <div class="row"><div class="ico">2</div><div><b>Você está ocupado</b><span>Atendendo, cortando, no trânsito…</span></div></div>
+          <div class="row"><div class="ico">✕</div><div><b>Cliente desiste</b><span>Marca com outra empresa</span></div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3 · Canal vs custo -->
+    <section class="scene s-canal">
+      <div class="talk">
+        <div class="talk-copy">
+          <div class="eyebrow">03 · O canal</div>
+          <h2>WhatsApp vende.<br><span class="g">Gente dedicada custa.</span></h2>
+          <p class="lead">É um dos maiores canais de vendas do Brasil — mas pagar alguém só para cuidar do chat vira um gasto enorme.</p>
+          <div class="cue">
+            <b>Fala</b>
+            <p>O WhatsApp é um dos maiores canais de vendas do Brasil. Mas depender de um funcionário específico só para isso é caro demais.</p>
+          </div>
+        </div>
+        <div class="viz">
+          <div class="row"><div class="ico">↑</div><div><b>Canal #1 de conversão</b><span>Cliente já está no WhatsApp</span></div></div>
+          <div class="row"><div class="ico">$</div><div><b>Secretária / plantão</b><span>Salário + turno + folga + falhas</span></div></div>
+          <div class="row"><div class="ico">≠</div><div><b>Escala quebrada</b><span>Mais volume = mais custo humano</span></div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 4 · Solução Wagoo -->
+    <section class="scene s-solucao">
+      <div class="talk solo">
+        <div class="talk-copy">
+          <div class="eyebrow">04 · Korven Lab</div>
+          <img class="sol-mark" src="/logo.png" alt="Wagoo" style="width:min(280px,48vw);margin:8px auto 22px;display:block;filter:drop-shadow(0 12px 40px rgba(100,179,77,.45));" />
+          <h2>Transformamos o WhatsApp<br>em <span class="g">secretária 24h.</span></h2>
+          <p class="lead">Por isso nós da Korven Lab desenvolvemos o Wagoo: qualquer profissional passa a atender e agendar sem ficar preso no celular.</p>
+          <div class="cue">
+            <b>Fala</b>
+            <p>Por isso nós da Korven Lab desenvolvemos o Wagoo — transformamos o WhatsApp de qualquer profissional em uma secretária 24 horas.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 5 · Demo produto -->
     <section class="scene s-demo">
       <div class="board">
         <svg class="wire" viewBox="0 0 1180 620" preserveAspectRatio="none">
@@ -546,13 +708,12 @@
           <path class="flow" d="M330 310 C 520 310, 560 300, 720 300" />
         </svg>
 
-        <!-- phone -->
         <div class="phone">
           <div class="notch"></div>
           <div class="screen">
             <div class="wa-top">
               <div class="av">M</div>
-              <div class="who"><b>Marina • Cliente</b><span>online</span></div>
+              <div class="who"><b>Marina · Cliente</b><span>online</span></div>
             </div>
             <div class="chat">
               <div class="msg in m1">Oi! Dá pra marcar um corte amanhã à tarde? <time>14:32</time></div>
@@ -565,17 +726,16 @@
           </div>
         </div>
 
-        <!-- right -->
         <div class="right">
           <div class="ai">
             <div class="orb"></div>
-            <div><b>IA Wagoo consultando disponibilidade</b><span>Lê o Google Calendar em tempo real</span></div>
+            <div><b>IA Wagoo consultando disponibilidade</b><span>Lê a agenda · conversa · confirma</span></div>
           </div>
 
           <div class="cal">
             <div class="head">
               <div class="gicon">31</div>
-              <div><b>Google Calendar</b><br><span>Julho • Barbearia</span></div>
+              <div><b>Google Calendar</b><br><span>Julho · Sua loja</span></div>
             </div>
             <div class="body">
               <div class="dow"><span>S</span><span>T</span><span>Q</span><span>Q</span><span>S</span><span>S</span><span>D</span></div>
@@ -586,7 +746,7 @@
               </div>
               <div class="event">
                 <div class="bar"></div>
-                <div><b>15h30 — Corte (Marina)</b><span>Amanhã • Profissional: você</span></div>
+                <div><b>15h30 — Corte (Marina)</b><span>Amanhã · Confirmado</span></div>
                 <div class="chk"><span class="c">✓</span> Sincronizado</div>
               </div>
             </div>
@@ -595,13 +755,63 @@
       </div>
     </section>
 
-    <!-- OUTRO -->
+    <!-- 6 · Setup único -->
+    <section class="scene s-setup">
+      <div class="talk">
+        <div class="talk-copy">
+          <div class="eyebrow">05 · Configuração</div>
+          <h2>Você define o ritmo.<br><span class="g">O Wagoo executa.</span></h2>
+          <p class="lead">Lê a disponibilidade, conversa com o cliente, marca horários livres e confirma. Setup uma vez — e pronto.</p>
+          <div class="cue">
+            <b>Fala</b>
+            <p>O Wagoo lê a disponibilidade da sua agenda, conversa com clientes, marca horários livres e confirma. Você só define o horário da loja e quando quer lembrar o cliente.</p>
+          </div>
+        </div>
+        <div class="viz">
+          <div class="setup-grid">
+            <div class="setup-card">
+              <div class="n">Passo 1</div>
+              <b>Horário da loja</b>
+              <p>Dias e turnos de funcionamento — a IA só oferece o que você libera.</p>
+            </div>
+            <div class="setup-card">
+              <div class="n">Passo 2</div>
+              <b>Lembretes</b>
+              <p>Em quanto tempo antes do horário o Wagoo avisa o cliente no WhatsApp.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 7 · Segurança -->
+    <section class="scene s-seguranca">
+      <div class="talk">
+        <div class="talk-copy">
+          <div class="eyebrow">06 · Segurança</div>
+          <h2>Compromisso além<br>do <span class="g">atendimento.</span></h2>
+          <p class="lead">Construído sobre APIs oficiais do Google e WhatsApp — com foco em estabilidade. Sem o drama comum desse nicho.</p>
+          <div class="cue">
+            <b>Fala</b>
+            <p>Além do atendimento, nosso compromisso é com a segurança. Wagoo usa APIs oficiais do Google e WhatsApp — testes de estabilidade, sem conversas vazadas nem bloqueio de números, um problema comum nesse nicho.</p>
+          </div>
+        </div>
+        <div class="viz trust-list">
+          <div class="row"><div class="ico">G</div><div><b>Google Calendar oficial</b><span>OAuth · permissões mínimas</span></div></div>
+          <div class="row"><div class="ico">W</div><div><b>WhatsApp estável</b><span>Canal que o cliente já confia</span></div></div>
+          <div class="row"><div class="ico warn">!</div><div><b>Evita o risco do nicho</b><span>Sem vazamento · sem bloqueio por gambiarra</span></div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 8 · Diferencial + preços -->
     <section class="scene s-outro">
-      <h2 class="punch">WhatsApp marca. Google Calendar confirma.<br><span class="g">Você trabalha.</span></h2>
+      <h2 class="punch">Preço justo. Segurança.<br><span class="g">Configura uma vez.</span></h2>
+      <p class="sub fade-up" style="opacity:1;max-width:640px;margin:-8px auto 8px;text-align:center;">Nosso diferencial: preço vs. mercado, segurança e configuração única — sem fidelidade.</p>
       <div class="plans">
         <div class="plan"><div class="n">Basic</div><div class="p">R$59<small>/mês</small></div><div class="u">1 usuário</div></div>
-        <div class="plan hot"><div class="n">Pro</div><div class="p">R$149<small>/mês</small></div><div class="u">até 3 usuários</div></div>
-        <div class="plan"><div class="n">Pro+</div><div class="p">R$259<small>/mês</small></div><div class="u">até 5 usuários</div></div>
+        <div class="plan hot"><div class="n">Pro</div><div class="p">R$149<small>/mês</small></div><div class="u">até 3 · lembretes + equipe</div></div>
+        <div class="plan"><div class="n">Pro+</div><div class="p">R$259<small>/mês</small></div><div class="u">até 5 · lembretes + equipe</div></div>
       </div>
       <div class="site">wagoobot.com</div>
     </section>
@@ -609,9 +819,11 @@
   </div>
 
   <div class="steps">
-    <div class="pill" data-step="0"><b>01</b> Cliente manda mensagem</div>
-    <div class="pill" data-step="1"><b>02</b> IA consulta a agenda</div>
-    <div class="pill" data-step="2"><b>03</b> Confirmado e sincronizado</div>
+    <div class="pill" data-step="0"><b>01</b> Dor</div>
+    <div class="pill" data-step="1"><b>02</b> Solução</div>
+    <div class="pill" data-step="2"><b>03</b> Fluxo</div>
+    <div class="pill" data-step="3"><b>04</b> Confiança</div>
+    <div class="pill" data-step="4"><b>05</b> Preço</div>
   </div>
 
   <!-- Slides de valor (controlados por /pitchnext) -->
@@ -694,9 +906,14 @@
   const API_BASE = "https://wag-backend.onrender.com";
   const REMOTE_URL = `${API_BASE}/api/pitch/remote`;
   const SCENES = [
-    { name:"intro", dur:4.5 },
-    { name:"demo",  dur:13.5 },
-    { name:"outro", dur:6.5 },
+    { name:"dor-cliente", dur:9 },
+    { name:"dor-negocio", dur:9 },
+    { name:"canal", dur:8 },
+    { name:"solucao", dur:7 },
+    { name:"demo", dur:13.5 },
+    { name:"setup", dur:8 },
+    { name:"seguranca", dur:9 },
+    { name:"outro", dur:8 },
   ];
   const TOTAL = SCENES.reduce((a,s)=>a+s.dur,0);
   const VALUE_SLIDES = ["mercado","concorrencia","margens","roadmap"];
@@ -713,10 +930,12 @@
   let valueSlide = "mercado";
   let lastKey = "fluxo|mercado";
 
-  function stepForDemo(t){
-    if(t < 2.9) return 0;
-    if(t < 9.2) return 1;
-    return 2;
+  function pillForScene(name){
+    if(name === "dor-cliente" || name === "dor-negocio" || name === "canal") return 0;
+    if(name === "solucao") return 1;
+    if(name === "demo" || name === "setup") return 2;
+    if(name === "seguranca") return 3;
+    return 4; // outro
   }
 
   function showValueSlide(id){
@@ -748,7 +967,7 @@
         start = performance.now();
         paused = false;
         body.classList.remove("fluxo-paused");
-        body.dataset.scene = "intro";
+        body.dataset.scene = "dor-cliente";
       } else if(paused){
         paused = false;
         body.classList.remove("fluxo-paused");
@@ -788,10 +1007,7 @@
       }
       if(body.dataset.scene !== current.name){ body.dataset.scene = current.name; }
 
-      let step = -1;
-      if(current.name === "intro") step = 0;
-      else if(current.name === "demo") step = stepForDemo(local);
-      else if(current.name === "outro") step = 2;
+      const step = pillForScene(current.name);
       pills.forEach(p => p.classList.toggle("on", +p.dataset.step === step));
     }
     requestAnimationFrame(frame);
@@ -824,6 +1040,30 @@
       start = performance.now();
       paused = false;
       body.classList.remove("fluxo-paused");
+    }
+    if(e.key === "ArrowRight" || e.key === "ArrowLeft"){
+      e.preventDefault();
+      let elapsed = (performance.now() - start)/1000;
+      if(paused) elapsed = (pausedAt - start)/1000;
+      let acc = 0, idx = 0;
+      for(let i=0;i<SCENES.length;i++){
+        if(elapsed < acc + SCENES[i].dur){ idx = i; break; }
+        acc += SCENES[i].dur;
+        if(i === SCENES.length-1) idx = i;
+      }
+      const next = e.key === "ArrowRight"
+        ? Math.min(SCENES.length-1, idx+1)
+        : Math.max(0, idx-1);
+      let jump = 0;
+      for(let i=0;i<next;i++) jump += SCENES[i].dur;
+      start = performance.now() - jump*1000;
+      paused = true;
+      pausedAt = performance.now();
+      body.classList.add("fluxo-paused");
+      body.dataset.scene = SCENES[next].name;
+      const step = pillForScene(SCENES[next].name);
+      pills.forEach(p => p.classList.toggle("on", +p.dataset.step === step));
+      bar.style.width = (jump/TOTAL*100).toFixed(2) + "%";
     }
   });
 </script>
