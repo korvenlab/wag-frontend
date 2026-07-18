@@ -1,6 +1,7 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import {
+  Bell,
   CheckCircle2,
   Loader2,
   Smartphone,
@@ -11,11 +12,14 @@ import {
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import { Button } from "./ui/button";
+import { Switch } from "./ui/switch";
 import { apiFetch } from "../lib/apiFetch";
+import { tierSupportsReminders } from "../lib/wagooPlans";
 
 const SKIP_KEY_PREFIX = "wagoo_wa_onboarding_skipped_";
+const REMIND_PRESETS = [15, 30, 60, 120] as const;
 
-type Step = 0 | 1 | 2 | 3;
+type Step = 0 | 1 | 2 | 3 | 4;
 
 export function skipWhatsAppOnboardingKey(userId: string) {
   return `${SKIP_KEY_PREFIX}${userId}`;
@@ -34,7 +38,8 @@ type WhatsAppOnboardingProps = {
 };
 
 export function WhatsAppOnboarding({ onSkip }: WhatsAppOnboardingProps) {
-  const { refreshProfile } = useAuth();
+  const { user, refreshProfile } = useAuth();
+  const showRemindersStep = tierSupportsReminders(user?.subscriptionTier);
   const [step, setStep] = useState<Step>(0);
   const [qrCode, setQrCode] = useState<string | null>(null);
   const [waStatus, setWaStatus] = useState<"idle" | "waiting_qr" | "connecting" | "connected">(
@@ -42,6 +47,20 @@ export function WhatsAppOnboarding({ onSkip }: WhatsAppOnboardingProps) {
   );
   const [isLoadingQR, setIsLoadingQR] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const [remindersEnabled, setRemindersEnabled] = useState(true);
+  const [remindBeforeMinutes, setRemindBeforeMinutes] = useState(60);
+  const [isSavingReminders, setIsSavingReminders] = useState(false);
+  const [remindersError, setRemindersError] = useState<string | null>(null);
+
+  const progressSteps = useMemo(
+    () => (showRemindersStep ? ([0, 1, 2, 3, 4] as Step[]) : ([0, 1, 2, 4] as Step[])),
+    [showRemindersStep],
+  );
+
+  const goAfterConnected = useCallback(() => {
+    setStep(showRemindersStep ? 3 : 4);
+  }, [showRemindersStep]);
 
   const fetchQr = useCallback(async () => {
     setIsLoadingQR(true);
@@ -60,7 +79,7 @@ export function WhatsAppOnboarding({ onSkip }: WhatsAppOnboardingProps) {
       if (data.connected || data.status === "connected") {
         setQrCode(null);
         setWaStatus("connected");
-        setStep(3);
+        goAfterConnected();
       } else if (data.status === "connecting") {
         setWaStatus("connecting");
       } else if (data.qrCode) {
@@ -76,7 +95,7 @@ export function WhatsAppOnboarding({ onSkip }: WhatsAppOnboardingProps) {
     } finally {
       setIsLoadingQR(false);
     }
-  }, []);
+  }, [goAfterConnected]);
 
   useEffect(() => {
     if (step !== 2) return;
@@ -102,7 +121,7 @@ export function WhatsAppOnboarding({ onSkip }: WhatsAppOnboardingProps) {
           if (data.connected || data.status === "connected") {
             setQrCode(null);
             setWaStatus("connected");
-            setStep(3);
+            goAfterConnected();
           } else if (data.status === "connecting") {
             setWaStatus("connecting");
           } else if (typeof data.qrCode === "string") {
@@ -115,10 +134,10 @@ export function WhatsAppOnboarding({ onSkip }: WhatsAppOnboardingProps) {
       })();
     }, intervalMs);
     return () => window.clearInterval(id);
-  }, [step, waStatus]);
+  }, [step, waStatus, goAfterConnected]);
 
   useEffect(() => {
-    if (step !== 3 || waStatus !== "connected") return;
+    if (step !== 4 || waStatus !== "connected") return;
     const t = window.setTimeout(() => {
       void refreshProfile({ force: true });
     }, 1200);
@@ -131,6 +150,30 @@ export function WhatsAppOnboarding({ onSkip }: WhatsAppOnboardingProps) {
 
   const handleFinish = () => {
     void refreshProfile({ force: true });
+  };
+
+  const handleSaveReminders = async (andContinue: boolean) => {
+    setIsSavingReminders(true);
+    setRemindersError(null);
+    try {
+      const response = await apiFetch("/api/settings/reminders", {
+        method: "POST",
+        body: JSON.stringify({
+          remindersEnabled,
+          remindBeforeMinutes,
+        }),
+      });
+      if (!response.ok) {
+        const body = (await response.json().catch(() => null)) as { error?: string } | null;
+        setRemindersError(body?.error || "Não foi possível salvar os lembretes.");
+        return;
+      }
+      if (andContinue) setStep(4);
+    } catch {
+      setRemindersError("Erro de rede ao salvar lembretes.");
+    } finally {
+      setIsSavingReminders(false);
+    }
   };
 
   const titles: Record<Step, { title: string; subtitle: string }> = {
@@ -147,7 +190,11 @@ export function WhatsAppOnboarding({ onSkip }: WhatsAppOnboardingProps) {
       subtitle: "Aponte a câmera do celular para a tela do computador.",
     },
     3: {
-      title: "WhatsApp conectado!",
+      title: "Configure os lembretes",
+      subtitle: "Avise o cliente no WhatsApp minutos antes do horário.",
+    },
+    4: {
+      title: "Tudo pronto!",
       subtitle: "Sua loja já pode receber mensagens pela IA do Wagoo.",
     },
   };
@@ -181,11 +228,15 @@ export function WhatsAppOnboarding({ onSkip }: WhatsAppOnboardingProps) {
             </AnimatePresence>
 
             <div className="mt-6 flex items-center justify-center gap-2">
-              {([0, 1, 2, 3] as Step[]).map((s) => (
+              {progressSteps.map((s) => (
                 <div
                   key={s}
                   className={`h-1.5 rounded-full transition-all ${
-                    s === step ? "w-8 bg-white" : s < step ? "w-4 bg-white/70" : "w-4 bg-white/25"
+                    s === step
+                      ? "w-8 bg-white"
+                      : progressSteps.indexOf(s) < progressSteps.indexOf(step)
+                        ? "w-4 bg-white/70"
+                        : "w-4 bg-white/25"
                   }`}
                 />
               ))}
@@ -207,6 +258,9 @@ export function WhatsAppOnboarding({ onSkip }: WhatsAppOnboardingProps) {
                       "Clientes falam no WhatsApp e a IA responde por você.",
                       "Agendamentos entram direto no seu fluxo (e no Calendar, se ligado).",
                       "É o mesmo vínculo de “Aparelhos conectados” do WhatsApp oficial.",
+                      ...(showRemindersStep
+                        ? ["Depois do QR, você configura os lembretes automáticos."]
+                        : []),
                     ].map((text) => (
                       <li
                         key={text}
@@ -355,9 +409,99 @@ export function WhatsAppOnboarding({ onSkip }: WhatsAppOnboardingProps) {
                 </motion.div>
               )}
 
-              {step === 3 && (
+              {step === 3 && showRemindersStep && (
                 <motion.div
                   key="s3"
+                  initial={{ opacity: 0, x: 12 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -12 }}
+                  className="space-y-5"
+                >
+                  <div className="rounded-2xl border border-slate-100 bg-slate-50/80 p-5 space-y-4">
+                    <div className="flex items-center justify-between gap-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-11 h-11 rounded-2xl bg-green-50 border border-green-100 flex items-center justify-center text-[#64b34d]">
+                          <Bell size={20} />
+                        </div>
+                        <div>
+                          <p className="text-sm font-black text-slate-900 tracking-tight">
+                            Lembretes no WhatsApp
+                          </p>
+                          <p className="text-xs text-slate-500 font-medium mt-0.5">
+                            Incluso no seu plano Pro / Pro+
+                          </p>
+                        </div>
+                      </div>
+                      <Switch
+                        checked={remindersEnabled}
+                        onCheckedChange={setRemindersEnabled}
+                        disabled={isSavingReminders}
+                        className="data-[state=checked]:bg-[#64b34d]"
+                      />
+                    </div>
+                    <p className="text-sm text-slate-600 font-medium leading-relaxed">
+                      Quando um horário for marcado, o Wagoo avisa o cliente no WhatsApp antes do
+                      compromisso.
+                    </p>
+                    <div className="space-y-2">
+                      <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">
+                        Antecedência
+                      </p>
+                      <div className="flex flex-wrap gap-2">
+                        {REMIND_PRESETS.map((m) => (
+                          <button
+                            key={m}
+                            type="button"
+                            disabled={!remindersEnabled || isSavingReminders}
+                            onClick={() => setRemindBeforeMinutes(m)}
+                            className={`px-3 py-2 rounded-xl text-xs font-black transition-all disabled:opacity-40 ${
+                              remindBeforeMinutes === m
+                                ? "bg-[#64b34d] text-white shadow-wg-subtle"
+                                : "bg-white text-slate-600 border border-slate-100 hover:border-slate-200"
+                            }`}
+                          >
+                            {m} min
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  {remindersError ? (
+                    <p className="text-xs text-red-600 font-medium bg-red-50 border border-red-100 rounded-xl px-3 py-2">
+                      {remindersError}
+                    </p>
+                  ) : null}
+
+                  <Button
+                    type="button"
+                    onClick={() => void handleSaveReminders(true)}
+                    disabled={isSavingReminders}
+                    className="w-full h-12 rounded-2xl bg-[#64b34d] hover:bg-[#4d8f3b] text-white font-black shadow-wg-green-cta"
+                  >
+                    {isSavingReminders ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <>
+                        Salvar e continuar
+                        <ChevronRight className="w-4 h-4 ml-1" />
+                      </>
+                    )}
+                  </Button>
+                  <button
+                    type="button"
+                    onClick={() => setStep(4)}
+                    disabled={isSavingReminders}
+                    className="w-full text-center text-xs font-bold text-slate-400 hover:text-slate-600 transition-colors"
+                  >
+                    Configurar depois no painel
+                  </button>
+                </motion.div>
+              )}
+
+              {step === 4 && (
+                <motion.div
+                  key="s4"
                   initial={{ opacity: 0, scale: 0.96 }}
                   animate={{ opacity: 1, scale: 1 }}
                   className="space-y-6 text-center py-4"
@@ -366,7 +510,9 @@ export function WhatsAppOnboarding({ onSkip }: WhatsAppOnboardingProps) {
                     <CheckCircle2 className="w-9 h-9 text-[#64b34d]" />
                   </div>
                   <p className="text-sm text-slate-600 font-medium leading-relaxed">
-                    Pronto. Você pode acompanhar o status e a IA no painel a qualquer momento.
+                    {showRemindersStep
+                      ? "WhatsApp e lembretes prontos. Você pode ajustar tudo no painel a qualquer momento."
+                      : "Pronto. Você pode acompanhar o status e a IA no painel a qualquer momento."}
                   </p>
                   <Button
                     type="button"
