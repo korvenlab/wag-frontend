@@ -199,7 +199,7 @@
   const FLUXO_ORDER = [
     "dor-cliente","dor-negocio","canal","solucao","demo","setup","seguranca","outro",
   ];
-  const VALORES_ORDER = ["mercado","concorrencia","margens","roadmap"];
+  const VALORES_ORDER = ["mercado","concorrencia","margens","roadmap","fechamento"];
   const LABELS = {
     "dor-cliente": "Dor · cliente",
     "dor-negocio": "Dor · negócio",
@@ -213,6 +213,7 @@
     concorrencia: "Concorrência",
     margens: "Margens",
     roadmap: "Roadmap",
+    fechamento: "Fechamento",
   };
 
   const bc = ("BroadcastChannel" in window) ? new BroadcastChannel(CHANNEL) : null;
