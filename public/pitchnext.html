@@ -255,15 +255,20 @@
     const order = orderFor(state.mode);
     const idx = Math.max(0, order.indexOf(state.slide));
     const isFluxo = state.mode === "fluxo";
+    const atFluxoStart = isFluxo && idx <= 0;
+    const atValoresEnd = !isFluxo && idx >= order.length - 1;
 
     btnFluxo.classList.toggle("on", isFluxo);
     btnValores.classList.toggle("on", !isFluxo);
     deckLabel.textContent = isFluxo ? "Fluxo Wagoo" : "Valores & números";
     slideTitle.textContent = LABELS[state.slide] || state.slide;
-    slideMeta.textContent = `${idx + 1} / ${order.length}`;
+    // Progresso contínuo: fluxo + valores
+    const total = FLUXO_ORDER.length + VALORES_ORDER.length;
+    const absIdx = isFluxo ? idx : FLUXO_ORDER.length + idx;
+    slideMeta.textContent = `${absIdx + 1} / ${total}`;
     dotsEl.innerHTML = order.map((_, i) => `<i class="${i === idx ? "on" : ""}"></i>`).join("");
-    stepPrev.disabled = idx <= 0;
-    stepNext.disabled = idx >= order.length - 1;
+    stepPrev.disabled = atFluxoStart;
+    stepNext.disabled = atValoresEnd;
 
     if(writing || writeTimer){
       setStatus("warn", "Enviando…");
@@ -360,11 +365,25 @@
   }
 
   function step(delta){
-    const order = orderFor(state.mode);
-    const i = Math.max(0, order.indexOf(state.slide));
-    const next = order[Math.min(order.length - 1, Math.max(0, i + delta))];
-    if(next === state.slide) return;
-    commitLocal(state.mode, next);
+    if(state.mode === "fluxo"){
+      const i = Math.max(0, FLUXO_ORDER.indexOf(state.slide));
+      const next = i + delta;
+      if(next < 0) return;
+      if(next >= FLUXO_ORDER.length){
+        commitLocal("valores", VALORES_ORDER[0]);
+        return;
+      }
+      commitLocal("fluxo", FLUXO_ORDER[next]);
+      return;
+    }
+    const i = Math.max(0, VALORES_ORDER.indexOf(state.slide));
+    const next = i + delta;
+    if(next >= VALORES_ORDER.length) return;
+    if(next < 0){
+      commitLocal("fluxo", FLUXO_ORDER[FLUXO_ORDER.length - 1]);
+      return;
+    }
+    commitLocal("valores", VALORES_ORDER[next]);
   }
 
   function ingestRemote(raw){
