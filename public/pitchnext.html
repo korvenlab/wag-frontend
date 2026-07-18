@@ -589,6 +589,8 @@
     const next = normalizeIncoming(raw);
     if(!next) return;
     if(next.mode === state.mode && next.slide === state.slide) return;
+    // Durante envio local, não deixar um GET atrasado sobrescrever
+    if(syncing) return;
     state = next;
     paint();
     try{ localStorage.setItem(STORAGE, JSON.stringify(state)); }catch{}
@@ -699,8 +701,24 @@
     }
   }catch{}
   paint();
-  void persist();
-  void pollRemote();
+  // Não POST no boot — só lê o estado do projetor (evita sobrescrever a seta).
+  void (async () => {
+    try{
+      const res = await fetch(REMOTE_URL, {
+        headers: { Accept: "application/json" },
+        cache: "no-store",
+      });
+      if(res.ok){
+        const data = await res.json();
+        applyIncoming(data);
+        apiOk = true;
+        setStatus("ok", statusLabel());
+        return;
+      }
+    }catch{}
+    // Sem API: mantém estado local e tenta publicar para sync na mesma máquina
+    void persist();
+  })();
   setInterval(() => { void pollRemote(); }, 700);
 </script>
 </body>

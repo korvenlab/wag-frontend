@@ -927,6 +927,8 @@
   let valueSlide = "mercado";
   let fluxoScene = "dor-cliente";
   let lastKey = "";
+  /** Marca publicações locais para ignorar GET remoto atrasado (vai-e-volta). */
+  let lastLocalPublishAt = 0;
   const bc = ("BroadcastChannel" in window) ? new BroadcastChannel(CHANNEL) : null;
 
   function pillForScene(name){
@@ -942,7 +944,6 @@
     const scene = FLUXO_SCENES[idx] || "dor-cliente";
     const changed = body.dataset.scene !== scene;
 
-    // Manual only — never autoplay scenes. Don't use fluxo-paused (freeze demo anims).
     body.classList.remove("fluxo-paused");
 
     if(changed || forceReplay){
@@ -967,13 +968,18 @@
     });
   }
 
+  function stateKey(nextMode, slide){
+    return `${nextMode}|${slide}`;
+  }
+
   /** Publica estado para /pitchnext (API + localStorage + BroadcastChannel). */
   function publishState(nextMode, slide){
     const payload = { mode: nextMode, slide };
-    lastKey = `${nextMode}|${slide}`;
+    lastKey = stateKey(nextMode, slide);
+    lastLocalPublishAt = Date.now();
     try{
       localStorage.setItem(STORAGE, JSON.stringify(payload));
-      localStorage.setItem(STORAGE + ":tick", String(Date.now()));
+      localStorage.setItem(STORAGE + ":tick", String(lastLocalPublishAt));
     }catch{}
     if(bc) bc.postMessage({ type: "pitch", ...payload });
     void fetch(REMOTE_URL, {
@@ -990,7 +996,7 @@
     const nextSlide = nextMode === "valores"
       ? (VALUE_SLIDES.includes(rawSlide) ? rawSlide : "mercado")
       : (FLUXO_SCENES.includes(rawSlide) ? rawSlide : "dor-cliente");
-    const key = `${nextMode}|${nextSlide}`;
+    const key = stateKey(nextMode, nextSlide);
     if(!force && key === lastKey) return;
     lastKey = key;
 
@@ -1006,11 +1012,29 @@
     }
   }
 
+  function shouldIgnoreRemote(data){
+    if(!lastLocalPublishAt) return false;
+    const age = Date.now() - lastLocalPublishAt;
+    // POST ainda em voo: ignora qualquer GET diferente do que publicamos
+    if(age < 1200){
+      const remoteKey = stateKey(
+        data.mode === "valores" ? "valores" : "fluxo",
+        typeof data.slide === "string" ? data.slide : "",
+      );
+      if(remoteKey !== lastKey) return true;
+    }
+    // Snapshot mais antigo que a nossa publicação
+    if(typeof data.updatedAt === "number" && data.updatedAt < lastLocalPublishAt){
+      return true;
+    }
+    return false;
+  }
+
   function stepFluxo(delta){
     const i = Math.max(0, FLUXO_SCENES.indexOf(fluxoScene));
     const next = Math.min(FLUXO_SCENES.length - 1, Math.max(0, i + delta));
     const scene = FLUXO_SCENES[next];
-    jumpToFluxoScene(scene, true);
+    jumpToFluxoScene(scene, scene === "demo");
     mode = "fluxo";
     body.dataset.mode = "fluxo";
     publishState("fluxo", scene);
@@ -1019,7 +1043,10 @@
   function readStored(){
     try{
       const saved = JSON.parse(localStorage.getItem(STORAGE) || "null");
-      if(saved?.mode) applyState(saved);
+      if(saved?.mode){
+        if(shouldIgnoreRemote(saved)) return;
+        applyState(saved);
+      }
     }catch{}
   }
 
@@ -1028,7 +1055,9 @@
       const res = await fetch(REMOTE_URL, { headers: { Accept: "application/json" }, cache: "no-store" });
       if(!res.ok) return;
       const data = await res.json();
-      if(data?.mode) applyState(data);
+      if(!data?.mode) return;
+      if(shouldIgnoreRemote(data)) return;
+      applyState(data);
     }catch{
       /* cold start Render / rede — próximo poll tenta de novo */
     }
@@ -1036,14 +1065,15 @@
 
   if(bc){
     bc.onmessage = (ev) => {
-      if(ev.data?.type === "pitch") applyState(ev.data);
+      if(ev.data?.type !== "pitch") return;
+      if(shouldIgnoreRemote(ev.data)) return;
+      applyState(ev.data);
     };
   }
   addEventListener("storage", (e) => {
     if(e.key === STORAGE || e.key === STORAGE + ":tick") readStored();
   });
 
-  // Arranque: primeira cena, parado — só setas ou /pitchnext avançam.
   jumpToFluxoScene("dor-cliente");
   lastKey = "fluxo|dor-cliente";
   readStored();
