@@ -1,18 +1,6 @@
 {
   "rewrites": [
     {
-      "source": "/pitch",
-      "destination": "/pitch.html"
-    },
-    {
-      "source": "/pitch/financas",
-      "destination": "/pitchnext.html"
-    },
-    {
-      "source": "/pitchnext",
-      "destination": "/pitchnext.html"
-    },
-    {
       "source": "/(.*)",
       "destination": "/index.html"
     }
