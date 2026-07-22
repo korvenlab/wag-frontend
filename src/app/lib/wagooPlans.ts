@@ -27,7 +27,12 @@ export const WAGOO_PLAN_CARDS: WagooPlanCard[] = [
     maxUsers: 3,
     description: "Até 3 usuários na equipe com o mesmo WhatsApp",
     highlight: true,
-    extras: ["Lembretes automáticos no WhatsApp antes do horário", "Gerenciar equipe de profissionais"],
+    extras: [
+      "Lembretes automáticos no WhatsApp antes do horário",
+      "Confirmação de presença após o lembrete",
+      "Export CSV de agendamentos para contabilidade",
+      "Gerenciar equipe de profissionais",
+    ],
   },
   {
     tier: "pro_plus",
@@ -35,17 +40,31 @@ export const WAGOO_PLAN_CARDS: WagooPlanCard[] = [
     priceBrl: 259,
     maxUsers: 5,
     description: "Até 5 usuários para negócios em crescimento",
-    extras: ["Lembretes automáticos no WhatsApp antes do horário", "Gerenciar equipe de profissionais"],
+    extras: [
+      "Lembretes automáticos no WhatsApp antes do horário",
+      "Confirmação de presença após o lembrete",
+      "Export CSV de agendamentos para contabilidade",
+      "Gerenciar equipe de profissionais",
+    ],
   },
 ];
 
+/** Recursos inclusos em todos os planos (landing / Pricing). */
 export const WAGOO_SHARED_FEATURES = [
   "Atendimento automático no WhatsApp",
   "Integração com Google Agenda",
   "Agendamentos ilimitados com IA",
+  "Estilo de conversa personalizado (tom humanizado)",
   "Sincronização em tempo real",
   "Painel com métricas de atendimento",
   "Suporte prioritário",
+] as const;
+
+/** O que o Basic não tem — texto de vendas. */
+export const WAGOO_BASIC_EXCLUSIONS = [
+  "Lembretes e confirmação de presença",
+  "Export CSV de agendamentos",
+  "Gerenciar equipe (Pro / Pro+)",
 ] as const;
 
 export function planLabel(tier: WagooPlanTier | null | undefined): string {
@@ -55,6 +74,11 @@ export function planLabel(tier: WagooPlanTier | null | undefined): string {
 
 /** Lembretes WhatsApp — só Pro e Pro+. */
 export function tierSupportsReminders(tier: WagooPlanTier | null | undefined): boolean {
+  return tier === "pro" || tier === "pro_plus";
+}
+
+/** Export CSV de agendamentos — só Pro e Pro+. */
+export function tierSupportsCsvExport(tier: WagooPlanTier | null | undefined): boolean {
   return tier === "pro" || tier === "pro_plus";
 }
 

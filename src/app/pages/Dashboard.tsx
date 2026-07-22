@@ -3,20 +3,21 @@ import { motion } from "framer-motion";
 import {
   QrCode,
   Bot, Phone, MessageSquare, Bell,
-  CalendarCheck, Zap, Loader2, Check, Coffee, Moon, Sun, Copy
+  CalendarCheck, Zap, Loader2, Check, Coffee, Moon, Sun, Copy, Download, MessageSquareText
 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/card";
 import { Button } from "../components/ui/button";
 import { Switch } from "../components/ui/switch";
 import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
+import { Textarea } from "../components/ui/textarea";
 import { useAuth } from "../context/AuthContext";
 import { useNavigate, useLocation } from "react-router";
 import { FeedbackFab } from "../components/FeedbackFab";
 import { DashboardSidebar } from "../components/DashboardSidebar";
 import { PlanFeatureGate } from "../components/PlanFeatureGate";
 import { apiFetch } from "../lib/apiFetch";
-import { planLabel, tierSupportsReminders } from "../lib/wagooPlans";
+import { planLabel, tierSupportsCsvExport, tierSupportsReminders } from "../lib/wagooPlans";
 import {
   BUSINESS_NICHE_OPTIONS,
   isBusinessNicheId,
@@ -27,8 +28,40 @@ import {
   setCachedDashboardProfile,
   setCachedTeam,
 } from "../lib/dashboardCache";
+import {
+  EMPTY_RESPONSE_TEMPLATES,
+  TEMPLATE_FIELDS,
+  normalizeTemplatesFromApi,
+  type ResponseTemplates,
+} from "../lib/responseTemplates";
 
 const REMIND_PRESETS = [15, 30, 60, 120] as const;
+
+function defaultCsvRange(): { from: string; to: string } {
+  const now = new Date();
+  const from = new Date(now.getFullYear(), now.getMonth(), 1);
+  const to = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
+  return { from: from.toISOString(), to: to.toISOString() };
+}
+
+function toDateInputValue(iso: string): string {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "";
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
+function fromDateInputStart(ymd: string): string {
+  const [y, m, d] = ymd.split("-").map(Number);
+  return new Date(y, m - 1, d, 0, 0, 0, 0).toISOString();
+}
+
+function fromDateInputEnd(ymd: string): string {
+  const [y, m, d] = ymd.split("-").map(Number);
+  return new Date(y, m - 1, d, 23, 59, 59, 999).toISOString();
+}
 
 const DAYS_OF_WEEK = ["Segunda-feira", "Terça-feira", "Quarta-feira", "Quinta-feira", "Sexta-feira", "Sábado", "Domingo"];
 
@@ -77,6 +110,14 @@ export function Dashboard() {
   const [remindBeforeMinutes, setRemindBeforeMinutes] = useState(60);
   const [isSavingReminders, setIsSavingReminders] = useState(false);
   const [showRemindersSuccess, setShowRemindersSuccess] = useState(false);
+  const [responseTemplates, setResponseTemplates] = useState<ResponseTemplates>({
+    ...EMPTY_RESPONSE_TEMPLATES,
+  });
+  const [isSavingTemplates, setIsSavingTemplates] = useState(false);
+  const [showTemplatesSuccess, setShowTemplatesSuccess] = useState(false);
+  const [csvRange, setCsvRange] = useState(defaultCsvRange);
+  const [isExportingCsv, setIsExportingCsv] = useState(false);
+  const [csvExportError, setCsvExportError] = useState<string | null>(null);
 
   const { user, loading, logout, refreshProfile } = useAuth();
   const navigate = useNavigate();
@@ -144,6 +185,7 @@ export function Dashboard() {
           setRemindBeforeMinutes(
             typeof data.remind_before_minutes === "number" ? data.remind_before_minutes : 60,
           );
+          setResponseTemplates(normalizeTemplatesFromApi(data.response_templates));
 
           if (data.working_hours && Object.keys(data.working_hours).length > 0) {
             setWorkingHours(data.working_hours);
@@ -348,6 +390,60 @@ export function Dashboard() {
       alert("Erro de rede ao salvar lembretes.");
     } finally {
       setIsSavingReminders(false);
+    }
+  };
+
+  const handleSaveTemplates = async () => {
+    setIsSavingTemplates(true);
+    setShowTemplatesSuccess(false);
+    try {
+      const response = await apiFetch("/api/settings/templates", {
+        method: "POST",
+        body: JSON.stringify({ responseTemplates }),
+      });
+      if (!response.ok) {
+        const body = (await response.json().catch(() => null)) as { error?: string } | null;
+        alert(body?.error || "Não foi possível salvar os templates.");
+        return;
+      }
+      const data = await response.json();
+      setResponseTemplates(normalizeTemplatesFromApi(data.response_templates));
+      setShowTemplatesSuccess(true);
+      window.setTimeout(() => setShowTemplatesSuccess(false), 2500);
+    } catch {
+      alert("Erro de rede ao salvar templates.");
+    } finally {
+      setIsSavingTemplates(false);
+    }
+  };
+
+  const handleExportCsv = async () => {
+    setIsExportingCsv(true);
+    setCsvExportError(null);
+    try {
+      const qs = new URLSearchParams({
+        from: csvRange.from,
+        to: csvRange.to,
+      });
+      const response = await apiFetch(`/api/calendar/events/export?${qs.toString()}`);
+      if (!response.ok) {
+        const body = (await response.json().catch(() => null)) as { error?: string } | null;
+        setCsvExportError(body?.error || "Não foi possível exportar o CSV.");
+        return;
+      }
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `wagoo-agendamentos-${toDateInputValue(csvRange.from)}_${toDateInputValue(csvRange.to)}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    } catch {
+      setCsvExportError("Erro de rede ao exportar CSV.");
+    } finally {
+      setIsExportingCsv(false);
     }
   };
 
@@ -610,9 +706,9 @@ export function Dashboard() {
                         Lembretes no WhatsApp
                       </h3>
                       <p className="text-slate-500 text-sm font-medium mt-2 leading-relaxed">
-                        Configure aqui quando avisar o cliente. O envio só acontece com o WhatsApp
-                        conectado na Visão Geral — não é obrigatório conectar só para salvar esta
-                        opção.
+                        Configure quando avisar o cliente. Depois do lembrete, ele pode confirmar
+                        presença ou avisar se não puder vir — com linguagem natural. O envio só
+                        acontece com o WhatsApp conectado na Visão Geral.
                       </p>
                     </div>
                     <div className="space-y-2">
@@ -757,6 +853,115 @@ export function Dashboard() {
                 <AnalyticsCard icon={<MessageSquare size={22} className="text-emerald-500" />} title="Conversas" value={messagesAnswered} />
                 <AnalyticsCard icon={<CalendarCheck size={22} className="text-emerald-600" />} title="Agendados" value={appointmentsMade} />
                 <AnalyticsCard icon={<Zap size={22} className="text-amber-500" />} title="Tempo Ganho" value={`${(appointmentsMade * 5 / 60).toFixed(1)}h`} />
+
+                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="lg:col-span-3">
+                  {tierSupportsCsvExport(user.subscriptionTier) ? (
+                    <Card className="rounded-[32px] border-none shadow-wg-elevated bg-white p-8 md:p-10 space-y-6">
+                      <div className="flex items-start gap-4">
+                        <div className="w-12 h-12 rounded-2xl bg-slate-50 flex items-center justify-center text-[#64b34d] shrink-0">
+                          <Download size={22} />
+                        </div>
+                        <div>
+                          <h3 className="font-black text-xl text-slate-900 tracking-tight">
+                            Exportar agendamentos (CSV)
+                          </h3>
+                          <p className="text-slate-500 text-sm font-medium mt-1 leading-relaxed">
+                            Baixe o período para contabilidade: data, cliente, telefone e profissional.
+                            Requer Google Agenda conectado.
+                          </p>
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-lg">
+                        <div className="space-y-2">
+                          <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">
+                            De
+                          </Label>
+                          <Input
+                            type="date"
+                            value={toDateInputValue(csvRange.from)}
+                            onChange={(e) =>
+                              setCsvRange((prev) => ({
+                                ...prev,
+                                from: fromDateInputStart(e.target.value),
+                              }))
+                            }
+                            className="h-11 rounded-xl bg-slate-50 border-none font-bold"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">
+                            Até
+                          </Label>
+                          <Input
+                            type="date"
+                            value={toDateInputValue(csvRange.to)}
+                            onChange={(e) =>
+                              setCsvRange((prev) => ({
+                                ...prev,
+                                to: fromDateInputEnd(e.target.value),
+                              }))
+                            }
+                            className="h-11 rounded-xl bg-slate-50 border-none font-bold"
+                          />
+                        </div>
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => setCsvRange(defaultCsvRange())}
+                          className="rounded-xl h-10 text-xs font-black"
+                        >
+                          Este mês
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => {
+                            const to = new Date();
+                            const from = new Date();
+                            from.setDate(from.getDate() - 30);
+                            setCsvRange({
+                              from: from.toISOString(),
+                              to: to.toISOString(),
+                            });
+                          }}
+                          className="rounded-xl h-10 text-xs font-black"
+                        >
+                          Últimos 30 dias
+                        </Button>
+                      </div>
+                      <Button
+                        type="button"
+                        onClick={() => void handleExportCsv()}
+                        disabled={isExportingCsv || !isGoogleConnected}
+                        className="h-12 px-6 rounded-2xl bg-slate-900 hover:bg-[#64b34d] text-white font-black gap-2"
+                      >
+                        {isExportingCsv ? (
+                          <Loader2 className="animate-spin" />
+                        ) : (
+                          <>
+                            <Download size={16} /> Baixar CSV
+                          </>
+                        )}
+                      </Button>
+                      {!isGoogleConnected && (
+                        <p className="text-amber-600 text-xs font-bold">
+                          Conecte o Google Agenda na Visão Geral para exportar.
+                        </p>
+                      )}
+                      {csvExportError && (
+                        <p className="text-red-600 text-xs font-medium">{csvExportError}</p>
+                      )}
+                    </Card>
+                  ) : (
+                    <PlanFeatureGate
+                      icon={Download}
+                      title="Export CSV disponível no Pro e Pro+"
+                      description="No plano Basic esta função não está inclusa. Faça upgrade para baixar seus agendamentos em CSV para contabilidade."
+                    />
+                  )}
+                </motion.div>
               </>
             )}
 
@@ -817,6 +1022,62 @@ export function Dashboard() {
                       {isSavingSettings ? <Loader2 className="animate-spin" /> : "Salvar Alterações"}
                     </Button>
                     {showSettingsSuccess && <p className="text-emerald-600 text-xs font-black text-center uppercase tracking-widest">✓ Perfil Atualizado</p>}
+
+                    <div className="pt-8 border-t border-slate-100 space-y-6">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-green-50 text-[#64b34d] flex items-center justify-center">
+                          <MessageSquareText size={18} />
+                        </div>
+                        <div>
+                          <h4 className="font-black text-slate-900 text-lg tracking-tight">
+                            Estilo de conversa
+                          </h4>
+                          <p className="text-slate-500 text-sm font-medium leading-relaxed">
+                            Guia amplo de tom e personalidade. A IA <span className="font-bold text-slate-700">não copia</span> o
+                            texto — improvisa respostas naturais e humanizadas a cada mensagem.
+                          </p>
+                        </div>
+                      </div>
+                      {TEMPLATE_FIELDS.map((field) => (
+                        <div key={field.key} className="space-y-2">
+                          <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 ml-1">
+                            {field.label}
+                          </Label>
+                          <p className="text-[11px] text-slate-400 font-medium ml-1">{field.hint}</p>
+                          <Textarea
+                            value={responseTemplates[field.key]}
+                            onChange={(e) =>
+                              setResponseTemplates((prev) => ({
+                                ...prev,
+                                [field.key]: e.target.value.slice(0, 800),
+                              }))
+                            }
+                            placeholder={field.placeholder}
+                            rows={field.rows ?? 2}
+                            className="min-h-[72px] px-4 py-3 rounded-2xl bg-slate-50 border-none font-medium text-sm resize-y"
+                          />
+                        </div>
+                      ))}
+                      <div className="relative">
+                        <Button
+                          type="button"
+                          onClick={() => void handleSaveTemplates()}
+                          disabled={isSavingTemplates}
+                          className="w-full h-12 rounded-2xl bg-[#64b34d] hover:bg-[#4d8f3b] text-white font-black"
+                        >
+                          {isSavingTemplates ? (
+                            <Loader2 className="animate-spin" />
+                          ) : (
+                            "Salvar estilo de conversa"
+                          )}
+                        </Button>
+                        {showTemplatesSuccess ? (
+                          <p className="absolute -bottom-6 left-0 right-0 text-center text-emerald-600 text-[10px] font-black uppercase tracking-[0.2em]">
+                            ✓ Estilo salvo
+                          </p>
+                        ) : null}
+                      </div>
+                    </div>
 
                     <div className="pt-6 border-t border-slate-100 space-y-3">
                       <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 ml-1">

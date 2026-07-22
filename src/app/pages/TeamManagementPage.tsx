@@ -478,8 +478,8 @@ export function TeamManagementPage() {
                     Escolha um plano Wagoo
                   </h2>
                   <p className="text-slate-500 font-medium leading-relaxed">
-                    Basic (1 usuário), Pro (até 3) ou Pro+ (até 5). Todos incluem as mesmas funções
-                    de IA e integrações.
+                    Basic (1 usuário), Pro (até 3) ou Pro+ (até 5). Todos têm WhatsApp, Agenda e
+                    IA; Pro e Pro+ incluem lembretes, confirmação de presença, export CSV e equipe.
                   </p>
                 </div>
                 <Button

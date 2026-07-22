@@ -6,6 +6,7 @@ import { supabase } from "../lib/supabase";
 import {
   WAGOO_PLAN_CARDS,
   WAGOO_SHARED_FEATURES,
+  WAGOO_BASIC_EXCLUSIONS,
   type WagooPlanTier,
 } from "../lib/wagooPlans";
 
@@ -59,10 +60,11 @@ export function Pricing() {
             <span className="text-xs font-black text-[#4d8f3b] uppercase tracking-widest">Planos Wagoo</span>
           </div>
           <h2 className="text-4xl md:text-6xl font-black text-slate-900 tracking-tighter leading-[0.95]">
-            Mesma IA e integrações. <span className="text-[#64b34d]">Escale sua equipe.</span>
+            Mesma IA e integrações. <span className="text-[#64b34d]">Escale quando precisar.</span>
           </h2>
           <p className="text-lg text-slate-500 font-medium leading-relaxed">
-            Todos os planos incluem WhatsApp, Google Agenda e agendamento com IA. A diferença é apenas quantos profissionais podem usar a plataforma.
+            Todos os planos incluem WhatsApp, Google Agenda, IA e estilo de conversa personalizado.
+            No Pro e Pro+ você ganha lembretes, confirmação de presença, export CSV e equipe.
           </p>
         </motion.div>
         <motion.div className="grid md:grid-cols-3 gap-6 lg:gap-8 items-stretch">
@@ -101,10 +103,17 @@ export function Pricing() {
                   </li>
                 ))}
                 {plan.tier === "basic" ? (
-                  <li className="flex items-start gap-3 text-sm font-medium text-slate-400">
-                    <span className="w-4 h-4 shrink-0 mt-0.5 text-center leading-none">–</span>
-                    Sem lembretes e sem gerenciar equipe (Pro / Pro+)
-                  </li>
+                  <>
+                    {WAGOO_BASIC_EXCLUSIONS.map((text) => (
+                      <li
+                        key={text}
+                        className="flex items-start gap-3 text-sm font-medium text-slate-400"
+                      >
+                        <span className="w-4 h-4 shrink-0 mt-0.5 text-center leading-none">–</span>
+                        {text}
+                      </li>
+                    ))}
+                  </>
                 ) : null}
               </ul>
               <button type="button" onClick={() => void handleCheckout(plan.tier)} disabled={loadingTier !== null} className={"w-full py-4 rounded-2xl font-black text-base flex items-center justify-center gap-2 disabled:opacity-70 " + (plan.highlight ? "bg-gradient-to-r from-[#64b34d] to-[#4d8f3b] text-white shadow-wg-green-cta" : "bg-slate-900 text-white hover:bg-[#64b34d]")}>
