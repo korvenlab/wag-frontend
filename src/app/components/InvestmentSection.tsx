@@ -1,30 +1,6 @@
 import { useRef } from "react";
-import { Clock3, TrendingUp, Wallet, ShieldCheck } from "lucide-react";
 
-const POINTS = [
-  {
-    icon: Clock3,
-    title: "Tempo que volta pra você",
-    body: "Cada mensagem de agenda respondida sozinha é minutos que você não gasta no celular no meio do atendimento.",
-  },
-  {
-    icon: Wallet,
-    title: "Investimento previsível",
-    body: "A partir de R$ 59/mês — menos que um dia de agenda perdida por falta de resposta rápida.",
-  },
-  {
-    icon: TrendingUp,
-    title: "Agenda que não dorme",
-    body: "Cliente marca à noite, no domingo, no intervalo. O Wagoo responde e joga no Google Calendar.",
-  },
-  {
-    icon: ShieldCheck,
-    title: "Operação sob seu controle",
-    body: "Você liga/desliga a IA, define horários e o estilo da conversa. O negócio continua com a sua cara.",
-  },
-] as const;
-
-/** Seção de valor — mostra por que o plano é investimento, sem prova social inventada. */
+/** Seção de valor — narrativa + conta rápida, sem grid de ícones. */
 export function InvestmentSection() {
   const ref = useRef<HTMLElement>(null);
 
@@ -58,15 +34,9 @@ export function InvestmentSection() {
         }}
       />
 
-      <div className="relative z-10 max-w-7xl mx-auto px-6">
-        <div className="grid lg:grid-cols-[1.1fr_0.9fr] gap-12 lg:gap-16 items-end mb-16">
-          <div className="space-y-6 max-w-xl">
-            <p
-              data-gsap="heading"
-              className="text-[11px] font-bold uppercase tracking-[0.28em] text-[#9ae07f]"
-            >
-              Por que vale a pena
-            </p>
+      <div className="relative z-10 max-w-6xl mx-auto px-6">
+        <div className="grid lg:grid-cols-[1.15fr_0.85fr] gap-12 lg:gap-16 items-start">
+          <div className="space-y-7 max-w-xl">
             <h2
               data-gsap="heading"
               className="text-4xl md:text-6xl font-extrabold tracking-tight leading-[0.95]"
@@ -74,10 +44,21 @@ export function InvestmentSection() {
               Menos tempo no WhatsApp.
               <span className="block text-[#64b34d]">Mais tempo no que paga a conta.</span>
             </h2>
-            <p data-gsap="heading" className="text-lg text-slate-300 font-medium leading-relaxed">
-              O Wagoo não é “mais um app”. É a secretária que nunca esquece a agenda — por uma
-              fração do custo de perder horários ou contratar alguém só pra responder mensagem.
-            </p>
+
+            <div className="space-y-5 text-base md:text-lg text-slate-300 font-medium leading-relaxed">
+              <p data-gsap="heading">
+                Cada mensagem de agenda respondida sozinha é tempo que você não gasta no celular no
+                meio do atendimento — à noite, no domingo, no intervalo.
+              </p>
+              <p data-gsap="heading">
+                A partir de R$&nbsp;59/mês: menos que um dia de agenda perdida por demora na
+                resposta.
+              </p>
+              <p data-gsap="heading">
+                Você liga e desliga a IA, define horários e o estilo da conversa. O negócio continua
+                com a sua cara.
+              </p>
+            </div>
           </div>
 
           <div
@@ -93,38 +74,20 @@ export function InvestmentSection() {
             </p>
             <p className="mt-4 text-slate-300 font-medium leading-relaxed">
               Plano Basic. Se o Wagoo recuperar{" "}
-              <span className="text-[#9ae07f] font-bold">um único horário</span> que você
-              perderia por demora na resposta, o mês já se paga.
+              <span className="text-[#9ae07f] font-bold">um único horário</span> que você perderia
+              por demora na resposta, o mês já se paga.
             </p>
-            <div className="mt-8 grid grid-cols-2 gap-4">
-              <div className="rounded-2xl bg-black/30 border border-white/10 p-4">
-                <p className="text-2xl font-black text-[#64b34d]">24/7</p>
-                <p className="text-xs text-slate-400 font-semibold mt-1">Atendimento na agenda</p>
+            <dl className="mt-8 space-y-4 border-t border-white/10 pt-6">
+              <div className="flex items-baseline justify-between gap-4">
+                <dt className="text-sm text-slate-400 font-semibold">Atendimento na agenda</dt>
+                <dd className="text-lg font-black text-[#64b34d]">24/7</dd>
               </div>
-              <div className="rounded-2xl bg-black/30 border border-white/10 p-4">
-                <p className="text-2xl font-black text-[#64b34d]">0</p>
-                <p className="text-xs text-slate-400 font-semibold mt-1">Dias de trial — já é produto</p>
+              <div className="flex items-baseline justify-between gap-4">
+                <dt className="text-sm text-slate-400 font-semibold">Dias de trial</dt>
+                <dd className="text-lg font-black text-[#64b34d]">0 — já é produto</dd>
               </div>
-            </div>
+            </dl>
           </div>
-        </div>
-
-        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
-          {POINTS.map(({ icon: Icon, title, body }) => (
-            <article
-              key={title}
-              data-gsap="item"
-              className="rounded-[24px] border border-white/10 bg-gradient-to-b from-white/[0.07] to-transparent p-6 min-h-[220px] flex flex-col"
-            >
-              <div className="mb-5 inline-flex h-11 w-11 items-center justify-center rounded-xl bg-[#64b34d]/15 text-[#9ae07f] border border-[#64b34d]/25">
-                <Icon className="w-5 h-5" strokeWidth={2.25} />
-              </div>
-              <h3 className="text-lg font-bold tracking-tight mb-2">
-                {title}
-              </h3>
-              <p className="text-sm text-slate-400 font-medium leading-relaxed flex-1">{body}</p>
-            </article>
-          ))}
         </div>
       </div>
     </section>

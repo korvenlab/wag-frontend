@@ -47,23 +47,13 @@ export function FAQ() {
   return (
     <section id="faq" data-gsap-section className="relative py-28 md:py-32 bg-white">
       <div className="max-w-4xl mx-auto px-6">
-        <div className="text-center mb-16">
-          <div
-            data-gsap="heading"
-            className="inline-block px-4 py-2 rounded-full bg-[#64b34d]/10 border border-[#64b34d]/20 mb-6"
-          >
-            <span className="text-[11px] text-[#64b34d] font-bold uppercase tracking-[0.2em]">
-              Dúvidas comuns
-            </span>
-          </div>
-
+        <div className="text-center mb-16 space-y-5">
           <h2
             data-gsap="heading"
-            className="text-4xl md:text-6xl font-extrabold mb-6 text-slate-900 tracking-tight"
+            className="text-4xl md:text-6xl font-extrabold text-slate-900 tracking-tight"
           >
             Tire suas <span className="text-[#64b34d]">dúvidas</span>
           </h2>
-
           <p data-gsap="heading" className="text-xl text-slate-500 font-medium">
             O essencial pra decidir com segurança
           </p>

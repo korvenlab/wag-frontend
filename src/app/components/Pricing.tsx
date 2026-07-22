@@ -1,4 +1,4 @@
-import { Check, Shield, Loader2, Sparkles, Users, MessageCircle } from "lucide-react";
+import { Check, Shield, Loader2, Users, MessageCircle } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../lib/supabase";
@@ -64,21 +64,12 @@ export function Pricing() {
       <div className="absolute top-1/2 left-0 -translate-y-1/2 w-[600px] h-[600px] bg-[#64b34d]/8 rounded-full blur-[120px] -z-10" />
       <div className="relative z-10 max-w-7xl mx-auto px-6">
         <div className="text-center max-w-3xl mx-auto mb-16 space-y-6">
-          <div
-            data-gsap="heading"
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#64b34d]/10 border border-[#64b34d]/20"
-          >
-            <Sparkles size={14} className="text-[#64b34d]" />
-            <span className="text-[11px] font-bold text-[#4d8f3b] uppercase tracking-[0.2em]">
-              Planos Wagoo
-            </span>
-          </div>
           <h2
             data-gsap="heading"
             className="text-4xl md:text-6xl font-extrabold text-slate-900 tracking-tight leading-[0.95]"
           >
-            Escolha o tamanho.{" "}
-            <span className="text-[#64b34d]">O retorno é o mesmo princípio.</span>
+            Escolha o plano.{" "}
+            <span className="text-[#64b34d]">O retorno começa no primeiro horário.</span>
           </h2>
           <p data-gsap="heading" className="text-lg text-slate-500 font-medium leading-relaxed">
             WhatsApp, Google Agenda, IA e estilo de conversa em todos. Pro e Pro+ somam lembretes,
