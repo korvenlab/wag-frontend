@@ -1034,7 +1034,7 @@ export function Dashboard() {
                           </h4>
                           <p className="text-slate-500 text-sm font-medium leading-relaxed">
                             Guia de tom e personalidade. A IA <span className="font-bold text-slate-700">não copia</span> o
-                            texto — improvisa respostas naturais (sempre curtas, 1–2 frases).
+                            texto — improvisa respostas naturais e humanizadas a cada mensagem.
                           </p>
                           <p className="text-slate-500 text-sm font-medium leading-relaxed mt-2">
                             <span className="font-bold text-slate-700">Pode deixar em branco</span> — a IA usa o estilo
