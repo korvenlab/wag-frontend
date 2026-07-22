@@ -1084,7 +1084,7 @@ export function Dashboard() {
                             </p>
                             <p className="text-slate-500 text-xs font-medium leading-relaxed mt-0.5">
                               {aiUseEmojis
-                                ? "A IA pode usar 1 emoji por mensagem, com moderação."
+                                ? "A IA usa emojis de forma natural e amigável, sem exagerar."
                                 : "Respostas sem emojis — tom mais neutro."}
                             </p>
                           </div>
