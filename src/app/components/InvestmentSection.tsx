@@ -82,10 +82,6 @@ export function InvestmentSection() {
                 <dt className="text-sm text-slate-400 font-semibold">Atendimento na agenda</dt>
                 <dd className="text-lg font-black text-[#64b34d]">24/7</dd>
               </div>
-              <div className="flex items-baseline justify-between gap-4">
-                <dt className="text-sm text-slate-400 font-semibold">Dias de trial</dt>
-                <dd className="text-lg font-black text-[#64b34d]">0 — já é produto</dd>
-              </div>
             </dl>
           </div>
         </div>
