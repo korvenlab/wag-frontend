@@ -1,1 +1,11 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Syne:wght@600;700;800&display=swap');
+
+:root {
+  --font-display: "Syne", system-ui, sans-serif;
+  --font-body: "DM Sans", system-ui, sans-serif;
+  --wagoo-green: #64b34d;
+  --wagoo-green-deep: #4d8f3b;
+  --wagoo-ink: #0f172a;
+  --wagoo-paper: #f4f7f2;
+  --wagoo-night: #0b1220;
+}

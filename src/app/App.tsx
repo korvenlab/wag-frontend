@@ -1,7 +1,8 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { Header } from "./components/Header";
 import { HeroSection } from "./components/HeroSection";
 import { HowItWorks } from "./components/HowItWorks";
+import { InvestmentSection } from "./components/InvestmentSection";
 import { Pricing } from "./components/Pricing";
 import { TrustSafety } from "./components/TrustSafety";
 import { FAQ } from "./components/FAQ";
@@ -11,6 +12,7 @@ import { Toaster } from "sonner";
 import { router } from "./routes";
 import { AuthProvider } from "./context/AuthContext";
 import { SupabaseConfigBanner } from "./components/SupabaseConfigBanner";
+import { useLandingSectionTransitions } from "./hooks/useLandingSectionTransitions";
 
 export default function App() {
   return (
@@ -23,6 +25,9 @@ export default function App() {
 }
 
 export function HomePage() {
+  const landingRef = useRef<HTMLDivElement>(null);
+  useLandingSectionTransitions(landingRef);
+
   useEffect(() => {
     const scrollToPricing = () => {
       if (window.location.hash !== "#precos") return;
@@ -33,11 +38,15 @@ export function HomePage() {
   }, []);
 
   return (
-    <div className="min-h-[100dvh] bg-white text-gray-900 antialiased overflow-x-hidden max-w-[100vw]">
+    <div
+      ref={landingRef}
+      className="min-h-[100dvh] bg-[var(--wagoo-paper)] text-[var(--wagoo-ink)] antialiased overflow-x-hidden max-w-[100vw]"
+    >
       <Header />
       <main>
         <HeroSection />
         <HowItWorks />
+        <InvestmentSection />
         <Pricing />
         <TrustSafety />
         <FAQ />

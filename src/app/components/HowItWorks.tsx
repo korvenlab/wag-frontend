@@ -1,73 +1,66 @@
-import { motion, useInView } from "framer-motion";
 import { MessageCircle, Calendar, CheckCircle2 } from "lucide-react";
-import { useRef, useState } from "react";
+import { useState, type ReactNode } from "react";
 
 export function HowItWorks() {
-  const ref = useRef(null);
-  const isInView = useInView(ref, { once: true, amount: 0.2 });
-
   return (
     <section
       id="como-funciona"
-      ref={ref}
-      className="relative py-32 bg-white overflow-hidden"
+      data-gsap-section
+      className="relative py-28 md:py-36 bg-[var(--wagoo-paper)] overflow-hidden"
     >
-      {/* Luzes de fundo para quebrar o "branco total" */}
-      <div className="absolute top-0 left-1/4 w-[600px] h-[600px] bg-green-50/40 blur-[140px] rounded-full -z-10" />
-      <div className="absolute bottom-0 right-1/4 w-[400px] h-[400px] bg-blue-50/20 blur-[120px] rounded-full -z-10" />
-      
+      <div className="absolute top-0 left-1/4 w-[560px] h-[560px] bg-[#64b34d]/10 blur-[140px] rounded-full -z-10" />
+      <div
+        className="pointer-events-none absolute inset-0 opacity-[0.35] -z-10"
+        style={{
+          backgroundImage:
+            "radial-gradient(rgba(15,23,42,0.06) 1px, transparent 1px)",
+          backgroundSize: "28px 28px",
+        }}
+      />
+
       <div className="relative z-10 max-w-7xl mx-auto px-6">
-        {/* Section Title */}
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          animate={isInView ? { opacity: 1, y: 0 } : {}}
-          className="text-center mb-28"
-        >
-          <span className="px-4 py-1.5 rounded-full bg-green-100 text-[#4d8f3b] text-xs font-black tracking-widest uppercase inline-block mb-6 border border-slate-200">
-            Fluxo Inteligente
+        <div className="text-center mb-20 md:mb-28 max-w-3xl mx-auto">
+          <span
+            data-gsap="heading"
+            className="px-4 py-1.5 rounded-full bg-[#64b34d]/12 text-[#4d8f3b] text-[11px] font-bold tracking-[0.22em] uppercase inline-block mb-6 border border-[#64b34d]/20"
+          >
+            Fluxo real
           </span>
-          <h2 className="text-5xl md:text-7xl font-black text-slate-900 leading-[0.9] tracking-tighter">
-            Seu Cliente Agenda em <span className="text-[#64b34d]">Segundos</span>,<br />
-            Sem Você Fazer Nada
+          <h2
+            data-gsap="heading"
+            className="font-[family-name:var(--font-display)] text-4xl md:text-6xl lg:text-7xl font-extrabold text-slate-900 leading-[0.92] tracking-tight"
+          >
+            Do WhatsApp ao Calendar
+            <span className="block text-[#64b34d]">sem você no meio.</span>
           </h2>
-          <p className="text-xl text-slate-500 max-w-2xl mx-auto mt-8 font-medium leading-relaxed">
-            Uma experiência perfeita que transforma mensagens em agendamentos confirmados automaticamente.
+          <p
+            data-gsap="heading"
+            className="text-lg md:text-xl text-slate-500 max-w-2xl mx-auto mt-7 font-medium leading-relaxed"
+          >
+            Três passos. O cliente fala como sempre fala — o Wagoo cuida da agenda.
           </p>
-        </motion.div>
+        </div>
 
-        {/* Cards Grid */}
-        <div className="relative grid md:grid-cols-3 gap-10 lg:gap-14">
-          
-          {/* Linha Conectora Minimalista */}
-          <div className="hidden md:block absolute top-1/3 left-0 w-full h-0.5 -z-10">
-            <div className="w-[80%] mx-auto border-t-2 border-dashed border-slate-100" />
-          </div>
+        <div className="relative grid md:grid-cols-3 gap-8 lg:gap-10">
+          <div className="hidden md:block absolute top-[38%] left-[8%] right-[8%] h-px bg-gradient-to-r from-transparent via-[#64b34d]/35 to-transparent -z-10" />
 
           <StepCard
-            delay={0.2}
-            icon={<MessageCircle size={32} />}
+            icon={<MessageCircle size={28} />}
             step="01"
-            title="Cliente Manda Mensagem"
-            description="Seu cliente envia uma mensagem simples no WhatsApp solicitando um agendamento. Natural e familiar."
-            isInView={isInView}
+            title="Cliente manda mensagem"
+            description="No WhatsApp, no tom dele. Pediu horário — o Wagoo entende e responde."
           />
-
           <StepCard
-            delay={0.4}
-            icon={<Calendar size={32} />}
+            icon={<Calendar size={28} />}
             step="02"
-            title="Wagoo Consulta o Calendar"
-            description="O Wagoo acessa seu Google Calendar em tempo real e identifica todos os horários disponíveis."
-            isInView={isInView}
+            title="Consulta o Google Calendar"
+            description="Vê o que está livre na sua agenda real, nos horários que você definiu."
           />
-
           <StepCard
-            delay={0.6}
-            icon={<CheckCircle2 size={32} />}
+            icon={<CheckCircle2 size={28} />}
             step="03"
-            title="Confirmado e Sincronizado"
-            description="O horário é confirmado instantaneamente e sincronizado no Google Calendar. Seu cliente e você recebem confirmação."
-            isInView={isInView}
+            title="Confirma e sincroniza"
+            description="Marca o horário, avisa o cliente e aparece na sua agenda — pronto."
           />
         </div>
       </div>
@@ -75,7 +68,17 @@ export function HowItWorks() {
   );
 }
 
-function StepCard({ icon, step, title, description, delay, isInView }: any) {
+function StepCard({
+  icon,
+  step,
+  title,
+  description,
+}: {
+  icon: ReactNode;
+  step: string;
+  title: string;
+  description: string;
+}) {
   const [rotateX, setRotateX] = useState(0);
   const [rotateY, setRotateY] = useState(0);
 
@@ -84,49 +87,40 @@ function StepCard({ icon, step, title, description, delay, isInView }: any) {
     const rect = card.getBoundingClientRect();
     const centerX = rect.width / 2;
     const centerY = rect.height / 2;
-    setRotateX(((e.clientY - rect.top - centerY) / centerY) * -6);
-    setRotateY(((e.clientX - rect.left - centerX) / centerX) * 6);
+    setRotateX(((e.clientY - rect.top - centerY) / centerY) * -5);
+    setRotateY(((e.clientX - rect.left - centerX) / centerX) * 5);
   };
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 40 }}
-      animate={isInView ? { opacity: 1, y: 0 } : {}}
-      transition={{ duration: 0.8, delay }}
+    <div
+      data-gsap="item"
       onMouseMove={handleMouseMove}
-      onMouseLeave={() => { setRotateX(0); setRotateY(0); }}
+      onMouseLeave={() => {
+        setRotateX(0);
+        setRotateY(0);
+      }}
       style={{
         transform: `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg)`,
-        transition: "transform 0.1s ease-out",
+        transition: "transform 0.12s ease-out",
       }}
       className="relative group"
     >
-      <div className="relative bg-white p-10 lg:p-12 rounded-[48px] border border-slate-200 
-        shadow-wg-card group-hover:shadow-wg-card-hover 
-        transition-[box-shadow,transform] duration-500 h-full flex flex-col items-start"
-      >
-        <div className="absolute top-10 right-12 text-5xl font-black text-slate-50 group-hover:text-green-50/50 transition-colors pointer-events-none">
+      <div className="relative bg-white p-9 lg:p-11 rounded-[36px] border border-slate-200/90 shadow-wg-card group-hover:shadow-wg-card-hover transition-[box-shadow] duration-500 h-full flex flex-col items-start overflow-hidden">
+        <div className="absolute -right-2 top-6 text-6xl font-black text-slate-100 group-hover:text-[#64b34d]/10 transition-colors pointer-events-none font-[family-name:var(--font-display)]">
           {step}
         </div>
 
-        <div className="w-20 h-20 rounded-[30px] bg-green-50 flex items-center justify-center text-[#64b34d] mb-10 
-          group-hover:bg-[#64b34d] group-hover:text-white transition-all duration-500 shadow-inner border border-slate-200">
+        <div className="w-16 h-16 rounded-[22px] bg-[#64b34d]/10 flex items-center justify-center text-[#64b34d] mb-8 group-hover:bg-[#64b34d] group-hover:text-white transition-all duration-500 border border-[#64b34d]/15">
           {icon}
         </div>
 
-        <div className="space-y-4">
-          <h3 className="text-2xl font-black text-slate-900 tracking-tighter">
+        <div className="space-y-3 relative">
+          <h3 className="text-xl md:text-2xl font-extrabold text-slate-900 tracking-tight">
             {title}
           </h3>
-          <p className="text-slate-500 leading-relaxed font-medium text-[16px]">
-            {description}
-          </p>
-        </div>
-
-        <div className="absolute bottom-10 left-12 w-12 h-1.5 bg-green-100 rounded-full overflow-hidden">
-          <div className="w-0 group-hover:w-full h-full bg-[#64b34d] transition-all duration-700" />
+          <p className="text-slate-500 leading-relaxed font-medium text-[15px]">{description}</p>
         </div>
       </div>
-    </motion.div>
+    </div>
   );
 }

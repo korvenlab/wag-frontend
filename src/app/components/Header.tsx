@@ -97,6 +97,9 @@ export function Header() {
             <NavLink onClick={() => scrollToSection("como-funciona")}>
               Como Funciona
             </NavLink>
+            <NavLink onClick={() => scrollToSection("investimento")}>
+              Valor
+            </NavLink>
             <NavLink onClick={() => scrollToSection("precos")}>
               Preços
             </NavLink>
@@ -203,6 +206,9 @@ export function Header() {
             <div className="px-6 py-6 flex flex-col gap-4">
               <MobileNavLink onClick={() => scrollToSection("como-funciona")}>
                 Como Funciona
+              </MobileNavLink>
+              <MobileNavLink onClick={() => scrollToSection("investimento")}>
+                Valor
               </MobileNavLink>
               <MobileNavLink onClick={() => scrollToSection("precos")}>
                 Preços
