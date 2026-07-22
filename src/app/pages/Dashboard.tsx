@@ -1033,8 +1033,12 @@ export function Dashboard() {
                             Estilo de conversa
                           </h4>
                           <p className="text-slate-500 text-sm font-medium leading-relaxed">
-                            Guia amplo de tom e personalidade. A IA <span className="font-bold text-slate-700">não copia</span> o
-                            texto — improvisa respostas naturais e humanizadas a cada mensagem.
+                            Guia de tom e personalidade. A IA <span className="font-bold text-slate-700">não copia</span> o
+                            texto — improvisa respostas naturais (sempre curtas, 1–2 frases).
+                          </p>
+                          <p className="text-slate-500 text-sm font-medium leading-relaxed mt-2">
+                            <span className="font-bold text-slate-700">Pode deixar em branco</span> — a IA usa o estilo
+                            padrão do Wagoo e funciona normalmente. Preencha só se quiser personalizar o jeito de falar.
                           </p>
                         </div>
                       </div>

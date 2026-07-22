@@ -36,7 +36,7 @@ export const TEMPLATE_FIELDS: {
   {
     key: "notas_ia",
     label: "Personalidade (o mais importante)",
-    hint: "Descreva o jeito de falar — amplo e livre. A IA usa isso como guia, não como texto pronto.",
+    hint: "Opcional. Jeito de falar — a IA usa como guia, não como texto pronto. Em branco = estilo padrão.",
     placeholder:
       "Ex.: Fale como uma secretária simpática e leve, do jeito brasileiro de WhatsApp. Trate o cliente pelo nome quando souber. Seja acolhedora sem exagero, objetiva e humana — nunca robótica. Pode usar “tá”, “pode ser”, “combinado”. Evite formalidade demais e não fique repetindo a mesma frase.",
     rows: 4,
@@ -44,28 +44,28 @@ export const TEMPLATE_FIELDS: {
   {
     key: "saudacao",
     label: "Abertura / cumprimento",
-    hint: "Só inspiração de clima (ex.: calorosa, rápida, descontraída). A IA varia a cada cliente.",
+    hint: "Opcional. Clima do cumprimento (calorosa, rápida…). Em branco = padrão.",
     placeholder:
       "Ex.: Cumprimente de forma calorosa e natural, como quem já conhece a casa; pergunte como pode ajudar sem soar de script.",
   },
   {
     key: "apos_agendar",
     label: "Quando o horário é confirmado",
-    hint: "Clima desejado ao fechar o agendamento — a mensagem do sistema continua natural; a IA usa isso nas conversas.",
+    hint: "Opcional. Clima ao fechar o horário. Em branco = padrão.",
     placeholder:
       "Ex.: Confirme com tranquilidade, diga que está anotado e que a gente espera ele(a), sem soar automática.",
   },
   {
     key: "ao_cancelar",
     label: "Quando cancela",
-    hint: "Tom ao cancelar: empático, sem drama, aberto a remarcar.",
+    hint: "Opcional. Tom ao cancelar. Em branco = padrão.",
     placeholder:
       "Ex.: Confirme o cancelamento de boa, sem culpa no cliente, e deixe a porta aberta pra remarcar.",
   },
   {
     key: "fora_horario",
     label: "Sem vaga / fora do horário",
-    hint: "Como oferecer alternativa quando não dá pra marcar naquele momento.",
+    hint: "Opcional. Como oferecer alternativa. Em branco = padrão.",
     placeholder:
       "Ex.: Explique com leveza que naquele horário não rola e sugira outras opções sem insistir demais.",
   },
