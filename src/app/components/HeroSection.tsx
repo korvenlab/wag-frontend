@@ -3,6 +3,8 @@ import { motion, useReducedMotion } from "motion/react";
 import { ArrowRight, Calendar, Check, MessageCircle } from "lucide-react";
 import { Button } from "./ui/button";
 
+const HERO_HIGHLIGHT = "automático";
+
 type ChatPhase =
   | "typingClient"
   | "bubbleClient"
@@ -78,6 +80,11 @@ function FadeSlide({
 
 export const HeroSection = () => {
   const reduceMotion = useReducedMotion();
+  const letterBaseDelay = 0.42;
+  const letterStagger = 0.042;
+  const underlineDelay =
+    letterBaseDelay + HERO_HIGHLIGHT.length * letterStagger + 0.2;
+
   const [phase, setPhase] = useState<ChatPhase>("typingClient");
 
   useEffect(() => {
@@ -106,9 +113,8 @@ export const HeroSection = () => {
   return (
     <section
       aria-labelledby="hero-heading"
-      className="relative min-h-screen flex items-center justify-center pt-24 pb-16 px-6 overflow-hidden"
+      className="relative min-h-screen flex items-center justify-center pt-20 pb-10 px-6 overflow-hidden"
     >
-      {/* Full-bleed: paper → verde suave */}
       <div
         className="absolute inset-0 -z-20"
         style={{
@@ -116,69 +122,86 @@ export const HeroSection = () => {
             "linear-gradient(165deg, var(--wagoo-paper) 0%, #e8f3e4 42%, #d4ebcc 100%)",
         }}
       />
-      {/* Faixa de “dia da agenda” */}
-      <div
-        className="pointer-events-none absolute inset-x-0 top-[18%] h-[42%] -z-10 opacity-90"
-        style={{
-          background:
-            "linear-gradient(90deg, transparent 0%, rgba(100,179,77,0.07) 18%, rgba(100,179,77,0.14) 50%, rgba(100,179,77,0.07) 82%, transparent 100%)",
-        }}
-      />
-      <div
-        className="pointer-events-none absolute inset-0 -z-10 opacity-[0.35]"
-        style={{
-          backgroundImage:
-            "repeating-linear-gradient(90deg, transparent, transparent 71px, rgba(15,23,42,0.04) 71px, rgba(15,23,42,0.04) 72px)",
-          maskImage: "linear-gradient(to bottom, transparent 8%, black 28%, black 72%, transparent 94%)",
-        }}
-      />
+      <div className="absolute top-[-10%] right-[-5%] w-[600px] h-[600px] bg-[#64b34d]/12 blur-[120px] rounded-full -z-10" />
+      <div className="absolute bottom-[-10%] left-[-5%] w-[500px] h-[500px] bg-slate-300/25 blur-[120px] rounded-full -z-10" />
 
-      <div className="w-full max-w-6xl mx-auto flex flex-col items-center text-center gap-12 lg:gap-14">
+      <div className="w-full max-w-7xl mx-auto grid lg:grid-cols-2 gap-12 items-center">
         <motion.div
-          initial={{ opacity: 0, y: reduceMotion ? 0 : 22 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: reduceMotion ? 0.01 : 0.75, ease: [0.22, 1, 0.36, 1] }}
-          className="space-y-6 max-w-3xl"
+          initial={{ opacity: 0, x: reduceMotion ? 0 : -30 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: reduceMotion ? 0.01 : 0.8 }}
+          className="space-y-8"
         >
-          <h1
-            id="hero-heading"
-            className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-black text-slate-900 tracking-tighter leading-none"
-          >
-            Wagoo
-          </h1>
+          <div className="space-y-4 text-left">
+            <h1
+              id="hero-heading"
+              className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-black text-slate-900 tracking-tighter leading-[0.95] sm:leading-[0.9]"
+            >
+              Sua agenda <br />
+              <span className="text-[#4d8f3b]">
+                no{" "}
+                <span className="relative inline-block">
+                  {reduceMotion ? (
+                    <>{HERO_HIGHLIGHT}.</>
+                  ) : (
+                    <>
+                      {HERO_HIGHLIGHT.split("").map((letter, i) => (
+                        <motion.span
+                          key={`${letter}-${i}`}
+                          className="inline-block"
+                          initial={{ opacity: 0, y: 18 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{
+                            delay: letterBaseDelay + i * letterStagger,
+                            duration: 0.48,
+                            ease: [0.22, 1, 0.36, 1],
+                          }}
+                        >
+                          {letter}
+                        </motion.span>
+                      ))}
+                      <motion.span
+                        className="inline-block"
+                        initial={{ opacity: 0, scale: 0.2 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{
+                          delay: letterBaseDelay + HERO_HIGHLIGHT.length * letterStagger,
+                          type: "spring",
+                          stiffness: 420,
+                          damping: 20,
+                        }}
+                      >
+                        .
+                      </motion.span>
+                      <motion.span
+                        aria-hidden
+                        className="pointer-events-none absolute left-0 bottom-0.5 h-[3px] w-full max-w-full origin-left rounded-full bg-[#64b34d]/50"
+                        initial={{ scaleX: 0 }}
+                        animate={{ scaleX: 1 }}
+                        transition={{
+                          delay: underlineDelay,
+                          duration: 0.65,
+                          ease: [0.22, 1, 0.36, 1],
+                        }}
+                      />
+                    </>
+                  )}
+                </span>
+              </span>
+            </h1>
+            <p className="text-lg sm:text-xl text-slate-600 max-w-lg leading-relaxed font-medium">
+              Transforme conversas de WhatsApp em horários no Google Calendar — 24h, sem você
+              perder tempo no celular. Um investimento que se paga no primeiro horário recuperado.
+            </p>
+          </div>
 
-          <p className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-slate-800 tracking-tight leading-snug">
-            Quem responde a agenda{" "}
-            <span className="relative inline-block text-[#4d8f3b]">
-              enquanto você atende?
-              {!reduceMotion ? (
-                <motion.span
-                  aria-hidden
-                  className="pointer-events-none absolute left-0 bottom-0.5 h-[3px] w-full origin-left rounded-full bg-[#64b34d]/45"
-                  initial={{ scaleX: 0 }}
-                  animate={{ scaleX: 1 }}
-                  transition={{
-                    delay: 0.55,
-                    duration: 0.7,
-                    ease: [0.22, 1, 0.36, 1],
-                  }}
-                />
-              ) : null}
-            </span>
-          </p>
-
-          <p className="text-base sm:text-lg text-slate-600 max-w-xl mx-auto leading-relaxed font-medium">
-            Conversas de WhatsApp viram horários no Google Calendar — 24h. Um investimento que se
-            paga no primeiro horário recuperado.
-          </p>
-
-          <div className="flex flex-col sm:flex-row gap-4 items-center justify-center pt-1">
+          <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
             <Button
               asChild
               className="h-14 min-h-[48px] sm:h-16 px-8 sm:px-10 rounded-2xl bg-slate-900 text-white font-bold hover:bg-[#64b34d] transition-[box-shadow,background-color] shadow-wg-cta group border border-slate-700 focus-visible:ring-2 focus-visible:ring-[#64b34d] focus-visible:ring-offset-2"
             >
               <a href="/login">
-                Começar agora
+                Começar Agora
                 <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform inline" />
               </a>
             </Button>
@@ -191,16 +214,14 @@ export const HeroSection = () => {
           </div>
         </motion.div>
 
-        {/* Cena de produto: WhatsApp + Calendar no mesmo plano */}
         <motion.div
-          initial={{ opacity: 0, y: reduceMotion ? 0 : 36 }}
+          initial={{ opacity: 0, y: reduceMotion ? 0 : 40 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: reduceMotion ? 0.01 : 0.9, delay: reduceMotion ? 0 : 0.15, ease: "easeOut" }}
-          className="relative w-full max-w-2xl"
+          transition={{ duration: reduceMotion ? 0.01 : 1, ease: "easeOut" }}
+          className="relative w-full max-w-[550px] lg:max-w-none mx-auto"
           aria-hidden
         >
           <div className="relative grid sm:grid-cols-[1.15fr_0.85fr] gap-3 sm:gap-4 items-stretch">
-            {/* WhatsApp */}
             <div className="rounded-[28px] bg-white/90 backdrop-blur-sm border border-slate-200/80 p-5 sm:p-6 text-left shadow-wg-device">
               <div className="flex items-center gap-2.5 mb-5 pb-3 border-b border-slate-100">
                 <div className="w-9 h-9 rounded-full bg-[#64b34d] flex items-center justify-center text-white border border-[#4d8f3b]/30">
@@ -240,7 +261,6 @@ export const HeroSection = () => {
               </div>
             </div>
 
-            {/* Faixa Calendar */}
             <div className="rounded-[28px] bg-white/90 backdrop-blur-sm border border-slate-200/80 p-5 sm:p-6 flex flex-col justify-center shadow-wg-device">
               <div className="flex items-center gap-2 mb-4">
                 <div className="w-8 h-8 rounded-xl bg-[#4285F4] flex items-center justify-center text-white">
