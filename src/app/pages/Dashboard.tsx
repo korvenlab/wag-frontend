@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { motion } from "motion/react";
 import {
   QrCode,
-  Bot, Phone, MessageSquare, Bell,
+  Bot, Phone, MessageSquare, Bell, Smile,
   CalendarCheck, Zap, Loader2, Check, Coffee, Moon, Sun, Copy, Download, MessageSquareText
 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/card";
@@ -82,6 +82,8 @@ export function Dashboard() {
   const [selectedDay, setSelectedDay] = useState("Segunda-feira");
 
   const [isAIEnabled, setIsAIEnabled] = useState(true);
+  const [aiUseEmojis, setAiUseEmojis] = useState(false);
+  const [isSavingEmojis, setIsSavingEmojis] = useState(false);
   const [qrCode, setQrCode] = useState<string | null>(null);
   const [waStatus, setWaStatus] = useState<"idle" | "waiting_qr" | "connecting" | "connected">("idle");
   const [isLoadingQR, setIsLoadingQR] = useState(false);
@@ -138,6 +140,7 @@ export function Dashboard() {
           cached.business_niche_custom || user.businessNicheCustom || "",
         );
         setIsAIEnabled(cached.is_ai_enabled ?? true);
+        setAiUseEmojis(!!cached.ai_use_emojis);
         setIsWhatsAppConnected(!!cached.whatsapp_connected);
         setMessagesAnswered(cached.messages_answered || 0);
         setAppointmentsMade(cached.appointments_made || 0);
@@ -176,6 +179,7 @@ export function Dashboard() {
               : "",
           );
           setIsAIEnabled(data.is_ai_enabled ?? true);
+          setAiUseEmojis(!!data.ai_use_emojis);
           setIsWhatsAppConnected(!!data.whatsapp_connected);
           setMessagesAnswered(data.messages_answered || 0);
           setAppointmentsMade(data.appointments_made || 0);
@@ -203,6 +207,7 @@ export function Dashboard() {
                 ? data.business_niche_custom
                 : null,
             is_ai_enabled: data.is_ai_enabled ?? true,
+            ai_use_emojis: !!data.ai_use_emojis,
             whatsapp_connected: !!data.whatsapp_connected,
             google_connected: !!data.google_connected,
             messages_answered: data.messages_answered || 0,
@@ -345,6 +350,31 @@ export function Dashboard() {
       setIsAIEnabled(!checked); 
     } finally { 
       setIsSavingAI(false); 
+    }
+  };
+
+  const handleToggleEmojis = async (checked: boolean) => {
+    setAiUseEmojis(checked);
+    setIsSavingEmojis(true);
+    try {
+      const response = await apiFetch("/api/settings/ai", {
+        method: "POST",
+        body: JSON.stringify({ ai_use_emojis: checked }),
+      });
+      if (!response.ok) {
+        setAiUseEmojis(!checked);
+        return;
+      }
+      if (user) {
+        const cached = getCachedDashboardProfile(user.id);
+        if (cached) {
+          setCachedDashboardProfile(user.id, { ...cached, ai_use_emojis: checked });
+        }
+      }
+    } catch {
+      setAiUseEmojis(!checked);
+    } finally {
+      setIsSavingEmojis(false);
     }
   };
 
@@ -1041,6 +1071,30 @@ export function Dashboard() {
                             padrão do Wagoo e funciona normalmente. Preencha só se quiser personalizar o jeito de falar.
                           </p>
                         </div>
+                      </div>
+
+                      <div className="flex items-center justify-between gap-4 rounded-2xl bg-slate-50 px-4 py-4">
+                        <div className="flex items-center gap-3 min-w-0">
+                          <div className="w-10 h-10 shrink-0 rounded-xl bg-white text-slate-700 flex items-center justify-center border border-slate-100">
+                            <Smile size={18} />
+                          </div>
+                          <div className="min-w-0">
+                            <p className="font-black text-slate-900 text-sm tracking-tight">
+                              Usar emojis
+                            </p>
+                            <p className="text-slate-500 text-xs font-medium leading-relaxed mt-0.5">
+                              {aiUseEmojis
+                                ? "A IA pode usar 1 emoji por mensagem, com moderação."
+                                : "Respostas sem emojis — tom mais neutro."}
+                            </p>
+                          </div>
+                        </div>
+                        <Switch
+                          checked={aiUseEmojis}
+                          onCheckedChange={handleToggleEmojis}
+                          disabled={isSavingEmojis}
+                          className="data-[state=checked]:bg-[#64b34d] shrink-0"
+                        />
                       </div>
                       {TEMPLATE_FIELDS.map((field) => (
                         <div key={field.key} className="space-y-2">

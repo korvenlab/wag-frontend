@@ -5,6 +5,7 @@ export type DashboardProfileCache = {
   business_niche: string | null;
   business_niche_custom: string | null;
   is_ai_enabled: boolean;
+  ai_use_emojis: boolean;
   whatsapp_connected: boolean;
   google_connected: boolean;
   messages_answered: number;
