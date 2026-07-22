@@ -30,11 +30,21 @@ export function useLandingSectionTransitions(
       const sections = gsap.utils.toArray<HTMLElement>("[data-gsap-section]", root);
 
       sections.forEach((section) => {
-        const heading = section.querySelectorAll<HTMLElement>('[data-gsap="heading"]');
-        const items = section.querySelectorAll<HTMLElement>('[data-gsap="item"]');
-        const fades = section.querySelectorAll<HTMLElement>('[data-gsap="fade"]');
+        // Flatten NodeLists — gsap.set([nl1, nl2]) treats NestedLists as invalid
+        // targets and crashes with: Cannot read properties of undefined (reading 'opacity')
+        const heading = gsap.utils.toArray<HTMLElement>(
+          section.querySelectorAll('[data-gsap="heading"]'),
+        );
+        const items = gsap.utils.toArray<HTMLElement>(
+          section.querySelectorAll('[data-gsap="item"]'),
+        );
+        const fades = gsap.utils.toArray<HTMLElement>(
+          section.querySelectorAll('[data-gsap="fade"]'),
+        );
+        const targets = [...heading, ...items, ...fades];
+        if (!targets.length) return;
 
-        gsap.set([heading, items, fades], {
+        gsap.set(targets, {
           opacity: 0,
           y: 40,
           filter: "blur(5px)",
