@@ -30,7 +30,7 @@ export function FAQ() {
     {
       question: "Qual plano preciso contratar?",
       answer:
-        "Basic (R$ 59/mês, 1 usuário), Pro (R$ 149/mês, até 3) e Pro+ (R$ 259/mês, até 5). Todos incluem WhatsApp, Google Agenda, IA e estilo de conversa personalizado. Lembretes, confirmação de presença, export CSV e gestão de equipe são exclusivos do Pro e Pro+.",
+        "Basic (R$ 59/mês, 1 usuário), Pro (R$ 149/mês, até 3) e Pro+ (R$ 259/mês, até 5). Todos incluem WhatsApp, Google Agenda, IA e estilo de conversa personalizado. Lembretes, export CSV e gestão de equipe são exclusivos do Pro e Pro+.",
     },
     {
       question: "O Wagoo é exclusivo para a minha agenda?",

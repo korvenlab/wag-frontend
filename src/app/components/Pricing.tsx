@@ -64,7 +64,7 @@ export function Pricing() {
           </h2>
           <p className="text-lg text-slate-500 font-medium leading-relaxed">
             Todos os planos incluem WhatsApp, Google Agenda, IA e estilo de conversa personalizado.
-            No Pro e Pro+ você ganha lembretes, confirmação de presença, export CSV e equipe.
+            No Pro e Pro+ você ganha lembretes, export CSV e equipe.
           </p>
         </motion.div>
         <motion.div className="grid md:grid-cols-3 gap-6 lg:gap-8 items-stretch">

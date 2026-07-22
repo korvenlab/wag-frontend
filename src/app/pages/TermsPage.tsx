@@ -47,7 +47,7 @@ export const TermsPage = () => {
         <h2 style={{ color: '#111827', marginTop: '40px' }}>3. Assinaturas e Pagamentos</h2>
         <ul style={{ paddingLeft: '20px' }}>
           <li><strong>Basic:</strong> R$ 59,00/mês — 1 usuário (WhatsApp, Google Agenda, IA e estilo de conversa).</li>
-          <li><strong>Pro:</strong> R$ 149,00/mês — até 3 usuários, com lembretes, confirmação de presença, export CSV e gestão de equipe.</li>
+          <li><strong>Pro:</strong> R$ 149,00/mês — até 3 usuários, com lembretes, export CSV e gestão de equipe.</li>
           <li><strong>Pro+:</strong> R$ 259,00/mês — até 5 usuários, com os mesmos recursos avançados do Pro.</li>
           <li><strong>Processamento:</strong> Todos os pagamentos são processados de forma segura via <strong>Stripe</strong>.</li>
           <li><strong>Renovação:</strong> A assinatura é renovada automaticamente a cada 30 dias.</li>

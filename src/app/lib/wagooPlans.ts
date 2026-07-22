@@ -29,7 +29,6 @@ export const WAGOO_PLAN_CARDS: WagooPlanCard[] = [
     highlight: true,
     extras: [
       "Lembretes automáticos no WhatsApp antes do horário",
-      "Confirmação de presença após o lembrete",
       "Export CSV de agendamentos para contabilidade",
       "Gerenciar equipe de profissionais",
     ],
@@ -42,7 +41,6 @@ export const WAGOO_PLAN_CARDS: WagooPlanCard[] = [
     description: "Até 5 usuários para negócios em crescimento",
     extras: [
       "Lembretes automáticos no WhatsApp antes do horário",
-      "Confirmação de presença após o lembrete",
       "Export CSV de agendamentos para contabilidade",
       "Gerenciar equipe de profissionais",
     ],
@@ -62,7 +60,7 @@ export const WAGOO_SHARED_FEATURES = [
 
 /** O que o Basic não tem — texto de vendas. */
 export const WAGOO_BASIC_EXCLUSIONS = [
-  "Lembretes e confirmação de presença",
+  "Lembretes automáticos no WhatsApp",
   "Export CSV de agendamentos",
   "Gerenciar equipe (Pro / Pro+)",
 ] as const;
