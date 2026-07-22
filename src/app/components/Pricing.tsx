@@ -75,7 +75,7 @@ export function Pricing() {
           </div>
           <h2
             data-gsap="heading"
-            className="font-[family-name:var(--font-display)] text-4xl md:text-6xl font-extrabold text-slate-900 tracking-tight leading-[0.95]"
+            className="text-4xl md:text-6xl font-extrabold text-slate-900 tracking-tight leading-[0.95]"
           >
             Escolha o tamanho.{" "}
             <span className="text-[#64b34d]">O retorno é o mesmo princípio.</span>

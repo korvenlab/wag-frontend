@@ -69,7 +69,7 @@ export function InvestmentSection() {
             </p>
             <h2
               data-gsap="heading"
-              className="font-[family-name:var(--font-display)] text-4xl md:text-6xl font-extrabold tracking-tight leading-[0.95]"
+              className="text-4xl md:text-6xl font-extrabold tracking-tight leading-[0.95]"
             >
               Menos tempo no WhatsApp.
               <span className="block text-[#64b34d]">Mais tempo no que paga a conta.</span>
@@ -87,7 +87,7 @@ export function InvestmentSection() {
             <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-slate-400 mb-4">
               Conta rápida
             </p>
-            <p className="font-[family-name:var(--font-display)] text-5xl md:text-6xl font-extrabold text-white tracking-tight">
+            <p className="text-5xl md:text-6xl font-extrabold text-white tracking-tight">
               R$ 59
               <span className="text-xl text-slate-400 font-bold">/mês</span>
             </p>
@@ -119,7 +119,7 @@ export function InvestmentSection() {
               <div className="mb-5 inline-flex h-11 w-11 items-center justify-center rounded-xl bg-[#64b34d]/15 text-[#9ae07f] border border-[#64b34d]/25">
                 <Icon className="w-5 h-5" strokeWidth={2.25} />
               </div>
-              <h3 className="font-[family-name:var(--font-display)] text-lg font-bold tracking-tight mb-2">
+              <h3 className="text-lg font-bold tracking-tight mb-2">
                 {title}
               </h3>
               <p className="text-sm text-slate-400 font-medium leading-relaxed flex-1">{body}</p>

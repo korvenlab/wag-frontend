@@ -28,7 +28,7 @@ export function HowItWorks() {
           </span>
           <h2
             data-gsap="heading"
-            className="font-[family-name:var(--font-display)] text-4xl md:text-6xl lg:text-7xl font-extrabold text-slate-900 leading-[0.92] tracking-tight"
+            className="text-4xl md:text-6xl lg:text-7xl font-extrabold text-slate-900 leading-[0.92] tracking-tight"
           >
             Do WhatsApp ao Calendar
             <span className="block text-[#64b34d]">sem você no meio.</span>
@@ -106,7 +106,7 @@ function StepCard({
       className="relative group"
     >
       <div className="relative bg-white p-9 lg:p-11 rounded-[36px] border border-slate-200/90 shadow-wg-card group-hover:shadow-wg-card-hover transition-[box-shadow] duration-500 h-full flex flex-col items-start overflow-hidden">
-        <div className="absolute -right-2 top-6 text-6xl font-black text-slate-100 group-hover:text-[#64b34d]/10 transition-colors pointer-events-none font-[family-name:var(--font-display)]">
+        <div className="absolute -right-2 top-6 text-6xl font-black text-slate-100 group-hover:text-[#64b34d]/10 transition-colors pointer-events-none">
           {step}
         </div>
 

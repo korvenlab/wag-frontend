@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
 import { motion, useReducedMotion } from "motion/react";
-import { animate, createTimeline, stagger } from "animejs";
+import gsap from "gsap";
 import { ArrowRight, Calendar, MessageCircle, Check } from "lucide-react";
 import { Button } from "./ui/button";
 
@@ -26,13 +26,13 @@ export const HeroSection = () => {
   const underlineDelay =
     letterBaseDelay + HERO_HIGHLIGHT.length * letterStagger + 0.2;
 
+  const chatRootRef = useRef<HTMLDivElement>(null);
   const typingClientRef = useRef<HTMLDivElement>(null);
   const bubbleClientRef = useRef<HTMLDivElement>(null);
   const typingBotRef = useRef<HTMLDivElement>(null);
   const bubbleBotRef = useRef<HTMLDivElement>(null);
   const calendarRef = useRef<HTMLDivElement>(null);
   const syncRef = useRef<HTMLDivElement>(null);
-  const typingDotsAnimRef = useRef<{ pause: () => void; cancel?: () => void } | null>(null);
 
   useEffect(() => {
     if (reduceMotion) return;
@@ -47,102 +47,74 @@ export const HeroSection = () => {
       return;
     }
 
-    const chatEls = [typingClient, bubbleClient, typingBot, bubbleBot, calendar, sync];
-    for (const el of chatEls) {
-      el.style.opacity = "0";
-      el.style.transform = "translateY(10px) scale(0.96)";
-      el.style.pointerEvents = "none";
-    }
+    const ctx = gsap.context(() => {
+      const chatEls = [typingClient, bubbleClient, typingBot, bubbleBot, calendar, sync];
+      gsap.set(chatEls, { opacity: 0, y: 10, scale: 0.96 });
 
-    const startTypingPulse = (root: HTMLElement) => {
-      typingDotsAnimRef.current?.pause();
-      typingDotsAnimRef.current?.cancel?.();
-      const dots = root.querySelectorAll(".hero-typing-dot");
-      typingDotsAnimRef.current = animate(dots, {
-        translateY: [
-          { to: -3, ease: "inOut(2)", duration: 280 },
-          { to: 0, ease: "inOut(2)", duration: 280 },
-        ],
-        delay: stagger(90),
-        loop: true,
+      let typingPulse: gsap.core.Tween | null = null;
+
+      const startTypingPulse = (root: HTMLElement) => {
+        typingPulse?.kill();
+        const dots = root.querySelectorAll(".hero-typing-dot");
+        gsap.set(dots, { y: 0 });
+        typingPulse = gsap.to(dots, {
+          y: -3,
+          duration: 0.28,
+          ease: "power1.inOut",
+          yoyo: true,
+          repeat: -1,
+          stagger: 0.09,
+        });
+      };
+
+      const stopTypingPulse = () => {
+        typingPulse?.kill();
+        typingPulse = null;
+      };
+
+      const tl = gsap.timeline({
+        repeat: -1,
+        repeatDelay: 1.2,
+        defaults: { ease: "power3.out" },
       });
-    };
 
-    const stopTypingPulse = () => {
-      typingDotsAnimRef.current?.pause();
-      typingDotsAnimRef.current?.cancel?.();
-      typingDotsAnimRef.current = null;
-    };
+      tl.call(() => {
+        gsap.set(chatEls, { opacity: 0, y: 10, scale: 0.96 });
+        stopTypingPulse();
+      })
+        .to(typingClient, { opacity: 1, y: 0, scale: 1, duration: 0.35 }, 0.15)
+        .call(() => startTypingPulse(typingClient))
+        .to(typingClient, { opacity: 0, y: 6, scale: 0.96, duration: 0.2 }, "+=1.05")
+        .call(stopTypingPulse)
+        .to(bubbleClient, { opacity: 1, y: 0, scale: 1, duration: 0.4 }, "+=0.05")
+        .to(typingBot, { opacity: 1, y: 0, scale: 1, duration: 0.35 }, "+=0.55")
+        .call(() => startTypingPulse(typingBot))
+        .to(typingBot, { opacity: 0, y: 6, scale: 0.96, duration: 0.2 }, "+=0.9")
+        .call(stopTypingPulse)
+        .to(bubbleBot, { opacity: 1, y: 0, scale: 1, duration: 0.4 }, "+=0.05")
+        .to(
+          calendar,
+          { opacity: 1, y: 0, scale: 1, duration: 0.55, ease: "back.out(1.4)" },
+          "+=0.35",
+        )
+        .to(sync, { opacity: 1, y: 0, scale: 1, duration: 0.35 }, "-=0.15")
+        .to(
+          [bubbleClient, bubbleBot, calendar, sync],
+          {
+            opacity: 0,
+            y: -6,
+            scale: 0.98,
+            duration: 0.4,
+            stagger: 0.04,
+            ease: "power2.in",
+          },
+          "+=2.1",
+        );
 
-    const show = {
-      opacity: 1,
-      translateY: 0,
-      scale: 1,
-      duration: 420,
-      ease: "out(3)",
-    } as const;
+      return () => stopTypingPulse();
+    }, chatRootRef);
 
-    const hideQuick = {
-      opacity: 0,
-      translateY: 6,
-      scale: 0.96,
-      duration: 220,
-      ease: "in(2)",
-    } as const;
-
-    const tl = createTimeline({
-      loop: true,
-      loopDelay: 1400,
-      defaults: { ease: "out(3)" },
-    });
-
-    tl.call(() => {
-      for (const el of chatEls) {
-        el.style.opacity = "0";
-        el.style.transform = "translateY(10px) scale(0.96)";
-      }
-      stopTypingPulse();
-    }, 0)
-      .add(typingClient, { ...show }, 200)
-      .call(() => startTypingPulse(typingClient), 200)
-      .add(typingClient, { ...hideQuick }, "+=1100")
-      .call(stopTypingPulse, "<")
-      .add(bubbleClient, { ...show }, "+=80")
-      .add(typingBot, { ...show }, "+=650")
-      .call(() => startTypingPulse(typingBot), "<<")
-      .add(typingBot, { ...hideQuick }, "+=950")
-      .call(stopTypingPulse, "<")
-      .add(bubbleBot, { ...show }, "+=80")
-      .add(
-        calendar,
-        {
-          opacity: 1,
-          translateY: 0,
-          scale: [0.88, 1.03, 1],
-          duration: 650,
-          ease: "out(3)",
-        },
-        "+=380",
-      )
-      .add(sync, { ...show, duration: 380 }, "-=180")
-      .add(
-        [bubbleClient, bubbleBot, calendar, sync],
-        {
-          opacity: 0,
-          translateY: -6,
-          scale: 0.98,
-          duration: 420,
-          ease: "in(2)",
-          delay: stagger(40),
-        },
-        "+=2200",
-      );
-
-    return () => {
-      stopTypingPulse();
-      tl.pause();
-      tl.cancel();
-    };
+    return () => ctx.revert();
   }, [reduceMotion]);
 
   return (
@@ -172,7 +144,7 @@ export const HeroSection = () => {
           <div className="space-y-4 text-left">
             <h1
               id="hero-heading"
-              className="font-[family-name:var(--font-display)] text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-extrabold text-slate-900 tracking-tighter leading-[0.95] sm:leading-[0.9]"
+              className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-black text-slate-900 tracking-tighter leading-[0.95] sm:leading-[0.9]"
             >
               Sua agenda <br />
               <span className="text-[#4d8f3b]">
@@ -269,7 +241,7 @@ export const HeroSection = () => {
               </div>
             </div>
 
-            <div className="flex-1 grid grid-cols-2">
+            <div ref={chatRootRef} className="flex-1 grid grid-cols-2">
               <div className="p-6 sm:p-8 border-r border-slate-200 space-y-4">
                 <div className="flex items-center gap-2 mb-4 sm:mb-6">
                   <div className="w-8 h-8 rounded-full bg-[#64b34d] flex items-center justify-center text-white shadow-wg-icon-green border border-slate-200">
@@ -295,13 +267,13 @@ export const HeroSection = () => {
                       <div className="relative min-h-[46px]">
                         <div
                           ref={typingClientRef}
-                          className="absolute left-0 top-0 will-change-transform"
+                          className="absolute left-0 top-0 will-change-transform opacity-0"
                         >
                           <TypingDots className="rounded-tl-none" />
                         </div>
                         <div
                           ref={bubbleClientRef}
-                          className="bg-slate-100 p-3.5 rounded-2xl rounded-tl-none text-xs text-slate-700 border border-slate-200 will-change-transform"
+                          className="bg-slate-100 p-3.5 rounded-2xl rounded-tl-none text-xs text-slate-700 border border-slate-200 will-change-transform opacity-0"
                         >
                           &quot;Pode ser amanhã às 14h?&quot;
                         </div>
@@ -309,13 +281,13 @@ export const HeroSection = () => {
                       <div className="relative min-h-[46px] flex justify-end">
                         <div
                           ref={typingBotRef}
-                          className="absolute right-0 top-0 will-change-transform"
+                          className="absolute right-0 top-0 will-change-transform opacity-0"
                         >
                           <TypingDots className="rounded-tr-none bg-[#e8f6e3] border-[#cfe9c6]" />
                         </div>
                         <div
                           ref={bubbleBotRef}
-                          className="bg-[#64b34d] p-3.5 rounded-2xl rounded-tr-none text-xs text-white font-bold shadow-wg-bubble border border-[#4d8f3b] will-change-transform max-w-[95%]"
+                          className="bg-[#64b34d] p-3.5 rounded-2xl rounded-tr-none text-xs text-white font-bold shadow-wg-bubble border border-[#4d8f3b] will-change-transform max-w-[95%] opacity-0"
                         >
                           &quot;Claro! Horário reservado.&quot;
                         </div>
@@ -328,9 +300,7 @@ export const HeroSection = () => {
               <div className="p-6 sm:p-8 bg-slate-50/30 flex flex-col justify-center items-center text-center">
                 <div
                   ref={calendarRef}
-                  className={`w-full bg-white p-6 rounded-[32px] shadow-wg-inner border border-slate-200 will-change-transform ${
-                    reduceMotion ? "" : "opacity-0"
-                  }`}
+                  className="w-full bg-white p-6 rounded-[32px] shadow-wg-inner border border-slate-200 will-change-transform opacity-0"
                 >
                   <div className="w-12 h-12 rounded-2xl bg-[#4285F4] flex items-center justify-center text-white mx-auto mb-4 shadow-wg-icon-blue border border-slate-200">
                     <Calendar size={22} />
@@ -343,9 +313,7 @@ export const HeroSection = () => {
 
                   <div
                     ref={syncRef}
-                    className={`mt-5 flex items-center justify-center gap-1.5 text-[#4d8f3b] text-[11px] font-black uppercase will-change-transform ${
-                      reduceMotion ? "" : "opacity-0"
-                    }`}
+                    className="mt-5 flex items-center justify-center gap-1.5 text-[#4d8f3b] text-[11px] font-black uppercase will-change-transform opacity-0"
                   >
                     <Check size={12} strokeWidth={4} />
                     Sincronizado
