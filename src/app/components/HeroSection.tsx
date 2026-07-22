@@ -1,10 +1,45 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { motion, useReducedMotion } from "motion/react";
-import gsap from "gsap";
 import { ArrowRight, Calendar, MessageCircle, Check } from "lucide-react";
 import { Button } from "./ui/button";
 
 const HERO_HIGHLIGHT = "automático";
+
+type ChatPhase =
+  | "typingClient"
+  | "bubbleClient"
+  | "typingBot"
+  | "bubbleBot"
+  | "calendar"
+  | "hold"
+  | "clear";
+
+/** Sequência do mock: tempos em ms (visível → próximo passo). */
+const CHAT_SCRIPT: { phase: ChatPhase; ms: number }[] = [
+  { phase: "typingClient", ms: 1100 },
+  { phase: "bubbleClient", ms: 700 },
+  { phase: "typingBot", ms: 1000 },
+  { phase: "bubbleBot", ms: 500 },
+  { phase: "calendar", ms: 2200 },
+  { phase: "hold", ms: 400 },
+  { phase: "clear", ms: 900 },
+];
+
+function visibilityFor(phase: ChatPhase) {
+  return {
+    typingClient: phase === "typingClient",
+    bubbleClient: (
+      phase === "bubbleClient" ||
+      phase === "typingBot" ||
+      phase === "bubbleBot" ||
+      phase === "calendar" ||
+      phase === "hold"
+    ),
+    typingBot: phase === "typingBot",
+    bubbleBot: phase === "bubbleBot" || phase === "calendar" || phase === "hold",
+    calendar: phase === "calendar" || phase === "hold",
+  };
+}
 
 function TypingDots({ className = "" }: { className?: string }) {
   return (
@@ -19,6 +54,31 @@ function TypingDots({ className = "" }: { className?: string }) {
   );
 }
 
+function FadeSlide({
+  show,
+  className = "",
+  children,
+}: {
+  show: boolean;
+  className?: string;
+  children: ReactNode;
+}) {
+  return (
+    <div
+      className={
+        "will-change-transform transition-[opacity,transform] duration-300 ease-out " +
+        (show
+          ? "opacity-100 translate-y-0 scale-100 "
+          : "opacity-0 translate-y-2 scale-95 pointer-events-none ") +
+        className
+      }
+      aria-hidden={!show}
+    >
+      {children}
+    </div>
+  );
+}
+
 export const HeroSection = () => {
   const reduceMotion = useReducedMotion();
   const letterBaseDelay = 0.42;
@@ -26,96 +86,30 @@ export const HeroSection = () => {
   const underlineDelay =
     letterBaseDelay + HERO_HIGHLIGHT.length * letterStagger + 0.2;
 
-  const chatRootRef = useRef<HTMLDivElement>(null);
-  const typingClientRef = useRef<HTMLDivElement>(null);
-  const bubbleClientRef = useRef<HTMLDivElement>(null);
-  const typingBotRef = useRef<HTMLDivElement>(null);
-  const bubbleBotRef = useRef<HTMLDivElement>(null);
-  const calendarRef = useRef<HTMLDivElement>(null);
-  const syncRef = useRef<HTMLDivElement>(null);
+  const [phase, setPhase] = useState<ChatPhase>("typingClient");
 
   useEffect(() => {
-    if (reduceMotion) return;
+    let i = 0;
+    let timer = 0;
 
-    const typingClient = typingClientRef.current;
-    const bubbleClient = bubbleClientRef.current;
-    const typingBot = typingBotRef.current;
-    const bubbleBot = bubbleBotRef.current;
-    const calendar = calendarRef.current;
-    const sync = syncRef.current;
-    if (!typingClient || !bubbleClient || !typingBot || !bubbleBot || !calendar || !sync) {
-      return;
-    }
+    const tick = () => {
+      const step = CHAT_SCRIPT[i % CHAT_SCRIPT.length];
+      setPhase(step.phase);
+      i += 1;
+      timer = window.setTimeout(tick, step.ms);
+    };
 
-    const ctx = gsap.context(() => {
-      const chatEls = [typingClient, bubbleClient, typingBot, bubbleBot, calendar, sync];
-      gsap.set(chatEls, { opacity: 0, y: 10, scale: 0.96 });
+    tick();
+    return () => window.clearTimeout(timer);
+  }, []);
 
-      let typingPulse: gsap.core.Tween | null = null;
-
-      const startTypingPulse = (root: HTMLElement) => {
-        typingPulse?.kill();
-        const dots = root.querySelectorAll(".hero-typing-dot");
-        gsap.set(dots, { y: 0 });
-        typingPulse = gsap.to(dots, {
-          y: -3,
-          duration: 0.28,
-          ease: "power1.inOut",
-          yoyo: true,
-          repeat: -1,
-          stagger: 0.09,
-        });
-      };
-
-      const stopTypingPulse = () => {
-        typingPulse?.kill();
-        typingPulse = null;
-      };
-
-      const tl = gsap.timeline({
-        repeat: -1,
-        repeatDelay: 1.2,
-        defaults: { ease: "power3.out" },
-      });
-
-      tl.call(() => {
-        gsap.set(chatEls, { opacity: 0, y: 10, scale: 0.96 });
-        stopTypingPulse();
-      })
-        .to(typingClient, { opacity: 1, y: 0, scale: 1, duration: 0.35 }, 0.15)
-        .call(() => startTypingPulse(typingClient))
-        .to(typingClient, { opacity: 0, y: 6, scale: 0.96, duration: 0.2 }, "+=1.05")
-        .call(stopTypingPulse)
-        .to(bubbleClient, { opacity: 1, y: 0, scale: 1, duration: 0.4 }, "+=0.05")
-        .to(typingBot, { opacity: 1, y: 0, scale: 1, duration: 0.35 }, "+=0.55")
-        .call(() => startTypingPulse(typingBot))
-        .to(typingBot, { opacity: 0, y: 6, scale: 0.96, duration: 0.2 }, "+=0.9")
-        .call(stopTypingPulse)
-        .to(bubbleBot, { opacity: 1, y: 0, scale: 1, duration: 0.4 }, "+=0.05")
-        .to(
-          calendar,
-          { opacity: 1, y: 0, scale: 1, duration: 0.55, ease: "back.out(1.4)" },
-          "+=0.35",
-        )
-        .to(sync, { opacity: 1, y: 0, scale: 1, duration: 0.35 }, "-=0.15")
-        .to(
-          [bubbleClient, bubbleBot, calendar, sync],
-          {
-            opacity: 0,
-            y: -6,
-            scale: 0.98,
-            duration: 0.4,
-            stagger: 0.04,
-            ease: "power2.in",
-          },
-          "+=2.1",
-        );
-
-      return () => stopTypingPulse();
-    }, chatRootRef);
-
-    return () => ctx.revert();
-  }, [reduceMotion]);
+  const {
+    typingClient: showTypingClient,
+    bubbleClient: showBubbleClient,
+    typingBot: showTypingBot,
+    bubbleBot: showBubbleBot,
+    calendar: showCalendar,
+  } = visibilityFor(phase);
 
   return (
     <section
@@ -241,7 +235,7 @@ export const HeroSection = () => {
               </div>
             </div>
 
-            <div ref={chatRootRef} className="flex-1 grid grid-cols-2">
+            <div className="flex-1 grid grid-cols-2">
               <div className="p-6 sm:p-8 border-r border-slate-200 space-y-4">
                 <div className="flex items-center gap-2 mb-4 sm:mb-6">
                   <div className="w-8 h-8 rounded-full bg-[#64b34d] flex items-center justify-center text-white shadow-wg-icon-green border border-slate-200">
@@ -253,72 +247,49 @@ export const HeroSection = () => {
                 </div>
 
                 <div className="relative min-h-[128px]">
-                  {reduceMotion ? (
-                    <div className="space-y-3">
-                      <div className="bg-slate-100 p-3.5 rounded-2xl rounded-tl-none text-xs text-slate-700 border border-slate-200">
-                        &quot;Pode ser amanhã às 14h?&quot;
-                      </div>
-                      <div className="bg-[#64b34d] p-3.5 rounded-2xl rounded-tr-none text-xs text-white font-bold shadow-wg-bubble border border-[#4d8f3b] ml-auto max-w-[95%]">
-                        &quot;Claro! Horário reservado.&quot;
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="space-y-3">
-                      <div className="relative min-h-[46px]">
-                        <div
-                          ref={typingClientRef}
-                          className="absolute left-0 top-0 will-change-transform opacity-0"
-                        >
-                          <TypingDots className="rounded-tl-none" />
-                        </div>
-                        <div
-                          ref={bubbleClientRef}
-                          className="bg-slate-100 p-3.5 rounded-2xl rounded-tl-none text-xs text-slate-700 border border-slate-200 will-change-transform opacity-0"
-                        >
+                  <div className="space-y-3">
+                    <div className="relative min-h-[46px]">
+                      <FadeSlide show={showTypingClient} className="absolute left-0 top-0 z-10">
+                        <TypingDots className="rounded-tl-none" />
+                      </FadeSlide>
+                      <FadeSlide show={showBubbleClient}>
+                        <div className="bg-slate-100 p-3.5 rounded-2xl rounded-tl-none text-xs text-slate-700 border border-slate-200">
                           &quot;Pode ser amanhã às 14h?&quot;
                         </div>
-                      </div>
-                      <div className="relative min-h-[46px] flex justify-end">
-                        <div
-                          ref={typingBotRef}
-                          className="absolute right-0 top-0 will-change-transform opacity-0"
-                        >
-                          <TypingDots className="rounded-tr-none bg-[#e8f6e3] border-[#cfe9c6]" />
-                        </div>
-                        <div
-                          ref={bubbleBotRef}
-                          className="bg-[#64b34d] p-3.5 rounded-2xl rounded-tr-none text-xs text-white font-bold shadow-wg-bubble border border-[#4d8f3b] will-change-transform max-w-[95%] opacity-0"
-                        >
+                      </FadeSlide>
+                    </div>
+                    <div className="relative min-h-[46px] flex justify-end">
+                      <FadeSlide show={showTypingBot} className="absolute right-0 top-0 z-10">
+                        <TypingDots className="rounded-tr-none bg-[#e8f6e3] border-[#cfe9c6]" />
+                      </FadeSlide>
+                      <FadeSlide show={showBubbleBot} className="w-full flex justify-end">
+                        <div className="bg-[#64b34d] p-3.5 rounded-2xl rounded-tr-none text-xs text-white font-bold shadow-wg-bubble border border-[#4d8f3b] max-w-[95%]">
                           &quot;Claro! Horário reservado.&quot;
                         </div>
-                      </div>
+                      </FadeSlide>
                     </div>
-                  )}
+                  </div>
                 </div>
               </div>
 
               <div className="p-6 sm:p-8 bg-slate-50/30 flex flex-col justify-center items-center text-center">
-                <div
-                  ref={calendarRef}
-                  className="w-full bg-white p-6 rounded-[32px] shadow-wg-inner border border-slate-200 will-change-transform opacity-0"
-                >
-                  <div className="w-12 h-12 rounded-2xl bg-[#4285F4] flex items-center justify-center text-white mx-auto mb-4 shadow-wg-icon-blue border border-slate-200">
-                    <Calendar size={22} />
-                  </div>
-                  <p className="text-[11px] font-black text-blue-600 uppercase mb-1 tracking-widest">
-                    Agendado
-                  </p>
-                  <p className="text-sm font-black text-slate-900">Maria Silva</p>
-                  <p className="text-xs text-slate-600 font-bold">Terça • 14:00</p>
+                <FadeSlide show={showCalendar} className="w-full">
+                  <div className="w-full bg-white p-6 rounded-[32px] shadow-wg-inner border border-slate-200">
+                    <div className="w-12 h-12 rounded-2xl bg-[#4285F4] flex items-center justify-center text-white mx-auto mb-4 shadow-wg-icon-blue border border-slate-200">
+                      <Calendar size={22} />
+                    </div>
+                    <p className="text-[11px] font-black text-blue-600 uppercase mb-1 tracking-widest">
+                      Agendado
+                    </p>
+                    <p className="text-sm font-black text-slate-900">Maria Silva</p>
+                    <p className="text-xs text-slate-600 font-bold">Terça • 14:00</p>
 
-                  <div
-                    ref={syncRef}
-                    className="mt-5 flex items-center justify-center gap-1.5 text-[#4d8f3b] text-[11px] font-black uppercase will-change-transform opacity-0"
-                  >
-                    <Check size={12} strokeWidth={4} />
-                    Sincronizado
+                    <div className="mt-5 flex items-center justify-center gap-1.5 text-[#4d8f3b] text-[11px] font-black uppercase">
+                      <Check size={12} strokeWidth={4} />
+                      Sincronizado
+                    </div>
                   </div>
-                </div>
+                </FadeSlide>
               </div>
             </div>
           </div>
