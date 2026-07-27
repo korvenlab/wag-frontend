@@ -87,7 +87,9 @@ export function Header() {
             <div className="w-40 h-12 flex items-center justify-center flex-shrink-0">
               <img
                 src="/logo.png"
-                alt="Logo"
+                alt="Wagoo"
+                width={160}
+                height={48}
                 className="w-full h-full object-contain"
               />
             </div>

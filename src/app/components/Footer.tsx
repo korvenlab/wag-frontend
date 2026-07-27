@@ -16,9 +16,11 @@ export function Footer() {
             transition={{ delay: 0.1 }}
             className="mb-8"
           >
-            <img 
-              src="/logo.png" 
-              alt="Wagoo Logo" 
+            <img
+              src="/logo.png"
+              alt="Wagoo"
+              width={180}
+              height={48}
               className="h-12 mx-auto object-contain mb-4"
             />
             <p className="text-gray-600 text-sm leading-relaxed max-w-md mx-auto">
@@ -41,6 +43,18 @@ export function Footer() {
               <FooterLink to="/privacidade">Política de Privacidade</FooterLink>
               <FooterLink to="/privacidade">LGPD</FooterLink>
               <FooterLink to="/privacidade">Cookies</FooterLink>
+            </ul>
+            <h4 className="text-gray-900 font-bold uppercase tracking-wider text-xs mb-6 mt-10">
+              Guias
+            </h4>
+            <ul className="flex flex-wrap justify-center gap-x-8 gap-y-3">
+              <FooterLink to="/automatizar-agendamento-whatsapp">
+                Automatizar WhatsApp
+              </FooterLink>
+              <FooterLink to="/agenda-whatsapp-google-calendar">
+                WhatsApp + Calendar
+              </FooterLink>
+              <FooterLink to="/wagoo-vs-planilha">Wagoo vs planilha</FooterLink>
             </ul>
           </motion.div>
         </div>
@@ -65,6 +79,8 @@ export function Footer() {
               <img 
                 src="/logokorven.png" 
                 alt="Korven Lab" 
+                width={120}
+                height={32}
                 className="h-8 object-contain grayscale opacity-70 hover:grayscale-0 hover:opacity-100 transition-all"
               />
             </a>

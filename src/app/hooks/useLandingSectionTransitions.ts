@@ -18,6 +18,7 @@ function ensureGsap() {
 export function useLandingSectionTransitions(
   rootRef: RefObject<HTMLElement | null>,
   enabled = true,
+  revision = 0,
 ) {
   useEffect(() => {
     if (!enabled || !rootRef.current) return;
@@ -106,8 +107,10 @@ export function useLandingSectionTransitions(
       });
     }, root);
 
+    ScrollTrigger.refresh();
+
     return () => {
       ctx.revert();
     };
-  }, [rootRef, enabled]);
+  }, [rootRef, enabled, revision]);
 }
