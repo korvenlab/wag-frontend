@@ -1,31 +1,52 @@
 # SEO Wagoo — checklist operacional
 
-## Arquivos no ar
+Domínio canônico: **https://wagoobot.com**
 
-- `https://wagoobot.com/robots.txt`
-- `https://wagoobot.com/sitemap.xml`
-- `https://wagoobot.com/og-wagoo.png`
-- Páginas de conteúdo:
-  - `/automatizar-agendamento-whatsapp`
-  - `/agenda-whatsapp-google-calendar`
-  - `/wagoo-vs-planilha`
+## Arquivos no ar (confirme no navegador)
 
-## Google Search Console (manual)
+- https://wagoobot.com/robots.txt
+- https://wagoobot.com/sitemap.xml
+- https://wagoobot.com/og-wagoo.png
 
-1. Abra [Google Search Console](https://search.google.com/search-console).
-2. Adicione a propriedade **URL prefix**: `https://wagoobot.com`.
-3. Verifique o domínio (método recomendado: **registro DNS** no provedor do domínio, ou meta tag HTML / arquivo HTML se preferir).
-4. Em **Sitemaps**, envie: `https://wagoobot.com/sitemap.xml`.
-5. Em **Inspeção de URL**, peça indexação de:
-  - `https://wagoobot.com/`
-  - as 3 páginas de guia acima
-6. Acompanhe cobertura e Core Web Vitals nas semanas seguintes.
+Páginas para indexar (não indexe `robots.txt` nem `sitemap.xml`):
+
+- https://wagoobot.com/
+- https://wagoobot.com/automatizar-agendamento-whatsapp
+- https://wagoobot.com/agenda-whatsapp-google-calendar
+- https://wagoobot.com/wagoo-vs-planilha
+
+## Google Search Console — ordem correta
+
+### 1) Enviar o sitemap (obrigatório primeiro)
+
+1. Abra a propriedade **`wagoobot.com`** (URL prefix `https://wagoobot.com`).
+2. Menu **Indexação → Sitemaps**.
+3. Em “Adicionar um novo sitemap”, digite só: `sitemap.xml`
+4. Envie. Aguarde status **Êxito** (pode levar minutos/horas).
+
+Não use a Inspeção de URL no `robots.txt` nem no `sitemap.xml` — o Google **não indexa** esses arquivos. Eles só orientam o crawler.
+
+### 2) Pedir indexação das páginas
+
+Para cada URL da lista acima:
+
+1. **Inspeção de URL** → cole a URL da **página** (ex.: `https://wagoobot.com/`).
+2. Clique **Testar o URL publicado** (versão ao vivo).
+3. Se o teste ao vivo disser que a URL está disponível, use **Solicitar indexação**.
+4. Se aparecer “Google não reconhece o URL”, é normal em site novo: o sitemap ainda não foi processado. Espere o sitemap ficar “Êxito” e tente de novo no dia seguinte.
+5. Erro “Ops... algo deu errado” ao solicitar indexação costuma ser limite temporário do Search Console — espere e repita; não indica bug no site.
+
+### 3) O que NÃO fazer
+
+- Solicitar indexação de `https://wagoobot.com/robots.txt`
+- Solicitar indexação de `https://wagoobot.com/sitemap.xml`
+- Usar propriedade com domínio errado (`wagobot.com` com 2 “o”)
 
 ## Após cada deploy
 
-- Confirme que `sitemap.xml` e `robots.txt` respondem 200.
-- Teste prévia social: [Facebook Sharing Debugger](https://developers.facebook.com/tools/debug/) e WhatsApp (colar o link numa conversa).
-- Se mudar preços Basic/Pro/Pro+, atualize o JSON-LD em `index.html` e a AggregateOffer nas páginas SEO.
+- Confirme que sitemap e robots respondem 200 no domínio **wagoobot.com**.
+- Teste prévia social: [Facebook Sharing Debugger](https://developers.facebook.com/tools/debug/).
+- Se mudar preços Basic/Pro/Pro+, atualize o JSON-LD em `index.html`.
 
 ## Build
 
