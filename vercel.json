@@ -1,4 +1,11 @@
 {
+  "redirects": [
+    {
+      "source": "/automatizar-agendamento-whatsapp",
+      "destination": "/agendamento/whatsapp",
+      "permanent": true
+    }
+  ],
   "rewrites": [
     {
       "source": "/((?!sitemap\\.xml|robots\\.txt|og-wagoo\\.png|.*\\..*).*)",

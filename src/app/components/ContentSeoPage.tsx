@@ -1,5 +1,5 @@
 import { Link } from "react-router";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, ChevronRight } from "lucide-react";
 import { Header } from "../components/Header";
 import { Footer } from "../components/Footer";
 import { SeoHead } from "../components/SeoHead";
@@ -16,20 +16,43 @@ type FaqItem = {
   a: string;
 };
 
+function buildBreadcrumbList(meta: SeoPageMeta) {
+  const items = [
+    { name: "Início", path: "/" },
+    ...(meta.breadcrumbs ?? [{ name: meta.title.split("|")[0].trim(), path: meta.path }]),
+  ];
+
+  return {
+    "@type": "BreadcrumbList",
+    itemListElement: items.map((item, index) => ({
+      "@type": "ListItem",
+      position: index + 1,
+      name: item.name,
+      item: item.path === "/" ? `${SITE_ORIGIN}/` : `${SITE_ORIGIN}${item.path}`,
+    })),
+  };
+}
+
 export function ContentSeoPage({
   meta,
   h1,
   lead,
   sections,
   faqs,
+  relatedLinks,
 }: {
   meta: SeoPageMeta;
   h1: string;
   lead: string;
   sections: Section[];
   faqs: FaqItem[];
+  relatedLinks?: { to: string; label: string }[];
 }) {
   const url = `${SITE_ORIGIN}${meta.path}`;
+  const crumbTrail = [
+    { name: "Início", path: "/" },
+    ...(meta.breadcrumbs ?? []),
+  ];
 
   const jsonLd = [
     {
@@ -39,6 +62,7 @@ export function ContentSeoPage({
       url,
       isPartOf: { "@type": "WebSite", name: "Wagoo", url: SITE_ORIGIN },
     },
+    buildBreadcrumbList(meta),
     {
       "@type": "SoftwareApplication",
       name: "Wagoo",
@@ -69,6 +93,33 @@ export function ContentSeoPage({
       <Header />
       <main className="pt-28 pb-20 px-6">
         <article className="max-w-3xl mx-auto">
+          <nav aria-label="Breadcrumb" className="mb-6">
+            <ol className="flex flex-wrap items-center gap-1 text-sm text-slate-500 font-medium">
+              {crumbTrail.map((item, index) => {
+                const isLast = index === crumbTrail.length - 1;
+                return (
+                  <li key={item.path} className="flex items-center gap-1">
+                    {index > 0 && (
+                      <ChevronRight className="w-3.5 h-3.5 text-slate-400 shrink-0" aria-hidden />
+                    )}
+                    {isLast ? (
+                      <span className="text-slate-800 font-semibold" aria-current="page">
+                        {item.name}
+                      </span>
+                    ) : (
+                      <Link
+                        to={item.path}
+                        className="text-[#4d8f3b] hover:underline underline-offset-2"
+                      >
+                        {item.name}
+                      </Link>
+                    )}
+                  </li>
+                );
+              })}
+            </ol>
+          </nav>
+
           <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-[#4d8f3b] mb-4">
             Wagoo · Guia
           </p>
@@ -110,6 +161,27 @@ export function ContentSeoPage({
               </section>
             ))}
           </div>
+
+          {relatedLinks && relatedLinks.length > 0 && (
+            <section className="mt-12 pt-8 border-t border-slate-200">
+              <h2 className="text-lg font-extrabold text-slate-900 tracking-tight mb-4">
+                Continue lendo
+              </h2>
+              <ul className="flex flex-col sm:flex-row flex-wrap gap-3">
+                {relatedLinks.map((link) => (
+                  <li key={link.to}>
+                    <Link
+                      to={link.to}
+                      className="inline-flex items-center gap-1 text-[#4d8f3b] font-bold hover:underline underline-offset-2"
+                    >
+                      {link.label}
+                      <ArrowRight className="w-3.5 h-3.5" />
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
 
           <section className="mt-14 pt-10 border-t border-slate-200">
             <h2 className="text-2xl font-extrabold text-slate-900 tracking-tight mb-6">

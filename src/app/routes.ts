@@ -7,9 +7,11 @@ import { ProtectedCalendarPage } from "./pages/ProtectedCalendarPage";
 import { PrivacyPage } from "./pages/PrivacyPage";
 import { TermsPage } from "./pages/TermsPage";
 import { PublicCalendarPage } from "./pages/PublicCalendarPage";
-import { AutomatizarAgendamentoWhatsappPage } from "./pages/AutomatizarAgendamentoWhatsappPage";
+import { AgendamentoHubPage } from "./pages/AgendamentoHubPage";
+import { AgendamentoWhatsappPage } from "./pages/AgendamentoWhatsappPage";
 import { AgendaWhatsappGoogleCalendarPage } from "./pages/AgendaWhatsappGoogleCalendarPage";
 import { WagooVsPlanilhaPage } from "./pages/WagooVsPlanilhaPage";
+import { RedirectAutomatizarAgendamentoWhatsapp } from "./pages/RedirectAutomatizarAgendamentoWhatsapp";
 
 export const router = createBrowserRouter([
   {
@@ -17,8 +19,16 @@ export const router = createBrowserRouter([
     Component: HomePage,
   },
   {
+    path: "/agendamento",
+    Component: AgendamentoHubPage,
+  },
+  {
+    path: "/agendamento/whatsapp",
+    Component: AgendamentoWhatsappPage,
+  },
+  {
     path: "/automatizar-agendamento-whatsapp",
-    Component: AutomatizarAgendamentoWhatsappPage,
+    Component: RedirectAutomatizarAgendamentoWhatsapp,
   },
   {
     path: "/agenda-whatsapp-google-calendar",

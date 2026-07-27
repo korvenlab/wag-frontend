@@ -22,14 +22,24 @@ const routes = [
     h1: "Sua agenda no automático",
   },
   {
-    path: "/automatizar-agendamento-whatsapp",
-    title: "Como automatizar agendamentos no WhatsApp | Wagoo",
+    path: "/agendamento",
+    title: "Agendamento automático | Wagoo",
     description:
-      "Pare de responder “tem horário?” na mão. Veja como automatizar agendamentos no WhatsApp e gravar tudo no Google Calendar com o Wagoo.",
-    ogTitle: "Automatize agendamentos no WhatsApp",
+      "Agendamento automático no WhatsApp e no Google Calendar. Menos furos, menos tempo no celular — o Wagoo confirma horário por você.",
+    ogTitle: "Agendamento automático com o Wagoo",
     ogDescription:
-      "Cliente pede horário no WhatsApp — o Wagoo confirma e joga no Google Calendar, 24h.",
-    h1: "Como automatizar agendamentos no WhatsApp sem perder o fio da meada",
+      "Do pedido no chat ao horário na agenda — sem planilha e sem responder tudo à mão.",
+    h1: "Agendamento automático que roda enquanto você atende",
+  },
+  {
+    path: "/agendamento/whatsapp",
+    title: "Agendamento no WhatsApp | Wagoo",
+    description:
+      "Agendamentos no WhatsApp no automático: o cliente pede horário, o Wagoo confirma e grava no Google Calendar, 24 horas por dia.",
+    ogTitle: "Agendamento no WhatsApp",
+    ogDescription:
+      "Automatize agendamentos no WhatsApp e sincronize com o Google Calendar — sem copiar horário à mão.",
+    h1: "Agendamento no WhatsApp sem perder o fio da meada",
   },
   {
     path: "/agenda-whatsapp-google-calendar",

@@ -1,7 +1,7 @@
 import { ContentSeoPage } from "../components/ContentSeoPage";
-import { CONTENT_SEO_PAGES } from "../lib/seoPages";
+import { getSeoPageByPath } from "../lib/seoPages";
 
-const meta = CONTENT_SEO_PAGES[1];
+const meta = getSeoPageByPath("/agenda-whatsapp-google-calendar")!;
 
 export function AgendaWhatsappGoogleCalendarPage() {
   return (
@@ -31,6 +31,10 @@ export function AgendaWhatsappGoogleCalendarPage() {
             "Se você busca integração WhatsApp Google Calendar sem planilha no meio, o caminho é automatizar a ponte — não contratar alguém só para digitar horário.",
           ],
         },
+      ]}
+      relatedLinks={[
+        { to: "/agendamento", label: "Hub de agendamento" },
+        { to: "/agendamento/whatsapp", label: "Agendamento no WhatsApp" },
       ]}
       faqs={[
         {

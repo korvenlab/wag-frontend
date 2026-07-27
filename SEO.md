@@ -11,9 +11,16 @@ Domínio canônico: **https://wagoobot.com**
 Páginas para indexar (não indexe `robots.txt` nem `sitemap.xml`):
 
 - https://wagoobot.com/
-- https://wagoobot.com/automatizar-agendamento-whatsapp
+- https://wagoobot.com/agendamento
+- https://wagoobot.com/agendamento/whatsapp
 - https://wagoobot.com/agenda-whatsapp-google-calendar
 - https://wagoobot.com/wagoo-vs-planilha
+
+Hierarquia de breadcrumb (como no SERP: `› agendamento › whatsapp`):
+
+- Hub: `/agendamento`
+- Folha keyword: `/agendamento/whatsapp`
+- Redirect permanente: `/automatizar-agendamento-whatsapp` → `/agendamento/whatsapp`
 
 ## Google Search Console — ordem correta
 

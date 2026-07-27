@@ -1,7 +1,7 @@
 import { ContentSeoPage } from "../components/ContentSeoPage";
-import { CONTENT_SEO_PAGES } from "../lib/seoPages";
+import { getSeoPageByPath } from "../lib/seoPages";
 
-const meta = CONTENT_SEO_PAGES[2];
+const meta = getSeoPageByPath("/wagoo-vs-planilha")!;
 
 export function WagooVsPlanilhaPage() {
   return (
@@ -31,6 +31,10 @@ export function WagooVsPlanilhaPage() {
             "Não é “mais uma ferramenta”: é tirar da sua mão o trabalho repetitivo de remarcar e confirmar, mantendo o calendário como fonte da verdade.",
           ],
         },
+      ]}
+      relatedLinks={[
+        { to: "/agendamento", label: "Hub de agendamento" },
+        { to: "/agendamento/whatsapp", label: "Agendamento no WhatsApp" },
       ]}
       faqs={[
         {

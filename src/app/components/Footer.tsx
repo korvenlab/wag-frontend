@@ -48,8 +48,9 @@ export function Footer() {
               Guias
             </h4>
             <ul className="flex flex-wrap justify-center gap-x-8 gap-y-3">
-              <FooterLink to="/automatizar-agendamento-whatsapp">
-                Automatizar WhatsApp
+              <FooterLink to="/agendamento">Agendamento</FooterLink>
+              <FooterLink to="/agendamento/whatsapp">
+                Agendamento no WhatsApp
               </FooterLink>
               <FooterLink to="/agenda-whatsapp-google-calendar">
                 WhatsApp + Calendar

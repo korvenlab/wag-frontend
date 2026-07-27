@@ -1,9 +1,16 @@
+export type SeoBreadcrumb = {
+  name: string;
+  path: string;
+};
+
 export type SeoPageMeta = {
   path: string;
   title: string;
   description: string;
   ogTitle?: string;
   ogDescription?: string;
+  /** Trilha para BreadcrumbList + UI (sem o item Início, que é sempre adicionado). */
+  breadcrumbs?: SeoBreadcrumb[];
 };
 
 export const SITE_ORIGIN = "https://wagoobot.com";
@@ -20,13 +27,27 @@ export const HOME_SEO: SeoPageMeta = {
 
 export const CONTENT_SEO_PAGES: SeoPageMeta[] = [
   {
-    path: "/automatizar-agendamento-whatsapp",
-    title: "Como automatizar agendamentos no WhatsApp | Wagoo",
+    path: "/agendamento",
+    title: "Agendamento automático | Wagoo",
     description:
-      "Pare de responder “tem horário?” na mão. Veja como automatizar agendamentos no WhatsApp e gravar tudo no Google Calendar com o Wagoo.",
-    ogTitle: "Automatize agendamentos no WhatsApp",
+      "Agendamento automático no WhatsApp e no Google Calendar. Menos furos, menos tempo no celular — o Wagoo confirma horário por você.",
+    ogTitle: "Agendamento automático com o Wagoo",
     ogDescription:
-      "Cliente pede horário no WhatsApp — o Wagoo confirma e joga no Google Calendar, 24h.",
+      "Do pedido no chat ao horário na agenda — sem planilha e sem responder tudo à mão.",
+    breadcrumbs: [{ name: "Agendamento", path: "/agendamento" }],
+  },
+  {
+    path: "/agendamento/whatsapp",
+    title: "Agendamento no WhatsApp | Wagoo",
+    description:
+      "Agendamentos no WhatsApp no automático: o cliente pede horário, o Wagoo confirma e grava no Google Calendar, 24 horas por dia.",
+    ogTitle: "Agendamento no WhatsApp",
+    ogDescription:
+      "Automatize agendamentos no WhatsApp e sincronize com o Google Calendar — sem copiar horário à mão.",
+    breadcrumbs: [
+      { name: "Agendamento", path: "/agendamento" },
+      { name: "WhatsApp", path: "/agendamento/whatsapp" },
+    ],
   },
   {
     path: "/agenda-whatsapp-google-calendar",
@@ -36,6 +57,10 @@ export const CONTENT_SEO_PAGES: SeoPageMeta[] = [
     ogTitle: "WhatsApp + Google Calendar no automático",
     ogDescription:
       "Sincronize conversas de agenda com o Google Calendar sem planilha e sem copiar horário à mão.",
+    breadcrumbs: [
+      { name: "Agendamento", path: "/agendamento" },
+      { name: "WhatsApp + Calendar", path: "/agenda-whatsapp-google-calendar" },
+    ],
   },
   {
     path: "/wagoo-vs-planilha",
@@ -45,7 +70,12 @@ export const CONTENT_SEO_PAGES: SeoPageMeta[] = [
     ogTitle: "Wagoo vs planilha de agendamentos",
     ogDescription:
       "Planilha não responde o cliente à noite. Veja a diferença na operação do dia a dia.",
+    breadcrumbs: [{ name: "Wagoo vs planilha", path: "/wagoo-vs-planilha" }],
   },
 ];
+
+export function getSeoPageByPath(path: string): SeoPageMeta | undefined {
+  return CONTENT_SEO_PAGES.find((p) => p.path === path);
+}
 
 export const ALL_PRERENDER_PATHS = ["/", ...CONTENT_SEO_PAGES.map((p) => p.path)];
