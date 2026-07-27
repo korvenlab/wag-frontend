@@ -2,9 +2,9 @@
 
 ## Arquivos no ar
 
-- `https://wagobot.com/robots.txt`
-- `https://wagobot.com/sitemap.xml`
-- `https://wagobot.com/og-wagoo.png`
+- `https://wagoobot.com/robots.txt`
+- `https://wagoobot.com/sitemap.xml`
+- `https://wagoobot.com/og-wagoo.png`
 - Páginas de conteúdo:
   - `/automatizar-agendamento-whatsapp`
   - `/agenda-whatsapp-google-calendar`
@@ -13,12 +13,12 @@
 ## Google Search Console (manual)
 
 1. Abra [Google Search Console](https://search.google.com/search-console).
-2. Adicione a propriedade **URL prefix**: `https://wagobot.com`.
+2. Adicione a propriedade **URL prefix**: `https://wagoobot.com`.
 3. Verifique o domínio (método recomendado: **registro DNS** no provedor do domínio, ou meta tag HTML / arquivo HTML se preferir).
-4. Em **Sitemaps**, envie: `https://wagobot.com/sitemap.xml`.
+4. Em **Sitemaps**, envie: `https://wagoobot.com/sitemap.xml`.
 5. Em **Inspeção de URL**, peça indexação de:
-   - `https://wagobot.com/`
-   - as 3 páginas de guia acima
+  - `https://wagoobot.com/`
+  - as 3 páginas de guia acima
 6. Acompanhe cobertura e Core Web Vitals nas semanas seguintes.
 
 ## Após cada deploy

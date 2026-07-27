@@ -8,7 +8,7 @@ import { fileURLToPath } from "node:url";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const distDir = path.resolve(__dirname, "../dist");
-const origin = "https://wagobot.com";
+const origin = "https://wagoobot.com";
 
 const routes = [
   {

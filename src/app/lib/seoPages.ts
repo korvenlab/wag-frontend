@@ -6,7 +6,7 @@ export type SeoPageMeta = {
   ogDescription?: string;
 };
 
-export const SITE_ORIGIN = "https://wagobot.com";
+export const SITE_ORIGIN = "https://wagoobot.com";
 
 export const HOME_SEO: SeoPageMeta = {
   path: "/",

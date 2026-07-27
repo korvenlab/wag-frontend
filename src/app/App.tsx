@@ -54,7 +54,7 @@ export function HomePage() {
           "@type": "SoftwareApplication",
           name: "Wagoo",
           description: HOME_SEO.description,
-          url: "https://wagobot.com/",
+          url: "https://wagoobot.com/",
           applicationCategory: "BusinessApplication",
           operatingSystem: "Web",
           offers: {

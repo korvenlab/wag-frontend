@@ -4,4 +4,4 @@ Disallow: /dashboard
 Disallow: /dashboard/
 Disallow: /login
 
-Sitemap: https://wagobot.com/sitemap.xml
+Sitemap: https://wagoobot.com/sitemap.xml
