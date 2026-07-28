@@ -72,8 +72,8 @@ export function Pricing() {
             <span className="text-[#64b34d]">O retorno começa no primeiro horário.</span>
           </h2>
           <p data-gsap="heading" className="text-lg text-slate-500 font-medium leading-relaxed">
-            WhatsApp, Google Agenda, IA e estilo de conversa em todos. Pro e Pro+ somam lembretes,
-            export CSV e equipe.
+            WhatsApp, Google Agenda, IA, tabela de preços e estilo de conversa em todos. Pro e Pro+
+            somam lembretes, export CSV e equipe.
           </p>
         </div>
 

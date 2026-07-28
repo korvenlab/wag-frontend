@@ -52,6 +52,7 @@ export const WAGOO_SHARED_FEATURES = [
   "Atendimento automático no WhatsApp",
   "Integração com Google Agenda",
   "Agendamentos ilimitados com IA",
+  "Tabela de preços por nicho (IA responde valores no WhatsApp)",
   "Estilo de conversa personalizado (tom humanizado)",
   "Sincronização em tempo real",
   "Painel com métricas de atendimento",

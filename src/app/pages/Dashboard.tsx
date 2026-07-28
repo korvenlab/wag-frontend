@@ -1088,8 +1088,8 @@ export function Dashboard() {
                             {nicheServiceLabel(businessNiche)}
                           </Label>
                           <p className="text-slate-500 text-xs font-medium mt-1 ml-1 leading-relaxed">
-                            Preencha os valores dos serviços do seu nicho. A IA usa esta tabela
-                            quando perguntarem preço no WhatsApp.
+                            Incluso em todos os planos (Basic, Pro e Pro+). Preencha os valores do
+                            seu nicho — a IA responde no WhatsApp quando perguntarem preço.
                           </p>
                         </div>
                         <Button
