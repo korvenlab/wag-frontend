@@ -4,6 +4,7 @@ export type DashboardProfileCache = {
   store_name: string;
   business_niche: string | null;
   business_niche_custom: string | null;
+  service_prices?: { name: string; price: string }[];
   is_ai_enabled: boolean;
   ai_use_emojis: boolean;
   whatsapp_connected: boolean;
