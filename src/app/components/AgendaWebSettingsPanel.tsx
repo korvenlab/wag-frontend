@@ -6,12 +6,15 @@ import {
   Clock,
   Copy,
   ExternalLink,
+  Link2,
   Loader2,
   Plus,
   Trash2,
   Upload,
   Users,
   CalendarDays,
+  CalendarCheck,
+  Eye,
 } from "lucide-react";
 import { apiFetch } from "../lib/apiFetch";
 import { Button } from "./ui/button";
@@ -77,12 +80,29 @@ const MISSING_SECTION: Record<PublishMissing, string> = {
 type AgendaWebSettingsPanelProps = {
   /** Compacto quando embutido no dashboard IA */
   embedded?: boolean;
+  /**
+   * Seção do menu. Sem valor (ou `"all"`) mostra tudo — usado no painel IA embutido.
+   */
+  section?: AgendaWebSection | "all";
   onProfileSaved?: () => void;
+  /** Checklist / atalhos para outra seção do menu */
+  onNavigateSection?: (section: AgendaWebSection) => void;
 };
+
+export type AgendaWebSection =
+  | "overview"
+  | "negocio"
+  | "horarios"
+  | "servicos"
+  | "profissionais"
+  | "agendamentos"
+  | "whatsapp";
 
 export function AgendaWebSettingsPanel({
   embedded = false,
+  section = "all",
   onProfileSaved,
+  onNavigateSection,
 }: AgendaWebSettingsPanelProps) {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -140,8 +160,27 @@ export function AgendaWebSettingsPanel({
 
   const canPublish = checklist.length === 0;
 
+  const show = (id: AgendaWebSection) => section === "all" || section === id;
+
   const scrollToSection = (id: string) => {
     document.getElementById(`aw-${id}`)?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+
+  const goSection = (id: AgendaWebSection) => {
+    if (onNavigateSection) {
+      onNavigateSection(id);
+      return;
+    }
+    const map: Record<AgendaWebSection, string> = {
+      overview: "links",
+      negocio: "negocio",
+      horarios: "horarios",
+      servicos: "servicos",
+      profissionais: "profissionais",
+      agendamentos: "agendamentos",
+      whatsapp: "links",
+    };
+    scrollToSection(map[id]);
   };
 
   const load = useCallback(async () => {
@@ -389,28 +428,32 @@ export function AgendaWebSettingsPanel({
       ) : null}
 
       {/* Checklist + links */}
+      {show("overview") ? (
       <Card id="aw-links" className="rounded-3xl border-slate-200 shadow-wg-subtle">
         <CardHeader>
-          <CardTitle className="text-xl font-extrabold">Publicar e compartilhar</CardTitle>
+          <CardTitle className="text-xl font-extrabold">Início · Publicar e links</CardTitle>
+          <p className="text-sm text-slate-500 font-medium mt-1">
+            Complete a checklist, publique e compartilhe os links certos com cada pessoa.
+          </p>
         </CardHeader>
-        <CardContent className="space-y-5">
+        <CardContent className="space-y-6">
           <div className="rounded-2xl border border-slate-100 bg-slate-50 p-4 space-y-3">
             <p className="text-xs font-black uppercase tracking-widest text-slate-400">
               Checklist para publicar
             </p>
             {(
               [
-                ["store_name", "Nome do negócio"],
-                ["services", "Pelo menos 1 serviço"],
-                ["working_hours", "Horário de funcionamento"],
+                ["store_name", "Nome do negócio", "negocio" as AgendaWebSection],
+                ["services", "Pelo menos 1 serviço", "servicos" as AgendaWebSection],
+                ["working_hours", "Horário de funcionamento", "horarios" as AgendaWebSection],
               ] as const
-            ).map(([key, label]) => {
+            ).map(([key, label, target]) => {
               const ok = !localMissing.includes(key) && !missing.includes(key);
               return (
                 <button
                   key={key}
                   type="button"
-                  onClick={() => scrollToSection(MISSING_SECTION[key])}
+                  onClick={() => goSection(target)}
                   className="w-full flex items-center gap-3 text-left text-sm font-semibold"
                 >
                   {ok ? (
@@ -420,6 +463,9 @@ export function AgendaWebSettingsPanel({
                   )}
                   <span className={ok ? "text-slate-700" : "text-amber-800"}>
                     {ok ? label : `Falta: ${label.toLowerCase()}`}
+                  </span>
+                  <span className="ml-auto text-[10px] font-black uppercase tracking-wider text-slate-400">
+                    Ir →
                   </span>
                 </button>
               );
@@ -431,7 +477,7 @@ export function AgendaWebSettingsPanel({
               <p className="text-sm font-bold text-slate-900">Publicar agenda</p>
               <p className="text-xs text-slate-500">
                 {canPublish
-                  ? "Tudo certo — clientes podem marcar pelo link."
+                  ? "Tudo certo — os links abaixo ficam ativos para o cliente."
                   : "Complete a checklist acima para liberar a publicação."}
               </p>
             </div>
@@ -445,74 +491,109 @@ export function AgendaWebSettingsPanel({
             />
           </div>
 
-          <div className="space-y-3">
-            <div>
-              <Label className="text-xs font-bold uppercase tracking-wider text-slate-400">
-                Link para agendar
-              </Label>
-              <div className="mt-1 flex flex-wrap items-center gap-2">
-                <code className="text-sm font-bold text-slate-700 bg-slate-100 px-3 py-2 rounded-xl break-all flex-1 min-w-0">
-                  {publicUrl || (slug ? `/a/${slug}` : "Salve o nome do negócio para gerar")}
-                </code>
-                {publicUrl ? (
-                  <>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => {
-                        void navigator.clipboard.writeText(publicUrl);
-                        setMsg("Link de agendamento copiado.");
-                      }}
-                    >
-                      <Copy size={14} className="mr-1" /> Copiar
-                    </Button>
-                    <Button type="button" variant="outline" size="sm" asChild>
-                      <a href={publicUrl} target="_blank" rel="noreferrer">
-                        <ExternalLink size={14} className="mr-1" /> Abrir
-                      </a>
-                    </Button>
-                  </>
-                ) : null}
+          <div className="grid md:grid-cols-2 gap-4">
+            <div className="rounded-2xl border-2 border-[#64b34d]/30 bg-[#64b34d]/5 p-5 space-y-3">
+              <div className="flex items-center gap-2">
+                <div className="w-10 h-10 rounded-xl bg-[#64b34d] text-white flex items-center justify-center">
+                  <CalendarCheck size={20} />
+                </div>
+                <div>
+                  <p className="text-sm font-black text-slate-900">Link para agendar</p>
+                  <p className="text-[10px] font-black uppercase tracking-wider text-[#4d8f3b]">
+                    Use este no Instagram / WhatsApp
+                  </p>
+                </div>
               </div>
+              <p className="text-sm text-slate-600 font-medium leading-relaxed">
+                Página completa da sua loja. O cliente escolhe serviço, profissional, data e
+                horário — e confirma o agendamento.
+              </p>
+              <code className="block text-xs font-bold text-slate-700 bg-white/80 border border-slate-100 px-3 py-2 rounded-xl break-all">
+                {publicUrl || (slug ? `/a/${slug}` : "Salve o nome do negócio para gerar")}
+              </code>
+              {publicUrl ? (
+                <div className="flex flex-wrap gap-2">
+                  <Button
+                    type="button"
+                    size="sm"
+                    className="bg-[#64b34d] hover:bg-[#4d8f3b] text-white font-bold"
+                    onClick={() => {
+                      void navigator.clipboard.writeText(publicUrl);
+                      setMsg("Link de agendamento copiado.");
+                    }}
+                  >
+                    <Copy size={14} className="mr-1" /> Copiar link
+                  </Button>
+                  <Button type="button" variant="outline" size="sm" asChild>
+                    <a href={publicUrl} target="_blank" rel="noreferrer">
+                      <ExternalLink size={14} className="mr-1" /> Abrir página
+                    </a>
+                  </Button>
+                </div>
+              ) : null}
             </div>
-            <div>
-              <Label className="text-xs font-bold uppercase tracking-wider text-slate-400">
-                Link só para ver a agenda (livre / ocupado)
-              </Label>
-              <div className="mt-1 flex flex-wrap items-center gap-2">
-                <code className="text-sm font-bold text-slate-700 bg-slate-100 px-3 py-2 rounded-xl break-all flex-1 min-w-0">
-                  {agendaUrl || (slug ? `/a/${slug}/agenda` : "Disponível após publicar")}
-                </code>
-                {agendaUrl ? (
-                  <>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => {
-                        void navigator.clipboard.writeText(agendaUrl);
-                        setMsg("Link da agenda copiado.");
-                      }}
-                    >
-                      <Copy size={14} className="mr-1" /> Copiar
-                    </Button>
-                    <Button type="button" variant="outline" size="sm" asChild>
-                      <a href={agendaUrl} target="_blank" rel="noreferrer">
-                        <ExternalLink size={14} className="mr-1" /> Abrir
-                      </a>
-                    </Button>
-                  </>
-                ) : null}
+
+            <div className="rounded-2xl border border-slate-200 bg-white p-5 space-y-3">
+              <div className="flex items-center gap-2">
+                <div className="w-10 h-10 rounded-xl bg-slate-100 text-slate-600 flex items-center justify-center">
+                  <Eye size={20} />
+                </div>
+                <div>
+                  <p className="text-sm font-black text-slate-900">Link só para ver a agenda</p>
+                  <p className="text-[10px] font-black uppercase tracking-wider text-slate-400">
+                    Consulta · não marca horário
+                  </p>
+                </div>
               </div>
+              <p className="text-sm text-slate-600 font-medium leading-relaxed">
+                Mostra o que está livre ou ocupado. Útil para a equipe ou para o cliente só
+                olhar disponibilidade — <strong className="font-bold text-slate-800">não agenda</strong>.
+              </p>
+              <code className="block text-xs font-bold text-slate-700 bg-slate-50 border border-slate-100 px-3 py-2 rounded-xl break-all">
+                {agendaUrl || (slug ? `/a/${slug}/agenda` : "Disponível após salvar o negócio")}
+              </code>
+              {agendaUrl ? (
+                <div className="flex flex-wrap gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      void navigator.clipboard.writeText(agendaUrl);
+                      setMsg("Link da agenda (consulta) copiado.");
+                    }}
+                  >
+                    <Copy size={14} className="mr-1" /> Copiar
+                  </Button>
+                  <Button type="button" variant="outline" size="sm" asChild>
+                    <a href={agendaUrl} target="_blank" rel="noreferrer">
+                      <ExternalLink size={14} className="mr-1" /> Abrir
+                    </a>
+                  </Button>
+                </div>
+              ) : null}
             </div>
+          </div>
+
+          <div className="rounded-2xl border border-dashed border-slate-200 px-4 py-3 flex items-start gap-3 text-sm text-slate-500 font-medium">
+            <Link2 className="shrink-0 mt-0.5 text-slate-400" size={16} />
+            <p>
+              Dica: no bio do Instagram e no status do WhatsApp, use o{" "}
+              <strong className="text-slate-800 font-bold">link verde (agendar)</strong>. O link de
+              consulta é opcional.
+            </p>
           </div>
         </CardContent>
       </Card>
+      ) : null}
 
+      {show("negocio") ? (
       <Card id="aw-negocio" className="rounded-3xl border-slate-200 shadow-wg-subtle scroll-mt-24">
         <CardHeader>
           <CardTitle className="text-xl font-extrabold">Seu negócio</CardTitle>
+          <p className="text-sm text-slate-500 font-medium mt-1">
+            Nome, capa, logo e contatos que aparecem na página pública.
+          </p>
         </CardHeader>
         <CardContent className="space-y-5">
           <div className="space-y-4">
@@ -625,13 +706,18 @@ export function AgendaWebSettingsPanel({
           </Button>
         </CardContent>
       </Card>
+      ) : null}
 
+      {show("horarios") ? (
       <Card id="aw-horarios" className="rounded-3xl border-slate-200 shadow-wg-subtle scroll-mt-24">
         <CardHeader>
           <CardTitle className="text-xl font-extrabold flex items-center gap-2">
             <Clock size={20} className="text-[#64b34d]" />
             Horário de funcionamento
           </CardTitle>
+          <p className="text-sm text-slate-500 font-medium mt-1">
+            Dias e turnos em que o cliente pode marcar horário.
+          </p>
         </CardHeader>
         <CardContent className="space-y-5">
           <WorkingHoursEditor
@@ -652,10 +738,15 @@ export function AgendaWebSettingsPanel({
           </Button>
         </CardContent>
       </Card>
+      ) : null}
 
+      {show("servicos") ? (
       <Card id="aw-servicos" className="rounded-3xl border-slate-200 shadow-wg-subtle scroll-mt-24">
         <CardHeader>
           <CardTitle className="text-xl font-extrabold">Serviços</CardTitle>
+          <p className="text-sm text-slate-500 font-medium mt-1">
+            O que o cliente escolhe ao agendar (nome, preço e duração).
+          </p>
         </CardHeader>
         <CardContent className="space-y-6">
           {services.length === 0 ? (
@@ -768,18 +859,20 @@ export function AgendaWebSettingsPanel({
           </div>
         </CardContent>
       </Card>
+      ) : null}
 
+      {show("profissionais") ? (
       <Card id="aw-profissionais" className="rounded-3xl border-slate-200 shadow-wg-subtle scroll-mt-24">
         <CardHeader>
           <CardTitle className="text-xl font-extrabold flex items-center gap-2">
             <Users size={20} className="text-[#64b34d]" />
             Profissionais
           </CardTitle>
+          <p className="text-sm text-slate-500 font-medium mt-1">
+            Quem atende. O cliente escolhe no link — sem limite e sem login próprio.
+          </p>
         </CardHeader>
         <CardContent className="space-y-6">
-          <p className="text-sm text-slate-500 font-medium">
-            Quantos quiser — o cliente escolhe quem atende no link. Sem limite e sem login próprio.
-          </p>
           {providers.length === 0 ? (
             <p className="text-sm text-slate-500">
               Nenhum profissional ainda. Opcional: sem lista, o cliente agenda sem preferência.
@@ -870,12 +963,17 @@ export function AgendaWebSettingsPanel({
           </div>
         </CardContent>
       </Card>
+      ) : null}
 
-      <Card className="rounded-3xl border-slate-200 shadow-wg-subtle">
+      {show("agendamentos") ? (
+      <Card id="aw-agendamentos" className="rounded-3xl border-slate-200 shadow-wg-subtle">
         <CardHeader>
           <CardTitle className="text-xl font-extrabold flex items-center gap-2">
             <CalendarDays size={20} className="text-[#64b34d]" /> Próximos agendamentos
           </CardTitle>
+          <p className="text-sm text-slate-500 font-medium mt-1">
+            Horários marcados pelo link público. Você pode cancelar daqui.
+          </p>
         </CardHeader>
         <CardContent className="space-y-3">
           {appointments.filter((a) => a.status === "confirmed").length === 0 ? (
@@ -910,6 +1008,7 @@ export function AgendaWebSettingsPanel({
           )}
         </CardContent>
       </Card>
+      ) : null}
     </div>
   );
 }
