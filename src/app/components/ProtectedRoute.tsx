@@ -63,7 +63,15 @@ export function ProtectedRoute({ children, requirePayment = false }: ProtectedRo
     }
   }, [user?.hasPaid, checkoutSuccess, navigate]);
 
-  if (loading || !user) return null;
+  if (loading) {
+    return (
+      <div className="min-h-[100dvh] flex items-center justify-center bg-[#F8FAFC]">
+        <Loader2 className="w-10 h-10 animate-spin text-[#64b34d]" strokeWidth={2.5} />
+      </div>
+    );
+  }
+
+  if (!user) return null;
 
   if (requirePayment && !user.hasPaid && checkoutSuccess) {
     return (

@@ -14,6 +14,10 @@ function ensureGsap() {
  * Troca de seções na landing com GSAP ScrollTrigger.
  * Use `data-gsap-section` na section e `data-gsap="heading|item|fade"` nos filhos.
  * Ritmo editorial: headings um pouco mais lentos; timeline/itens com stagger curto.
+ *
+ * Importante: não usar gsap.set(opacity:0) no mount — isso escondia o conteúdo
+ * até o scroll e fazia a 1ª visita parecer “lenta/vazia”. from() + immediateRender:false
+ * mantém o HTML visível até o trigger.
  */
 export function useLandingSectionTransitions(
   rootRef: RefObject<HTMLElement | null>,
@@ -42,64 +46,60 @@ export function useLandingSectionTransitions(
         const fades = gsap.utils.toArray<HTMLElement>(
           section.querySelectorAll('[data-gsap="fade"]'),
         );
-        const targets = [...heading, ...items, ...fades];
-        if (!targets.length) return;
-
-        gsap.set(targets, {
-          opacity: 0,
-          y: 40,
-          filter: "blur(5px)",
-        });
+        if (!heading.length && !items.length && !fades.length) return;
 
         const tl = gsap.timeline({
           scrollTrigger: {
             trigger: section,
             start: "top 82%",
-            end: "top 24%",
-            toggleActions: "play none none reverse",
+            toggleActions: "play none none none",
+            once: true,
           },
         });
 
         if (heading.length) {
-          tl.to(
+          tl.from(
             heading,
             {
-              opacity: 1,
-              y: 0,
-              filter: "blur(0px)",
+              opacity: 0,
+              y: 40,
+              filter: "blur(5px)",
               duration: 0.82,
               ease: "power3.out",
               stagger: 0.11,
+              immediateRender: false,
             },
             0,
           );
         }
 
         if (items.length) {
-          tl.to(
+          tl.from(
             items,
             {
-              opacity: 1,
-              y: 0,
-              filter: "blur(0px)",
+              opacity: 0,
+              y: 40,
+              filter: "blur(5px)",
               duration: 0.68,
               ease: "power3.out",
               stagger: 0.13,
+              immediateRender: false,
             },
             heading.length ? 0.2 : 0.08,
           );
         }
 
         if (fades.length) {
-          tl.to(
+          tl.from(
             fades,
             {
-              opacity: 1,
-              y: 0,
-              filter: "blur(0px)",
+              opacity: 0,
+              y: 40,
+              filter: "blur(5px)",
               duration: 0.9,
               ease: "power2.out",
               stagger: 0.08,
+              immediateRender: false,
             },
             heading.length || items.length ? 0.28 : 0.1,
           );
