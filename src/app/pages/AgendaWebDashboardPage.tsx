@@ -4,6 +4,7 @@ import { useAuth } from "../context/AuthContext";
 import { Button } from "../components/ui/button";
 import { FeedbackFab } from "../components/FeedbackFab";
 import { AgendaWebSettingsPanel } from "../components/AgendaWebSettingsPanel";
+import { AgendaWebWhatsAppPanel } from "../components/AgendaWebWhatsAppPanel";
 
 export function AgendaWebDashboardPage() {
   const { user, logout, refreshProfile } = useAuth();
@@ -34,16 +35,17 @@ export function AgendaWebDashboardPage() {
         </div>
       </header>
 
-      <main className="max-w-5xl mx-auto px-4 py-8 pb-16">
-        <div className="mb-8">
+      <main className="max-w-5xl mx-auto px-4 py-8 pb-16 space-y-8">
+        <div>
           <h1 className="text-2xl md:text-3xl font-black text-slate-900 tracking-tight">
             Configure sua agenda online
           </h1>
           <p className="mt-2 text-slate-500 font-medium max-w-2xl">
-            Preencha negócio, horários e serviços. A checklist no topo mostra exatamente o que falta
-            para publicar. Profissionais são ilimitados — o cliente escolhe quem atende.
+            Preencha negócio, horários e serviços. Opcionalmente conecte o WhatsApp da loja para
+            confirmação e lembretes automáticos (sem IA).
           </p>
         </div>
+        <AgendaWebWhatsAppPanel />
         <AgendaWebSettingsPanel onProfileSaved={() => void refreshProfile({ force: true })} />
       </main>
       <FeedbackFab />

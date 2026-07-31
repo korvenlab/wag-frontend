@@ -12,20 +12,21 @@ export type WagooPlanCard = {
   extras: string[];
 };
 
-/** Plano de agendamento web (sem IA). */
+/** Plano de agendamento web (sem IA conversacional). */
 export const AGENDA_WEB_PLAN: WagooPlanCard = {
   tier: "agenda_web",
   name: "Agenda Web",
   priceBrl: 20,
   maxUsers: 0,
-  description: "Link público para o cliente agendar sozinho — sem WhatsApp IA",
+  description: "Link público para o cliente agendar — WhatsApp só para confirmação e lembretes",
   kind: "booking",
   extras: [
     "Página pública com link exclusivo",
-    "Wizard: profissional → serviço → data → horário",
+    "Wizard: serviços → profissional → data → horário",
     "Profissionais ilimitados (barbeiros / atendentes)",
-    "Link só-leitura da agenda (livre / ocupado)",
-    "Logo, serviços, preços e fotos",
+    "WhatsApp da loja (QR Baileys) — confirmação automática",
+    "Lembretes no WhatsApp antes do horário (script, sem IA)",
+    "Logo, capa, serviços, preços e fotos",
   ],
 };
 
@@ -115,9 +116,9 @@ export function tierIsAgendaWebOnly(tier: WagooPlanTier | null | undefined): boo
   return tier === "agenda_web";
 }
 
-/** Lembretes WhatsApp — só Pro e Pro+. */
+/** Lembretes WhatsApp — Agenda Web, Pro e Pro+. */
 export function tierSupportsReminders(tier: WagooPlanTier | null | undefined): boolean {
-  return tier === "pro" || tier === "pro_plus";
+  return tier === "agenda_web" || tier === "pro" || tier === "pro_plus";
 }
 
 /** Export CSV de agendamentos — só Pro e Pro+. */
