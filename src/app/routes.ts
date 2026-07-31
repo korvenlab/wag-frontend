@@ -6,6 +6,7 @@ import { ProtectedTeamPage } from "./pages/ProtectedTeamPage";
 import { ProtectedCalendarPage } from "./pages/ProtectedCalendarPage";
 import { PrivacyPage } from "./pages/PrivacyPage";
 import { TermsPage } from "./pages/TermsPage";
+import { PublicCalendarPage } from "./pages/PublicCalendarPage";
 import { PublicBookingPage } from "./pages/PublicBookingPage";
 import { ProtectedAgendaWebPage } from "./pages/ProtectedAgendaWebPage";
 import { AgendamentoHubPage } from "./pages/AgendamentoHubPage";
