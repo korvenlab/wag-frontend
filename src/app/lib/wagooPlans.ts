@@ -17,14 +17,15 @@ export const AGENDA_WEB_PLAN: WagooPlanCard = {
   tier: "agenda_web",
   name: "Agenda Web",
   priceBrl: 20,
-  maxUsers: 1,
+  maxUsers: 0,
   description: "Link público para o cliente agendar sozinho — sem WhatsApp IA",
   kind: "booking",
   extras: [
     "Página pública com link exclusivo",
-    "Wizard: serviço → data → horário → confirmação",
+    "Wizard: profissional → serviço → data → horário",
+    "Profissionais ilimitados (barbeiros / atendentes)",
+    "Link só-leitura da agenda (livre / ocupado)",
     "Logo, serviços, preços e fotos",
-    "Agenda gravada no painel (banco Wagoo)",
   ],
 };
 
@@ -36,7 +37,7 @@ export const WAGOO_PLAN_CARDS: WagooPlanCard[] = [
     maxUsers: 1,
     description: "1 usuário — ideal para profissional autônomo",
     kind: "ai",
-    extras: [],
+    extras: ["Agenda Web inclusa no painel"],
   },
   {
     tier: "pro",
@@ -47,6 +48,7 @@ export const WAGOO_PLAN_CARDS: WagooPlanCard[] = [
     highlight: true,
     kind: "ai",
     extras: [
+      "Agenda Web inclusa no painel",
       "Lembretes automáticos no WhatsApp antes do horário",
       "Export CSV de agendamentos para contabilidade",
       "Gerenciar equipe de profissionais",
@@ -60,6 +62,7 @@ export const WAGOO_PLAN_CARDS: WagooPlanCard[] = [
     description: "Até 5 usuários para negócios em crescimento",
     kind: "ai",
     extras: [
+      "Agenda Web inclusa no painel",
       "Lembretes automáticos no WhatsApp antes do horário",
       "Export CSV de agendamentos para contabilidade",
       "Gerenciar equipe de profissionais",
@@ -72,6 +75,7 @@ export const WAGOO_SHARED_FEATURES = [
   "Atendimento automático no WhatsApp",
   "Integração com Google Agenda",
   "Agendamentos ilimitados com IA",
+  "Agenda Web inclusa (link público + vitrine)",
   "Tabela de preços por nicho (IA responde valores no WhatsApp)",
   "Estilo de conversa personalizado (tom humanizado)",
   "Sincronização em tempo real",
@@ -96,7 +100,18 @@ export function tierSupportsAi(tier: WagooPlanTier | null | undefined): boolean 
   return tier === "basic" || tier === "pro" || tier === "pro_plus";
 }
 
+/** Agenda Web (link / vitrine) — standalone ou inclusa nos planos com IA. */
 export function tierSupportsPublicBooking(tier: WagooPlanTier | null | undefined): boolean {
+  return (
+    tier === "agenda_web" ||
+    tier === "basic" ||
+    tier === "pro" ||
+    tier === "pro_plus"
+  );
+}
+
+/** Só Agenda Web — sem dashboard de IA. */
+export function tierIsAgendaWebOnly(tier: WagooPlanTier | null | undefined): boolean {
   return tier === "agenda_web";
 }
 

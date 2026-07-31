@@ -12,6 +12,7 @@ import {
   CalendarDays,
   ChevronRight,
   Bell,
+  Link2,
 } from "lucide-react";
 import { Button } from "./ui/button";
 import { useNavigate } from "react-router";
@@ -23,6 +24,7 @@ export type DashboardNavId =
   | "reminders"
   | "team"
   | "calendar"
+  | "agenda-web"
   | "settings";
 
 type DashboardSidebarProps = {
@@ -158,6 +160,12 @@ export function DashboardSidebar({
                   navigate("/dashboard/equipe");
                   setIsSidebarOpen(false);
                 }}
+              />
+              <NavItem
+                icon={<Link2 size={20} />}
+                label="Agenda Web"
+                active={active === "agenda-web"}
+                onClick={() => goDashboard("agenda-web")}
               />
               <NavItem
                 icon={<Settings size={20} />}

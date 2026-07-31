@@ -46,10 +46,10 @@ export const TermsPage = () => {
 
         <h2 style={{ color: '#111827', marginTop: '40px' }}>3. Assinaturas e Pagamentos</h2>
         <ul style={{ paddingLeft: '20px' }}>
-          <li><strong>Agenda Web:</strong> R$ 20,00/mês — link público de agendamento (serviços, horários e confirmação), sem atendimento por IA no WhatsApp.</li>
-          <li><strong>Basic:</strong> R$ 59,00/mês — 1 usuário (WhatsApp, Google Agenda, IA, tabela de preços e estilo de conversa).</li>
-          <li><strong>Pro:</strong> R$ 149,00/mês — até 3 usuários, com lembretes, export CSV e gestão de equipe.</li>
-          <li><strong>Pro+:</strong> R$ 259,00/mês — até 5 usuários, com os mesmos recursos avançados do Pro.</li>
+          <li><strong>Agenda Web:</strong> R$ 20,00/mês — dashboard próprio com link público de agendamento, profissionais ilimitados, horários e vista pública da agenda; sem atendimento por IA no WhatsApp.</li>
+          <li><strong>Basic:</strong> R$ 59,00/mês — 1 usuário (WhatsApp, Google Agenda, IA) + Agenda Web inclusa no painel.</li>
+          <li><strong>Pro:</strong> R$ 149,00/mês — até 3 usuários na equipe IA, lembretes, export CSV, gestão de equipe + Agenda Web inclusa.</li>
+          <li><strong>Pro+:</strong> R$ 259,00/mês — até 5 usuários na equipe IA, mesmos recursos avançados do Pro + Agenda Web inclusa.</li>
           <li><strong>Processamento:</strong> Todos os pagamentos são processados de forma segura via <strong>Stripe</strong>.</li>
           <li><strong>Renovação:</strong> A assinatura é renovada automaticamente a cada 30 dias.</li>
           <li><strong>Cancelamento:</strong> Pode ser solicitado a qualquer momento através do painel do usuário ou suporte, sem taxas de fidelidade.</li>

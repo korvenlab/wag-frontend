@@ -1,0 +1,867 @@
+import { useCallback, useEffect, useMemo, useState } from "react";
+import {
+  AlertCircle,
+  Check,
+  CheckCircle2,
+  Clock,
+  Copy,
+  ExternalLink,
+  Loader2,
+  Plus,
+  Trash2,
+  Upload,
+  Users,
+  CalendarDays,
+} from "lucide-react";
+import { apiFetch } from "../lib/apiFetch";
+import { Button } from "./ui/button";
+import { Input } from "./ui/input";
+import { Label } from "./ui/label";
+import { Textarea } from "./ui/textarea";
+import { Switch } from "./ui/switch";
+import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
+import {
+  WorkingHoursEditor,
+  createDefaultWorkingHours,
+  hasAnyOpenWindow,
+  normalizeWorkingHours,
+  type WorkingHoursMap,
+} from "./WorkingHoursEditor";
+
+export type PublishMissing = "store_name" | "services" | "working_hours";
+
+type BookingService = {
+  id: string;
+  name: string;
+  description: string;
+  price_brl: number;
+  duration_minutes: number;
+  image_url: string | null;
+  active: boolean;
+};
+
+type BookingProvider = {
+  id: string;
+  name: string;
+  photo_url: string | null;
+  bio: string;
+  active: boolean;
+};
+
+type BookingAppointment = {
+  id: string;
+  starts_at: string;
+  ends_at: string;
+  status: string;
+  client_name: string;
+  client_phone: string;
+  booking_services?: { name: string; price_brl: number; duration_minutes: number } | null;
+  booking_providers?: { id: string; name: string } | null;
+};
+
+function fileToDataUrl(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result));
+    reader.onerror = () => reject(new Error("Falha ao ler arquivo"));
+    reader.readAsDataURL(file);
+  });
+}
+
+const MISSING_SECTION: Record<PublishMissing, string> = {
+  store_name: "negocio",
+  services: "servicos",
+  working_hours: "horarios",
+};
+
+type AgendaWebSettingsPanelProps = {
+  /** Compacto quando embutido no dashboard IA */
+  embedded?: boolean;
+  onProfileSaved?: () => void;
+};
+
+export function AgendaWebSettingsPanel({
+  embedded = false,
+  onProfileSaved,
+}: AgendaWebSettingsPanelProps) {
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [msg, setMsg] = useState<string | null>(null);
+  const [errorBanner, setErrorBanner] = useState<string | null>(null);
+
+  const [storeName, setStoreName] = useState("");
+  const [tagline, setTagline] = useState("");
+  const [phone, setPhone] = useState("");
+  const [address, setAddress] = useState("");
+  const [published, setPublished] = useState(false);
+  const [logoUrl, setLogoUrl] = useState<string | null>(null);
+  const [slug, setSlug] = useState<string | null>(null);
+  const [publicUrl, setPublicUrl] = useState<string | null>(null);
+  const [agendaUrl, setAgendaUrl] = useState<string | null>(null);
+
+  const [workingHours, setWorkingHours] = useState<WorkingHoursMap>(createDefaultWorkingHours);
+  const [selectedDay, setSelectedDay] = useState("Segunda-feira");
+
+  const [services, setServices] = useState<BookingService[]>([]);
+  const [providers, setProviders] = useState<BookingProvider[]>([]);
+  const [appointments, setAppointments] = useState<BookingAppointment[]>([]);
+
+  const [missing, setMissing] = useState<PublishMissing[]>([]);
+  const [missingMessages, setMissingMessages] = useState<string[]>([]);
+
+  const [newName, setNewName] = useState("");
+  const [newDesc, setNewDesc] = useState("");
+  const [newPrice, setNewPrice] = useState("");
+  const [newDuration, setNewDuration] = useState("");
+  const [newImage, setNewImage] = useState<string | null>(null);
+
+  const [provName, setProvName] = useState("");
+  const [provBio, setProvBio] = useState("");
+  const [provPhoto, setProvPhoto] = useState<string | null>(null);
+
+  const localMissing = useMemo(() => {
+    const m: PublishMissing[] = [];
+    if (storeName.trim().length < 2) m.push("store_name");
+    if (services.filter((s) => s.active !== false).length < 1) m.push("services");
+    if (!hasAnyOpenWindow(workingHours)) m.push("working_hours");
+    return m;
+  }, [storeName, services, workingHours]);
+
+  const checklist = missingMessages.length
+    ? missingMessages
+    : localMissing.map((k) =>
+        k === "store_name"
+          ? "Falta o nome do negócio"
+          : k === "services"
+            ? "Falta adicionar pelo menos 1 serviço"
+            : "Falta definir horário de funcionamento (ative manhã/tarde/noite em algum dia)",
+      );
+
+  const canPublish = checklist.length === 0;
+
+  const scrollToSection = (id: string) => {
+    document.getElementById(`aw-${id}`)?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await apiFetch("/api/booking/me");
+      if (!res.ok) throw new Error("Falha ao carregar");
+      const data = await res.json();
+      setStoreName(data.profile?.store_name ?? "");
+      setTagline(data.profile?.booking_tagline ?? "");
+      setPhone(data.profile?.booking_phone ?? "");
+      setAddress(data.profile?.booking_address ?? "");
+      setPublished(!!data.profile?.booking_published);
+      setLogoUrl(data.profile?.booking_logo_url ?? null);
+      setSlug(data.profile?.booking_slug ?? null);
+      setPublicUrl(data.publicUrl ?? null);
+      setAgendaUrl(data.agendaUrl ?? null);
+      setWorkingHours(normalizeWorkingHours(data.profile?.working_hours));
+      setServices(data.services ?? []);
+      setProviders(data.providers ?? []);
+      setAppointments(data.appointments ?? []);
+      setMissing((data.missing as PublishMissing[]) ?? []);
+      setMissingMessages(data.missingMessages ?? []);
+    } catch {
+      setErrorBanner("Não foi possível carregar a Agenda Web.");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    void load();
+  }, [load]);
+
+  async function uploadImage(file: File, kind: "logo" | "service" | "provider") {
+    const dataUrl = await fileToDataUrl(file);
+    const res = await apiFetch("/api/booking/upload", {
+      method: "POST",
+      body: JSON.stringify({ dataUrl, kind }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || "Upload falhou");
+    return data.url as string;
+  }
+
+  async function saveSite(opts?: { forcePublish?: boolean }) {
+    setSaving(true);
+    setMsg(null);
+    setErrorBanner(null);
+    const wantPublish = opts?.forcePublish ?? published;
+
+    if (wantPublish && !canPublish) {
+      setErrorBanner(
+        `Não deu para publicar. Ainda falta: ${checklist.join("; ")}.`,
+      );
+      setPublished(false);
+      setSaving(false);
+      const first = localMissing[0] || missing[0];
+      if (first) scrollToSection(MISSING_SECTION[first]);
+      return;
+    }
+
+    try {
+      const res = await apiFetch("/api/booking/me", {
+        method: "PATCH",
+        body: JSON.stringify({
+          store_name: storeName,
+          booking_tagline: tagline,
+          booking_phone: phone,
+          booking_address: address,
+          booking_logo_url: logoUrl,
+          booking_published: wantPublish,
+          working_hours: workingHours,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        const msgs: string[] = data.missingMessages ?? [];
+        setMissing(data.missing ?? []);
+        setMissingMessages(msgs);
+        setErrorBanner(
+          data.error ||
+            (msgs.length
+              ? `Não deu para publicar. Ainda falta: ${msgs.join("; ")}.`
+              : "Erro ao salvar"),
+        );
+        if (data.missing?.[0]) scrollToSection(MISSING_SECTION[data.missing[0] as PublishMissing]);
+        setPublished(false);
+        return;
+      }
+      setPublished(!!data.profile?.booking_published);
+      setSlug(data.profile?.booking_slug ?? null);
+      setPublicUrl(data.publicUrl ?? null);
+      setAgendaUrl(data.agendaUrl ?? null);
+      setMissing(data.missing ?? []);
+      setMissingMessages(data.missingMessages ?? []);
+      if (data.profile?.working_hours) {
+        setWorkingHours(normalizeWorkingHours(data.profile.working_hours));
+      }
+      setMsg("Configurações salvas.");
+      onProfileSaved?.();
+    } catch (e) {
+      setErrorBanner(e instanceof Error ? e.message : "Erro ao salvar");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function addService() {
+    if (newName.trim().length < 2) {
+      setErrorBanner("Falta o nome do serviço.");
+      scrollToSection("servicos");
+      return;
+    }
+    if (!newPrice.trim()) {
+      setErrorBanner("Falta o preço do serviço (R$).");
+      scrollToSection("servicos");
+      return;
+    }
+    if (!newDuration.trim()) {
+      setErrorBanner("Falta a duração do serviço (em minutos).");
+      scrollToSection("servicos");
+      return;
+    }
+    setSaving(true);
+    setErrorBanner(null);
+    try {
+      const res = await apiFetch("/api/booking/services", {
+        method: "POST",
+        body: JSON.stringify({
+          name: newName,
+          description: newDesc,
+          price_brl: Number(newPrice) || 0,
+          duration_minutes: Number(newDuration) || 30,
+          image_url: newImage,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Erro");
+      setServices((s) => [...s, data]);
+      setNewName("");
+      setNewDesc("");
+      setNewPrice("");
+      setNewDuration("");
+      setNewImage(null);
+      setMsg("Serviço adicionado.");
+      await load();
+    } catch (e) {
+      setErrorBanner(e instanceof Error ? e.message : "Erro");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function removeService(id: string) {
+    if (!confirm("Remover este serviço?")) return;
+    const res = await apiFetch(`/api/booking/services/${id}`, { method: "DELETE" });
+    if (res.ok) {
+      setServices((s) => s.filter((x) => x.id !== id));
+      await load();
+    }
+  }
+
+  async function addProvider() {
+    if (provName.trim().length < 2) {
+      setErrorBanner("Falta o nome do profissional.");
+      scrollToSection("profissionais");
+      return;
+    }
+    setSaving(true);
+    setErrorBanner(null);
+    try {
+      const res = await apiFetch("/api/booking/providers", {
+        method: "POST",
+        body: JSON.stringify({
+          name: provName,
+          bio: provBio,
+          photo_url: provPhoto,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Erro");
+      setProviders((p) => [...p, data]);
+      setProvName("");
+      setProvBio("");
+      setProvPhoto(null);
+      setMsg("Profissional adicionado.");
+    } catch (e) {
+      setErrorBanner(e instanceof Error ? e.message : "Erro");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function removeProvider(id: string) {
+    if (!confirm("Remover este profissional?")) return;
+    const res = await apiFetch(`/api/booking/providers/${id}`, { method: "DELETE" });
+    if (res.ok) setProviders((p) => p.filter((x) => x.id !== id));
+  }
+
+  async function cancelAppointment(id: string) {
+    const res = await apiFetch(`/api/booking/appointments/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify({ status: "cancelled" }),
+    });
+    if (res.ok) {
+      setAppointments((list) =>
+        list.map((a) => (a.id === id ? { ...a, status: "cancelled" } : a)),
+      );
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <Loader2 className="animate-spin text-[#64b34d]" size={32} />
+      </div>
+    );
+  }
+
+  return (
+    <div className={`space-y-8 ${embedded ? "" : ""}`}>
+      {errorBanner ? (
+        <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700 flex gap-3 items-start">
+          <AlertCircle className="shrink-0 mt-0.5" size={18} />
+          <div>
+            <p>{errorBanner}</p>
+            {checklist.length > 0 ? (
+              <ul className="mt-2 space-y-1">
+                {checklist.map((m) => (
+                  <li key={m}>• {m}</li>
+                ))}
+              </ul>
+            ) : null}
+          </div>
+        </div>
+      ) : null}
+
+      {msg ? (
+        <div className="rounded-2xl border border-green-100 bg-green-50 px-4 py-3 text-sm font-semibold text-[#4d8f3b]">
+          {msg}
+        </div>
+      ) : null}
+
+      {/* Checklist + links */}
+      <Card id="aw-links" className="rounded-3xl border-slate-200 shadow-wg-subtle">
+        <CardHeader>
+          <CardTitle className="text-xl font-extrabold">Publicar e compartilhar</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-5">
+          <div className="rounded-2xl border border-slate-100 bg-slate-50 p-4 space-y-3">
+            <p className="text-xs font-black uppercase tracking-widest text-slate-400">
+              Checklist para publicar
+            </p>
+            {(
+              [
+                ["store_name", "Nome do negócio"],
+                ["services", "Pelo menos 1 serviço"],
+                ["working_hours", "Horário de funcionamento"],
+              ] as const
+            ).map(([key, label]) => {
+              const ok = !localMissing.includes(key) && !missing.includes(key);
+              return (
+                <button
+                  key={key}
+                  type="button"
+                  onClick={() => scrollToSection(MISSING_SECTION[key])}
+                  className="w-full flex items-center gap-3 text-left text-sm font-semibold"
+                >
+                  {ok ? (
+                    <CheckCircle2 className="text-[#64b34d] shrink-0" size={18} />
+                  ) : (
+                    <AlertCircle className="text-amber-500 shrink-0" size={18} />
+                  )}
+                  <span className={ok ? "text-slate-700" : "text-amber-800"}>
+                    {ok ? label : `Falta: ${label.toLowerCase()}`}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+
+          <div className="flex items-center justify-between gap-4 rounded-2xl border border-slate-100 bg-white px-4 py-3">
+            <div>
+              <p className="text-sm font-bold text-slate-900">Publicar agenda</p>
+              <p className="text-xs text-slate-500">
+                {canPublish
+                  ? "Tudo certo — clientes podem marcar pelo link."
+                  : "Complete a checklist acima para liberar a publicação."}
+              </p>
+            </div>
+            <Switch
+              checked={published}
+              onCheckedChange={(v) => {
+                setPublished(v);
+                if (v) void saveSite({ forcePublish: true });
+                else void saveSite({ forcePublish: false });
+              }}
+            />
+          </div>
+
+          <div className="space-y-3">
+            <div>
+              <Label className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                Link para agendar
+              </Label>
+              <div className="mt-1 flex flex-wrap items-center gap-2">
+                <code className="text-sm font-bold text-slate-700 bg-slate-100 px-3 py-2 rounded-xl break-all flex-1 min-w-0">
+                  {publicUrl || (slug ? `/a/${slug}` : "Salve o nome do negócio para gerar")}
+                </code>
+                {publicUrl ? (
+                  <>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        void navigator.clipboard.writeText(publicUrl);
+                        setMsg("Link de agendamento copiado.");
+                      }}
+                    >
+                      <Copy size={14} className="mr-1" /> Copiar
+                    </Button>
+                    <Button type="button" variant="outline" size="sm" asChild>
+                      <a href={publicUrl} target="_blank" rel="noreferrer">
+                        <ExternalLink size={14} className="mr-1" /> Abrir
+                      </a>
+                    </Button>
+                  </>
+                ) : null}
+              </div>
+            </div>
+            <div>
+              <Label className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                Link só para ver a agenda (livre / ocupado)
+              </Label>
+              <div className="mt-1 flex flex-wrap items-center gap-2">
+                <code className="text-sm font-bold text-slate-700 bg-slate-100 px-3 py-2 rounded-xl break-all flex-1 min-w-0">
+                  {agendaUrl || (slug ? `/a/${slug}/agenda` : "Disponível após publicar")}
+                </code>
+                {agendaUrl ? (
+                  <>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        void navigator.clipboard.writeText(agendaUrl);
+                        setMsg("Link da agenda copiado.");
+                      }}
+                    >
+                      <Copy size={14} className="mr-1" /> Copiar
+                    </Button>
+                    <Button type="button" variant="outline" size="sm" asChild>
+                      <a href={agendaUrl} target="_blank" rel="noreferrer">
+                        <ExternalLink size={14} className="mr-1" /> Abrir
+                      </a>
+                    </Button>
+                  </>
+                ) : null}
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card id="aw-negocio" className="rounded-3xl border-slate-200 shadow-wg-subtle scroll-mt-24">
+        <CardHeader>
+          <CardTitle className="text-xl font-extrabold">Seu negócio</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-5">
+          <div className="flex items-center gap-4">
+            <div className="w-20 h-20 rounded-2xl bg-slate-100 border border-slate-200 overflow-hidden flex items-center justify-center">
+              {logoUrl ? (
+                <img src={logoUrl} alt="Logo" className="w-full h-full object-cover" />
+              ) : (
+                <Upload className="text-slate-300" />
+              )}
+            </div>
+            <div>
+              <Label className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                Logo (opcional)
+              </Label>
+              <Input
+                type="file"
+                accept="image/png,image/jpeg,image/webp"
+                className="mt-1"
+                onChange={(e) => {
+                  const f = e.target.files?.[0];
+                  if (!f) return;
+                  void uploadImage(f, "logo")
+                    .then((url) => {
+                      setLogoUrl(url);
+                      setMsg("Logo enviada.");
+                    })
+                    .catch((err) =>
+                      setErrorBanner(err instanceof Error ? err.message : "Upload falhou"),
+                    );
+                }}
+              />
+            </div>
+          </div>
+          <div className="grid md:grid-cols-2 gap-4">
+            <div>
+              <Label>Nome do negócio</Label>
+              <Input
+                value={storeName}
+                onChange={(e) => setStoreName(e.target.value)}
+                placeholder="Ex.: Barbearia Norte"
+                className="mt-1"
+              />
+            </div>
+            <div>
+              <Label>Slogan (opcional)</Label>
+              <Input value={tagline} onChange={(e) => setTagline(e.target.value)} className="mt-1" />
+            </div>
+            <div>
+              <Label>WhatsApp / telefone (opcional)</Label>
+              <Input value={phone} onChange={(e) => setPhone(e.target.value)} className="mt-1" />
+            </div>
+            <div>
+              <Label>Endereço (opcional)</Label>
+              <Input value={address} onChange={(e) => setAddress(e.target.value)} className="mt-1" />
+            </div>
+          </div>
+          <Button
+            type="button"
+            onClick={() => void saveSite()}
+            disabled={saving}
+            className="bg-[#64b34d] hover:bg-[#4d8f3b] text-white font-bold"
+          >
+            {saving ? <Loader2 className="animate-spin mr-2" size={16} /> : <Check className="mr-2" size={16} />}
+            Salvar dados do negócio
+          </Button>
+        </CardContent>
+      </Card>
+
+      <Card id="aw-horarios" className="rounded-3xl border-slate-200 shadow-wg-subtle scroll-mt-24">
+        <CardHeader>
+          <CardTitle className="text-xl font-extrabold flex items-center gap-2">
+            <Clock size={20} className="text-[#64b34d]" />
+            Horário de funcionamento
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-5">
+          <WorkingHoursEditor
+            value={workingHours}
+            onChange={setWorkingHours}
+            selectedDay={selectedDay}
+            onSelectDay={setSelectedDay}
+            compact={embedded}
+          />
+          <Button
+            type="button"
+            onClick={() => void saveSite()}
+            disabled={saving}
+            className="bg-[#64b34d] hover:bg-[#4d8f3b] text-white font-bold"
+          >
+            {saving ? <Loader2 className="animate-spin mr-2" size={16} /> : <Check className="mr-2" size={16} />}
+            Salvar horários
+          </Button>
+        </CardContent>
+      </Card>
+
+      <Card id="aw-servicos" className="rounded-3xl border-slate-200 shadow-wg-subtle scroll-mt-24">
+        <CardHeader>
+          <CardTitle className="text-xl font-extrabold">Serviços</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          {services.length === 0 ? (
+            <p className="text-sm text-amber-800 bg-amber-50 border border-amber-100 rounded-xl px-4 py-3 font-medium">
+              Ainda não há serviços. Adicione o primeiro abaixo — sem isso não dá para publicar.
+            </p>
+          ) : (
+            <div className="grid gap-3">
+              {services.map((s) => (
+                <div
+                  key={s.id}
+                  className="flex items-center gap-3 p-3 rounded-2xl border border-slate-100 bg-white"
+                >
+                  <div className="w-14 h-14 rounded-xl bg-slate-100 overflow-hidden shrink-0">
+                    {s.image_url ? (
+                      <img src={s.image_url} alt="" className="w-full h-full object-cover" />
+                    ) : null}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-bold text-slate-900 truncate">{s.name}</p>
+                    <p className="text-xs text-slate-500">
+                      {s.duration_minutes} min · R$ {Number(s.price_brl).toFixed(2)}
+                    </p>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => void removeService(s.id)}
+                  >
+                    <Trash2 size={16} className="text-red-500" />
+                  </Button>
+                </div>
+              ))}
+            </div>
+          )}
+
+          <div className="rounded-2xl border border-dashed border-slate-200 p-4 space-y-4 bg-slate-50/50">
+            <p className="text-sm font-bold text-slate-800">Adicionar serviço</p>
+            <div className="grid md:grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <Label className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                  Nome do serviço
+                </Label>
+                <Input
+                  placeholder="Ex.: Corte, Manicure"
+                  value={newName}
+                  onChange={(e) => setNewName(e.target.value)}
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                  Preço (R$)
+                </Label>
+                <Input
+                  placeholder="Ex.: 50"
+                  inputMode="decimal"
+                  value={newPrice}
+                  onChange={(e) => setNewPrice(e.target.value)}
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                  Duração (minutos)
+                </Label>
+                <Input
+                  placeholder="Ex.: 30"
+                  inputMode="numeric"
+                  value={newDuration}
+                  onChange={(e) => setNewDuration(e.target.value)}
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                  Foto (opcional)
+                </Label>
+                <Input
+                  type="file"
+                  accept="image/png,image/jpeg,image/webp"
+                  onChange={(e) => {
+                    const f = e.target.files?.[0];
+                    if (!f) return;
+                    void uploadImage(f, "service")
+                      .then(setNewImage)
+                      .catch((err) =>
+                        setErrorBanner(err instanceof Error ? err.message : "Upload falhou"),
+                      );
+                  }}
+                />
+              </div>
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                Descrição (opcional)
+              </Label>
+              <Textarea
+                placeholder="O que o cliente vê ao escolher"
+                value={newDesc}
+                onChange={(e) => setNewDesc(e.target.value)}
+              />
+            </div>
+            <Button
+              type="button"
+              onClick={() => void addService()}
+              disabled={saving}
+              className="font-bold"
+            >
+              <Plus size={16} className="mr-2" /> Adicionar serviço
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card id="aw-profissionais" className="rounded-3xl border-slate-200 shadow-wg-subtle scroll-mt-24">
+        <CardHeader>
+          <CardTitle className="text-xl font-extrabold flex items-center gap-2">
+            <Users size={20} className="text-[#64b34d]" />
+            Profissionais
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <p className="text-sm text-slate-500 font-medium">
+            Quantos quiser — o cliente escolhe quem atende no link. Sem limite e sem login próprio.
+          </p>
+          {providers.length === 0 ? (
+            <p className="text-sm text-slate-500">
+              Nenhum profissional ainda. Opcional: sem lista, o cliente agenda sem preferência.
+            </p>
+          ) : (
+            <div className="grid gap-3">
+              {providers.map((p) => (
+                <div
+                  key={p.id}
+                  className="flex items-center gap-3 p-3 rounded-2xl border border-slate-100 bg-white"
+                >
+                  <div className="w-14 h-14 rounded-full bg-slate-100 overflow-hidden shrink-0">
+                    {p.photo_url ? (
+                      <img src={p.photo_url} alt="" className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-slate-300 font-black">
+                        {p.name.slice(0, 1)}
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-bold text-slate-900 truncate">{p.name}</p>
+                    {p.bio ? <p className="text-xs text-slate-500 truncate">{p.bio}</p> : null}
+                  </div>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => void removeProvider(p.id)}
+                  >
+                    <Trash2 size={16} className="text-red-500" />
+                  </Button>
+                </div>
+              ))}
+            </div>
+          )}
+
+          <div className="rounded-2xl border border-dashed border-slate-200 p-4 space-y-4 bg-slate-50/50">
+            <p className="text-sm font-bold text-slate-800">Adicionar profissional</p>
+            <div className="grid md:grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <Label className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                  Nome
+                </Label>
+                <Input
+                  placeholder="Ex.: João, Ana"
+                  value={provName}
+                  onChange={(e) => setProvName(e.target.value)}
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                  Foto (opcional)
+                </Label>
+                <Input
+                  type="file"
+                  accept="image/png,image/jpeg,image/webp"
+                  onChange={(e) => {
+                    const f = e.target.files?.[0];
+                    if (!f) return;
+                    void uploadImage(f, "provider")
+                      .then(setProvPhoto)
+                      .catch((err) =>
+                        setErrorBanner(err instanceof Error ? err.message : "Upload falhou"),
+                      );
+                  }}
+                />
+              </div>
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                Bio (opcional)
+              </Label>
+              <Input
+                placeholder="Especialidade ou frase curta"
+                value={provBio}
+                onChange={(e) => setProvBio(e.target.value)}
+              />
+            </div>
+            <Button
+              type="button"
+              onClick={() => void addProvider()}
+              disabled={saving}
+              className="font-bold"
+            >
+              <Plus size={16} className="mr-2" /> Adicionar profissional
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card className="rounded-3xl border-slate-200 shadow-wg-subtle">
+        <CardHeader>
+          <CardTitle className="text-xl font-extrabold flex items-center gap-2">
+            <CalendarDays size={20} className="text-[#64b34d]" /> Próximos agendamentos
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          {appointments.filter((a) => a.status === "confirmed").length === 0 ? (
+            <p className="text-sm text-slate-500">Nenhum horário marcado ainda.</p>
+          ) : (
+            appointments
+              .filter((a) => a.status === "confirmed")
+              .map((a) => (
+                <div
+                  key={a.id}
+                  className="flex flex-wrap items-center justify-between gap-3 p-3 rounded-2xl border border-slate-100"
+                >
+                  <div>
+                    <p className="font-bold text-slate-900">{a.client_name}</p>
+                    <p className="text-xs text-slate-500">
+                      {new Date(a.starts_at).toLocaleString("pt-BR")} ·{" "}
+                      {a.booking_services?.name || "Serviço"}
+                      {a.booking_providers?.name ? ` · ${a.booking_providers.name}` : ""} ·{" "}
+                      {a.client_phone}
+                    </p>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => void cancelAppointment(a.id)}
+                  >
+                    Cancelar
+                  </Button>
+                </div>
+              ))
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+}

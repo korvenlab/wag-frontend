@@ -8,6 +8,7 @@ import { PrivacyPage } from "./pages/PrivacyPage";
 import { TermsPage } from "./pages/TermsPage";
 import { PublicCalendarPage } from "./pages/PublicCalendarPage";
 import { PublicBookingPage } from "./pages/PublicBookingPage";
+import { PublicBookingAgendaPage } from "./pages/PublicBookingAgendaPage";
 import { ProtectedAgendaWebPage } from "./pages/ProtectedAgendaWebPage";
 import { AgendamentoHubPage } from "./pages/AgendamentoHubPage";
 import { AgendamentoWhatsappPage } from "./pages/AgendamentoWhatsappPage";
@@ -75,5 +76,9 @@ export const router = createBrowserRouter([
   {
     path: "/a/:slug",
     Component: PublicBookingPage,
+  },
+  {
+    path: "/a/:slug/agenda",
+    Component: PublicBookingAgendaPage,
   },
 ]);

@@ -73,7 +73,8 @@ export function Pricing() {
             <span className="text-[#64b34d]">O retorno começa no primeiro horário.</span>
           </h2>
           <p data-gsap="heading" className="text-lg text-slate-500 font-medium leading-relaxed">
-            Agenda Web para o cliente marcar no link. Ou WhatsApp + IA + Google Agenda nos planos
+            Agenda Web standalone (R$ 20) ou WhatsApp + IA + Google Agenda nos planos
+            Basic/Pro — que já incluem a Agenda Web no menu.
             Basic, Pro e Pro+.
           </p>
         </div>

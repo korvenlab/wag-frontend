@@ -15,8 +15,9 @@ import { Textarea } from "../components/ui/textarea";
 import { useAuth } from "../context/AuthContext";
 import { useNavigate, useLocation } from "react-router";
 import { FeedbackFab } from "../components/FeedbackFab";
-import { DashboardSidebar } from "../components/DashboardSidebar";
+import { DashboardSidebar, type DashboardNavId } from "../components/DashboardSidebar";
 import { PlanFeatureGate } from "../components/PlanFeatureGate";
+import { AgendaWebSettingsPanel } from "../components/AgendaWebSettingsPanel";
 import { apiFetch } from "../lib/apiFetch";
 import { planLabel, tierSupportsCsvExport, tierSupportsReminders } from "../lib/wagooPlans";
 import {
@@ -278,7 +279,7 @@ export function Dashboard() {
     const section = (location.state as { section?: string } | null)?.section;
     if (
       section &&
-      ["overview", "analytics", "hours", "reminders", "settings"].includes(section)
+      ["overview", "analytics", "hours", "reminders", "settings", "agenda-web"].includes(section)
     ) {
       setActiveSection(section);
     }
@@ -607,13 +608,14 @@ export function Dashboard() {
 
   if (!user || !user.hasPaid) return null;
 
-  const sidebarActive =
+  const sidebarActive: DashboardNavId =
     activeSection === "overview" ||
     activeSection === "analytics" ||
     activeSection === "hours" ||
     activeSection === "reminders" ||
-    activeSection === "settings"
-      ? activeSection
+    activeSection === "settings" ||
+    activeSection === "agenda-web"
+      ? (activeSection as DashboardNavId)
       : "overview";
 
   return (
@@ -1026,6 +1028,19 @@ export function Dashboard() {
                   )}
                 </motion.div>
               </>
+            )}
+
+            {activeSection === "agenda-web" && (
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="lg:col-span-3 space-y-4">
+                <div className="mb-2">
+                  <h3 className="text-2xl font-black text-slate-900 tracking-tighter">Agenda Web</h3>
+                  <p className="text-slate-500 font-medium mt-1 text-base leading-relaxed">
+                    Link público para o cliente agendar sozinho — incluso no seu plano. Separado do
+                    WhatsApp com IA.
+                  </p>
+                </div>
+                <AgendaWebSettingsPanel embedded onProfileSaved={() => void refreshProfile({ force: true })} />
+              </motion.div>
             )}
 
             {activeSection === "settings" && (

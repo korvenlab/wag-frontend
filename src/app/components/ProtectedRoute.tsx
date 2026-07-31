@@ -5,10 +5,15 @@ import { motion } from "motion/react";
 import { Loader2 } from "lucide-react";
 import { NicheOnboarding } from "./NicheOnboarding";
 import {
+  AgendaWebOnboarding,
+  hasCompletedAgendaWebOnboarding,
+} from "./AgendaWebOnboarding";
+import {
   WhatsAppOnboarding,
   hasSkippedWhatsAppOnboarding,
   skipWhatsAppOnboardingKey,
 } from "./WhatsAppOnboarding";
+import { tierIsAgendaWebOnly, tierSupportsAi } from "../lib/wagooPlans";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -23,13 +28,19 @@ export function ProtectedRoute({ children, requirePayment = false }: ProtectedRo
     searchParams.get("checkout") === "success" || searchParams.get("success") === "true";
   const [pollTick, setPollTick] = useState(0);
   const [waOnboardingSkipped, setWaOnboardingSkipped] = useState(false);
+  const [agendaOnboardingDone, setAgendaOnboardingDone] = useState(false);
+
+  const isAgendaWebOnly = tierIsAgendaWebOnly(user?.subscriptionTier);
+  const isAiPlan = tierSupportsAi(user?.subscriptionTier);
 
   useEffect(() => {
     if (!user?.id) {
       setWaOnboardingSkipped(false);
+      setAgendaOnboardingDone(false);
       return;
     }
     setWaOnboardingSkipped(hasSkippedWhatsAppOnboarding(user.id));
+    setAgendaOnboardingDone(hasCompletedAgendaWebOnboarding(user.id));
   }, [user?.id]);
 
   useEffect(() => {
@@ -58,10 +69,12 @@ export function ProtectedRoute({ children, requirePayment = false }: ProtectedRo
   }, [requirePayment, user?.id, user?.hasPaid, checkoutSuccess, refreshProfile]);
 
   useEffect(() => {
-    if (user?.hasPaid && checkoutSuccess) {
-      navigate("/dashboard", { replace: true });
-    }
-  }, [user?.hasPaid, checkoutSuccess, navigate]);
+    if (!user?.hasPaid || !checkoutSuccess) return;
+    const dest = tierIsAgendaWebOnly(user.subscriptionTier)
+      ? "/dashboard/agenda-web"
+      : "/dashboard";
+    navigate(dest, { replace: true });
+  }, [user?.hasPaid, user?.subscriptionTier, checkoutSuccess, navigate]);
 
   if (loading) {
     return (
@@ -127,14 +140,24 @@ export function ProtectedRoute({ children, requirePayment = false }: ProtectedRo
     return null;
   }
 
-  if (requirePayment && user.hasPaid && !user.businessNiche) {
+  // Agenda Web only: setup próprio (link/serviços) — sem nicho de IA nem QR do WhatsApp.
+  if (requirePayment && user.hasPaid && isAgendaWebOnly && !agendaOnboardingDone) {
+    return <AgendaWebOnboarding onComplete={() => setAgendaOnboardingDone(true)} />;
+  }
+
+  if (requirePayment && user.hasPaid && isAgendaWebOnly) {
+    return <>{children}</>;
+  }
+
+  // Planos com IA: nicho + conexão WhatsApp.
+  if (requirePayment && user.hasPaid && isAiPlan && !user.businessNiche) {
     return <NicheOnboarding />;
   }
 
-  // Primeira conexão: guia do QR (+ lembretes no Pro/Pro+). Pode pular e ir ao painel.
   if (
     requirePayment &&
     user.hasPaid &&
+    isAiPlan &&
     user.businessNiche &&
     !user.whatsappConnected &&
     !waOnboardingSkipped
