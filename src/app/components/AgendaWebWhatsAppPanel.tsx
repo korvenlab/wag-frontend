@@ -187,10 +187,8 @@ export function AgendaWebWhatsAppPanel() {
             WhatsApp da loja
           </CardTitle>
           <p className="text-sm text-slate-500 font-medium leading-relaxed">
-            Opcional. Conecte o número do negócio para enviar{" "}
-            <strong className="text-slate-700 font-bold">confirmação</strong> na hora do
-            agendamento e <strong className="text-slate-700 font-bold">lembretes</strong>{" "}
-            automáticos — texto pronto, sem inteligência artificial.
+            Opcional. Conecte o número do negócio para enviar confirmação na hora do
+            agendamento e lembretes automáticos antes do horário.
           </p>
         </CardHeader>
         <CardContent className="space-y-5">
@@ -266,8 +264,8 @@ export function AgendaWebWhatsAppPanel() {
             />
           </div>
           <p className="text-sm text-slate-500 font-medium leading-relaxed">
-            Avisa o cliente antes do horário. Ele pode responder SIM/NÃO para confirmar presença —
-            ainda sem IA.
+            Avisa o cliente antes do horário. Ele pode responder SIM ou NÃO para confirmar
+            presença.
           </p>
         </CardHeader>
         <CardContent className="space-y-4">

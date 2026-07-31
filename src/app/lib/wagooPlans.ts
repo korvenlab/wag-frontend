@@ -18,14 +18,14 @@ export const AGENDA_WEB_PLAN: WagooPlanCard = {
   name: "Agenda Web",
   priceBrl: 20,
   maxUsers: 0,
-  description: "Link público para o cliente agendar — WhatsApp só para confirmação e lembretes",
+  description: "Link público para o cliente agendar, com confirmação e lembretes no WhatsApp",
   kind: "booking",
   extras: [
     "Página pública com link exclusivo",
     "Wizard: serviços → profissional → data → horário",
     "Profissionais ilimitados (barbeiros / atendentes)",
-    "WhatsApp da loja (QR Baileys) — confirmação automática",
-    "Lembretes no WhatsApp antes do horário (script, sem IA)",
+    "WhatsApp da loja (QR) — confirmação automática",
+    "Lembretes no WhatsApp antes do horário",
     "Logo, capa, serviços, preços e fotos",
   ],
 };

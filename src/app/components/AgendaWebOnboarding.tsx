@@ -226,7 +226,7 @@ export function AgendaWebOnboarding({ onComplete }: AgendaWebOnboardingProps) {
   const titles: Record<Step, { title: string; subtitle: string }> = {
     0: {
       title: "Bem-vindo à Agenda Web",
-      subtitle: "Seu cliente marca horário pelo link — sem IA e sem WhatsApp automático.",
+      subtitle: "Seu cliente marca horário pelo link público da sua agenda.",
     },
     1: {
       title: "Dados do seu negócio",

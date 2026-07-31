@@ -42,7 +42,7 @@ export function AgendaWebDashboardPage() {
           </h1>
           <p className="mt-2 text-slate-500 font-medium max-w-2xl">
             Preencha negócio, horários e serviços. Opcionalmente conecte o WhatsApp da loja para
-            confirmação e lembretes automáticos (sem IA).
+            confirmação e lembretes automáticos.
           </p>
         </div>
         <AgendaWebWhatsAppPanel />
