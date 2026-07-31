@@ -1,4 +1,4 @@
-export type WagooPlanTier = "basic" | "pro" | "pro_plus";
+export type WagooPlanTier = "agenda_web" | "basic" | "pro" | "pro_plus";
 
 export type WagooPlanCard = {
   tier: WagooPlanTier;
@@ -7,8 +7,25 @@ export type WagooPlanCard = {
   maxUsers: number;
   description: string;
   highlight?: boolean;
+  kind: "booking" | "ai";
   /** Diferenciais além dos recursos compartilhados */
   extras: string[];
+};
+
+/** Plano de agendamento web (sem IA). */
+export const AGENDA_WEB_PLAN: WagooPlanCard = {
+  tier: "agenda_web",
+  name: "Agenda Web",
+  priceBrl: 20,
+  maxUsers: 1,
+  description: "Link público para o cliente agendar sozinho — sem WhatsApp IA",
+  kind: "booking",
+  extras: [
+    "Página pública com link exclusivo",
+    "Wizard: serviço → data → horário → confirmação",
+    "Logo, serviços, preços e fotos",
+    "Agenda gravada no painel (banco Wagoo)",
+  ],
 };
 
 export const WAGOO_PLAN_CARDS: WagooPlanCard[] = [
@@ -18,6 +35,7 @@ export const WAGOO_PLAN_CARDS: WagooPlanCard[] = [
     priceBrl: 59,
     maxUsers: 1,
     description: "1 usuário — ideal para profissional autônomo",
+    kind: "ai",
     extras: [],
   },
   {
@@ -27,6 +45,7 @@ export const WAGOO_PLAN_CARDS: WagooPlanCard[] = [
     maxUsers: 3,
     description: "Até 3 usuários na equipe com o mesmo WhatsApp",
     highlight: true,
+    kind: "ai",
     extras: [
       "Lembretes automáticos no WhatsApp antes do horário",
       "Export CSV de agendamentos para contabilidade",
@@ -39,6 +58,7 @@ export const WAGOO_PLAN_CARDS: WagooPlanCard[] = [
     priceBrl: 259,
     maxUsers: 5,
     description: "Até 5 usuários para negócios em crescimento",
+    kind: "ai",
     extras: [
       "Lembretes automáticos no WhatsApp antes do horário",
       "Export CSV de agendamentos para contabilidade",
@@ -47,7 +67,7 @@ export const WAGOO_PLAN_CARDS: WagooPlanCard[] = [
   },
 ];
 
-/** Recursos inclusos em todos os planos (landing / Pricing). */
+/** Recursos inclusos em todos os planos com IA (landing / Pricing). */
 export const WAGOO_SHARED_FEATURES = [
   "Atendimento automático no WhatsApp",
   "Integração com Google Agenda",
@@ -68,7 +88,16 @@ export const WAGOO_BASIC_EXCLUSIONS = [
 
 export function planLabel(tier: WagooPlanTier | null | undefined): string {
   if (!tier) return "Sem plano";
+  if (tier === "agenda_web") return AGENDA_WEB_PLAN.name;
   return WAGOO_PLAN_CARDS.find((p) => p.tier === tier)?.name ?? tier;
+}
+
+export function tierSupportsAi(tier: WagooPlanTier | null | undefined): boolean {
+  return tier === "basic" || tier === "pro" || tier === "pro_plus";
+}
+
+export function tierSupportsPublicBooking(tier: WagooPlanTier | null | undefined): boolean {
+  return tier === "agenda_web";
 }
 
 /** Lembretes WhatsApp — só Pro e Pro+. */

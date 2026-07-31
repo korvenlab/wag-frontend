@@ -46,6 +46,7 @@ export const TermsPage = () => {
 
         <h2 style={{ color: '#111827', marginTop: '40px' }}>3. Assinaturas e Pagamentos</h2>
         <ul style={{ paddingLeft: '20px' }}>
+          <li><strong>Agenda Web:</strong> R$ 20,00/mês — link público de agendamento (serviços, horários e confirmação), sem atendimento por IA no WhatsApp.</li>
           <li><strong>Basic:</strong> R$ 59,00/mês — 1 usuário (WhatsApp, Google Agenda, IA, tabela de preços e estilo de conversa).</li>
           <li><strong>Pro:</strong> R$ 149,00/mês — até 3 usuários, com lembretes, export CSV e gestão de equipe.</li>
           <li><strong>Pro+:</strong> R$ 259,00/mês — até 5 usuários, com os mesmos recursos avançados do Pro.</li>

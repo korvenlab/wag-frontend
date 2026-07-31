@@ -1,4 +1,4 @@
-import { Check, Shield, Loader2, Users, MessageCircle } from "lucide-react";
+import { Check, Shield, Loader2, Users, MessageCircle, Link2 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../lib/supabase";
@@ -6,6 +6,7 @@ import {
   WAGOO_PLAN_CARDS,
   WAGOO_SHARED_FEATURES,
   WAGOO_BASIC_EXCLUSIONS,
+  AGENDA_WEB_PLAN,
   type WagooPlanTier,
 } from "../lib/wagooPlans";
 
@@ -72,10 +73,63 @@ export function Pricing() {
             <span className="text-[#64b34d]">O retorno começa no primeiro horário.</span>
           </h2>
           <p data-gsap="heading" className="text-lg text-slate-500 font-medium leading-relaxed">
-            WhatsApp, Google Agenda, IA, tabela de preços e estilo de conversa em todos. Pro e Pro+
-            somam lembretes, export CSV e equipe.
+            Agenda Web para o cliente marcar no link. Ou WhatsApp + IA + Google Agenda nos planos
+            Basic, Pro e Pro+.
           </p>
         </div>
+
+        <article
+          data-gsap="item"
+          className="mb-10 relative flex flex-col md:flex-row md:items-stretch gap-0 rounded-[32px] border border-[#64b34d]/40 bg-white shadow-wg-elevated overflow-hidden"
+        >
+          <div className="flex-1 p-8 md:p-10 space-y-5">
+            <div className="inline-flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-[#4d8f3b] bg-green-50 border border-green-100 px-3 py-1 rounded-full">
+              <Link2 size={12} /> Sem IA · só agendamento web
+            </div>
+            <div>
+              <h3 className="text-2xl md:text-3xl font-extrabold text-slate-900">
+                {AGENDA_WEB_PLAN.name}
+              </h3>
+              <p className="text-sm text-slate-500 font-medium mt-1">{AGENDA_WEB_PLAN.description}</p>
+            </div>
+            <div className="flex items-baseline gap-1">
+              <span className="text-xl font-bold text-slate-900">R$</span>
+              <span className="text-5xl font-extrabold text-slate-900 tracking-tight">
+                {AGENDA_WEB_PLAN.priceBrl}
+              </span>
+              <span className="text-slate-400 font-bold">/mês</span>
+            </div>
+            <ul className="grid sm:grid-cols-2 gap-2">
+              {AGENDA_WEB_PLAN.extras.map((text) => (
+                <li key={text} className="flex items-start gap-2 text-sm font-semibold text-slate-600">
+                  <Check className="w-4 h-4 text-[#64b34d] shrink-0 mt-0.5" strokeWidth={3} />
+                  {text}
+                </li>
+              ))}
+            </ul>
+          </div>
+          <div className="md:w-64 p-8 md:p-10 flex flex-col justify-center border-t md:border-t-0 md:border-l border-slate-100 bg-[var(--wagoo-paper)]">
+            <button
+              type="button"
+              onClick={() => void handleCheckout(AGENDA_WEB_PLAN.tier)}
+              disabled={loadingTier !== null}
+              className="w-full py-4 rounded-2xl font-black text-base flex items-center justify-center gap-2 disabled:opacity-70 bg-gradient-to-r from-[#64b34d] to-[#4d8f3b] text-white shadow-wg-green-cta"
+            >
+              {loadingTier === AGENDA_WEB_PLAN.tier ? (
+                <Loader2 className="animate-spin w-5 h-5" />
+              ) : (
+                "Assinar Agenda Web"
+              )}
+            </button>
+            <p className="mt-3 text-xs text-slate-500 font-medium text-center leading-relaxed">
+              Quer WhatsApp com IA depois? Assine Basic, Pro ou Pro+ separadamente.
+            </p>
+          </div>
+        </article>
+
+        <p className="text-center text-xs font-black uppercase tracking-[0.18em] text-slate-400 mb-6">
+          Planos com IA no WhatsApp
+        </p>
 
         <div className="grid md:grid-cols-3 gap-6 lg:gap-8 items-stretch">
           {WAGOO_PLAN_CARDS.map((plan) => (

@@ -6,7 +6,8 @@ import { ProtectedTeamPage } from "./pages/ProtectedTeamPage";
 import { ProtectedCalendarPage } from "./pages/ProtectedCalendarPage";
 import { PrivacyPage } from "./pages/PrivacyPage";
 import { TermsPage } from "./pages/TermsPage";
-import { PublicCalendarPage } from "./pages/PublicCalendarPage";
+import { PublicBookingPage } from "./pages/PublicBookingPage";
+import { ProtectedAgendaWebPage } from "./pages/ProtectedAgendaWebPage";
 import { AgendamentoHubPage } from "./pages/AgendamentoHubPage";
 import { AgendamentoWhatsappPage } from "./pages/AgendamentoWhatsappPage";
 import { AgendaWhatsappGoogleCalendarPage } from "./pages/AgendaWhatsappGoogleCalendarPage";
@@ -47,6 +48,10 @@ export const router = createBrowserRouter([
     Component: ProtectedDashboard,
   },
   {
+    path: "/dashboard/agenda-web",
+    Component: ProtectedAgendaWebPage,
+  },
+  {
     path: "/dashboard/equipe",
     Component: ProtectedTeamPage,
   },
@@ -65,5 +70,9 @@ export const router = createBrowserRouter([
   {
     path: "/calendario/publico/:slug",
     Component: PublicCalendarPage,
+  },
+  {
+    path: "/a/:slug",
+    Component: PublicBookingPage,
   },
 ]);
