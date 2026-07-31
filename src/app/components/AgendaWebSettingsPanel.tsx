@@ -95,6 +95,7 @@ export function AgendaWebSettingsPanel({
   const [address, setAddress] = useState("");
   const [published, setPublished] = useState(false);
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
+  const [coverUrl, setCoverUrl] = useState<string | null>(null);
   const [slug, setSlug] = useState<string | null>(null);
   const [publicUrl, setPublicUrl] = useState<string | null>(null);
   const [agendaUrl, setAgendaUrl] = useState<string | null>(null);
@@ -155,6 +156,7 @@ export function AgendaWebSettingsPanel({
       setAddress(data.profile?.booking_address ?? "");
       setPublished(!!data.profile?.booking_published);
       setLogoUrl(data.profile?.booking_logo_url ?? null);
+      setCoverUrl(data.profile?.booking_cover_url ?? null);
       setSlug(data.profile?.booking_slug ?? null);
       setPublicUrl(data.publicUrl ?? null);
       setAgendaUrl(data.agendaUrl ?? null);
@@ -175,7 +177,7 @@ export function AgendaWebSettingsPanel({
     void load();
   }, [load]);
 
-  async function uploadImage(file: File, kind: "logo" | "service" | "provider") {
+  async function uploadImage(file: File, kind: "logo" | "cover" | "service" | "provider") {
     const dataUrl = await fileToDataUrl(file);
     const res = await apiFetch("/api/booking/upload", {
       method: "POST",
@@ -212,6 +214,7 @@ export function AgendaWebSettingsPanel({
           booking_phone: phone,
           booking_address: address,
           booking_logo_url: logoUrl,
+          booking_cover_url: coverUrl,
           booking_published: wantPublish,
           working_hours: workingHours,
         }),
@@ -512,35 +515,80 @@ export function AgendaWebSettingsPanel({
           <CardTitle className="text-xl font-extrabold">Seu negócio</CardTitle>
         </CardHeader>
         <CardContent className="space-y-5">
-          <div className="flex items-center gap-4">
-            <div className="w-20 h-20 rounded-2xl bg-slate-100 border border-slate-200 overflow-hidden flex items-center justify-center">
-              {logoUrl ? (
-                <img src={logoUrl} alt="Logo" className="w-full h-full object-cover" />
-              ) : (
-                <Upload className="text-slate-300" />
-              )}
-            </div>
+          <div className="space-y-4">
             <div>
               <Label className="text-xs font-bold uppercase tracking-wider text-slate-400">
-                Logo (opcional)
+                Capa da página pública (opcional)
               </Label>
+              <p className="text-xs text-slate-500 mt-1 mb-2">
+                Foto de fundo do hero — como na vitrine da barbearia. Recomendado: horizontal, ~1200px.
+              </p>
+              <div className="relative h-36 rounded-2xl bg-slate-100 border border-slate-200 overflow-hidden">
+                {coverUrl ? (
+                  <img src={coverUrl} alt="Capa" className="w-full h-full object-cover" />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center text-slate-300">
+                    <Upload size={28} />
+                  </div>
+                )}
+              </div>
               <Input
                 type="file"
                 accept="image/png,image/jpeg,image/webp"
-                className="mt-1"
+                className="mt-2"
                 onChange={(e) => {
                   const f = e.target.files?.[0];
                   if (!f) return;
-                  void uploadImage(f, "logo")
+                  void uploadImage(f, "cover")
                     .then((url) => {
-                      setLogoUrl(url);
-                      setMsg("Logo enviada.");
+                      setCoverUrl(url);
+                      setMsg("Capa enviada. Clique em Salvar para aplicar.");
                     })
                     .catch((err) =>
                       setErrorBanner(err instanceof Error ? err.message : "Upload falhou"),
                     );
                 }}
               />
+              {coverUrl ? (
+                <button
+                  type="button"
+                  className="text-xs text-red-600 font-semibold mt-1"
+                  onClick={() => setCoverUrl(null)}
+                >
+                  Remover capa
+                </button>
+              ) : null}
+            </div>
+            <div className="flex items-center gap-4">
+              <div className="w-20 h-20 rounded-2xl bg-slate-100 border border-slate-200 overflow-hidden flex items-center justify-center">
+                {logoUrl ? (
+                  <img src={logoUrl} alt="Logo" className="w-full h-full object-cover" />
+                ) : (
+                  <Upload className="text-slate-300" />
+                )}
+              </div>
+              <div>
+                <Label className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                  Logo (opcional)
+                </Label>
+                <Input
+                  type="file"
+                  accept="image/png,image/jpeg,image/webp"
+                  className="mt-1"
+                  onChange={(e) => {
+                    const f = e.target.files?.[0];
+                    if (!f) return;
+                    void uploadImage(f, "logo")
+                      .then((url) => {
+                        setLogoUrl(url);
+                        setMsg("Logo enviada.");
+                      })
+                      .catch((err) =>
+                        setErrorBanner(err instanceof Error ? err.message : "Upload falhou"),
+                      );
+                  }}
+                />
+              </div>
             </div>
           </div>
           <div className="grid md:grid-cols-2 gap-4">
