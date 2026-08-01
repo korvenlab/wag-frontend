@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import {
   CalendarDays,
   Clock,
+  CreditCard,
   Link2,
   LogOut,
   Menu,
@@ -11,7 +12,7 @@ import {
   Users,
   X,
 } from "lucide-react";
-import { useNavigate } from "react-router";
+import { useNavigate, useSearchParams } from "react-router";
 import { useAuth } from "../context/AuthContext";
 import { Button } from "../components/ui/button";
 import { FeedbackFab } from "../components/FeedbackFab";
@@ -21,6 +22,7 @@ import {
 } from "../components/AgendaWebSettingsPanel";
 import { AgendaWebWhatsAppPanel } from "../components/AgendaWebWhatsAppPanel";
 import { AgendaWebGooglePanel } from "../components/AgendaWebGooglePanel";
+import { AgendaWebPaymentsPanel } from "../components/AgendaWebPaymentsPanel";
 
 const NAV: {
   id: AgendaWebSection;
@@ -65,6 +67,12 @@ const NAV: {
     icon: CalendarDays,
   },
   {
+    id: "pagamentos",
+    label: "Pagamentos",
+    hint: "Stripe e sinal",
+    icon: CreditCard,
+  },
+  {
     id: "google",
     label: "Google Agenda",
     hint: "Salvar no calendário",
@@ -107,6 +115,11 @@ const SECTION_COPY: Record<
     title: "Agendamentos",
     subtitle: "Quem já marcou horário pelo seu link.",
   },
+  pagamentos: {
+    title: "Pagamentos",
+    subtitle:
+      "Conecte a Stripe se quiser. O sinal antecipado é opcional — você decide se o cliente paga para confirmar.",
+  },
   google: {
     title: "Google Agenda",
     subtitle: "Salve os horários do link na sua agenda Google e evite conflito com o que já está lá.",
@@ -120,8 +133,15 @@ const SECTION_COPY: Record<
 export function AgendaWebDashboardPage() {
   const { user, logout, refreshProfile } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [section, setSection] = useState<AgendaWebSection>("overview");
   const [menuOpen, setMenuOpen] = useState(false);
+
+  useEffect(() => {
+    if (searchParams.get("connect")) {
+      setSection("pagamentos");
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -279,6 +299,8 @@ export function AgendaWebDashboardPage() {
               <AgendaWebWhatsAppPanel />
             ) : section === "google" ? (
               <AgendaWebGooglePanel />
+            ) : section === "pagamentos" ? (
+              <AgendaWebPaymentsPanel />
             ) : (
               <AgendaWebSettingsPanel
                 section={section}

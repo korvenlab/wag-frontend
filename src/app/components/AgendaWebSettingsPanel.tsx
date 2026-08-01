@@ -96,6 +96,7 @@ export type AgendaWebSection =
   | "servicos"
   | "profissionais"
   | "agendamentos"
+  | "pagamentos"
   | "whatsapp"
   | "google";
 
@@ -179,6 +180,7 @@ export function AgendaWebSettingsPanel({
       servicos: "servicos",
       profissionais: "profissionais",
       agendamentos: "agendamentos",
+      pagamentos: "links",
       whatsapp: "links",
       google: "links",
     };
@@ -978,18 +980,26 @@ export function AgendaWebSettingsPanel({
           </p>
         </CardHeader>
         <CardContent className="space-y-3">
-          {appointments.filter((a) => a.status === "confirmed").length === 0 ? (
+          {appointments.filter((a) => a.status === "confirmed" || a.status === "pending_payment")
+            .length === 0 ? (
             <p className="text-sm text-slate-500">Nenhum horário marcado ainda.</p>
           ) : (
             appointments
-              .filter((a) => a.status === "confirmed")
+              .filter((a) => a.status === "confirmed" || a.status === "pending_payment")
               .map((a) => (
                 <div
                   key={a.id}
                   className="flex flex-wrap items-center justify-between gap-3 p-3 rounded-2xl border border-slate-100"
                 >
                   <div>
-                    <p className="font-bold text-slate-900">{a.client_name}</p>
+                    <p className="font-bold text-slate-900">
+                      {a.client_name}
+                      {a.status === "pending_payment" ? (
+                        <span className="ml-2 text-[10px] uppercase tracking-wider font-black text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full">
+                          Aguardando sinal
+                        </span>
+                      ) : null}
+                    </p>
                     <p className="text-xs text-slate-500">
                       {new Date(a.starts_at).toLocaleString("pt-BR")} ·{" "}
                       {a.booking_services?.name || "Serviço"}

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Link, useParams } from "react-router";
+import { Link, useParams, useSearchParams } from "react-router";
 import {
   Loader2,
   Check,
@@ -71,6 +71,12 @@ type Site = {
   working_hours: WorkingHours | null;
   services: Service[];
   providers: Provider[];
+  deposit?: {
+    required: boolean;
+    percent: number;
+    wagoo_fee_percent: number;
+    hold_minutes: number;
+  };
 };
 
 type MyAppointment = {
@@ -151,6 +157,7 @@ function isShopOpenNow(hours: WorkingHours | null | undefined): boolean {
 
 export function PublicBookingPage() {
   const { slug } = useParams<{ slug: string }>();
+  const [searchParams, setSearchParams] = useSearchParams();
 
   const [site, setSite] = useState<Site | null>(null);
   const [notFound, setNotFound] = useState(false);
@@ -178,7 +185,9 @@ export function PublicBookingPage() {
     startsAt: string;
     servicesLabel: string;
     provider: string | null;
+    depositPaid?: boolean;
   } | null>(null);
+  const [paymentBanner, setPaymentBanner] = useState<string | null>(null);
 
   const [addressCopied, setAddressCopied] = useState(false);
 
@@ -209,6 +218,61 @@ export function PublicBookingPage() {
     })();
   }, [slug]);
 
+  useEffect(() => {
+    if (!slug) return;
+    const pago = searchParams.get("pago");
+    const cancelado = searchParams.get("pagamento");
+    const appointmentId = searchParams.get("appointment");
+
+    if (cancelado === "cancelado") {
+      setPaymentBanner("Pagamento cancelado. Você pode agendar de novo quando quiser.");
+      if (appointmentId) {
+        void fetch(
+          `${API}/api/booking/public/${encodeURIComponent(slug)}/appointments/${encodeURIComponent(appointmentId)}/cancel-payment`,
+          { method: "POST" },
+        );
+      }
+      const next = new URLSearchParams(searchParams);
+      next.delete("pagamento");
+      next.delete("appointment");
+      setSearchParams(next, { replace: true });
+      return;
+    }
+
+    if (pago === "1" && appointmentId) {
+      void (async () => {
+        try {
+          const res = await fetch(
+            `${API}/api/booking/public/${encodeURIComponent(slug)}/appointments/${encodeURIComponent(appointmentId)}/payment-status`,
+          );
+          const data = await res.json().catch(() => null);
+          if (res.ok && data?.paid) {
+            setConfirmedAppointment({
+              startsAt: data.appointment?.starts_at || "",
+              servicesLabel: "Agendamento confirmado",
+              provider: null,
+              depositPaid: true,
+            });
+            setPaymentBanner(null);
+          } else if (res.ok) {
+            setPaymentBanner(
+              "Recebemos seu retorno. Se o pagamento ainda estiver processando, aguarde um instante e atualize a página.",
+            );
+          }
+        } catch {
+          setPaymentBanner(
+            "Não foi possível confirmar o pagamento agora. Se você pagou, o salão já recebe a confirmação.",
+          );
+        } finally {
+          const next = new URLSearchParams(searchParams);
+          next.delete("pago");
+          next.delete("appointment");
+          setSearchParams(next, { replace: true });
+        }
+      })();
+    }
+  }, [slug, searchParams, setSearchParams]);
+
   const anyOverlayOpen = bookingOpen || myBookingsOpen;
 
   useEffect(() => {
@@ -237,6 +301,12 @@ export function PublicBookingPage() {
     () => selectedServices.reduce((sum, s) => sum + Number(s.price_brl || 0), 0),
     [selectedServices],
   );
+  const depositPreview = useMemo(() => {
+    if (!site?.deposit?.required || totalPrice <= 0) return null;
+    const pct = site.deposit.percent || 30;
+    const deposit = Math.round(((totalPrice * pct) / 100) * 100) / 100;
+    return { percent: pct, deposit: deposit < 1 && totalPrice > 0 ? 1 : deposit };
+  }, [site, totalPrice]);
   const selectedProvider = useMemo(
     () => (providerId ? site?.providers.find((p) => p.id === providerId) ?? null : null),
     [site, providerId],
@@ -332,6 +402,12 @@ export function PublicBookingPage() {
       );
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Não foi possível agendar");
+
+      if (data.requires_payment && data.checkout_url) {
+        window.location.href = data.checkout_url;
+        return;
+      }
+
       setConfirmedAppointment({
         startsAt: data.appointment?.starts_at || selectedSlot,
         servicesLabel: data.service?.name || selectedServices.map((s) => s.name).join(", "),
@@ -439,6 +515,18 @@ export function PublicBookingPage() {
 
   return (
     <div className="min-h-[100dvh] bg-[#0a0a0a] text-white overflow-x-hidden">
+      {paymentBanner ? (
+        <div className="relative z-50 bg-[#64b34d]/20 border-b border-[#64b34d]/40 px-4 py-3 text-center text-sm font-semibold text-[#9ae07f]">
+          {paymentBanner}
+          <button
+            type="button"
+            className="ml-2 underline text-white/70"
+            onClick={() => setPaymentBanner(null)}
+          >
+            Fechar
+          </button>
+        </div>
+      ) : null}
       {/* Hero */}
       <section className="relative min-h-[100dvh] flex flex-col justify-center overflow-hidden">
         <div className="absolute inset-0">
@@ -732,6 +820,9 @@ export function PublicBookingPage() {
                     <Check className="text-[#64b34d]" size={32} />
                   </div>
                   <p className="text-2xl font-black">Agendado!</p>
+                  {confirmedAppointment.depositPaid ? (
+                    <p className="text-[#9ae07f] text-sm font-bold">Sinal pago com sucesso</p>
+                  ) : null}
                   <p className="text-white/70 text-sm">
                     {confirmedAppointment.servicesLabel}
                     {confirmedAppointment.provider ? (
@@ -741,11 +832,13 @@ export function PublicBookingPage() {
                       </>
                     ) : null}
                     <br />
-                    {format(
-                      new Date(confirmedAppointment.startsAt),
-                      "dd 'de' MMMM 'às' HH:mm",
-                      { locale: ptBR },
-                    )}
+                    {confirmedAppointment.startsAt
+                      ? format(
+                          new Date(confirmedAppointment.startsAt),
+                          "dd 'de' MMMM 'às' HH:mm",
+                          { locale: ptBR },
+                        )
+                      : null}
                   </p>
                 </div>
               ) : (
@@ -998,6 +1091,18 @@ export function PublicBookingPage() {
                           <span>Total</span>
                           <span className="text-[#64b34d]">R$ {totalPrice.toFixed(2)}</span>
                         </div>
+                        {depositPreview ? (
+                          <div className="rounded-xl bg-[#64b34d]/15 border border-[#64b34d]/30 px-3 py-2 text-xs font-semibold text-[#9ae07f] space-y-1">
+                            <p>
+                              Sinal agora ({depositPreview.percent}%): R${" "}
+                              {depositPreview.deposit.toFixed(2)}
+                            </p>
+                            <p className="text-white/45 font-medium">
+                              O horário só fica confirmado depois do pagamento. Você será
+                              redirecionado ao Checkout seguro da Stripe.
+                            </p>
+                          </div>
+                        ) : null}
                         {hasProviders ? (
                           <p className="text-white/50 pt-1">
                             <span className="text-white/35">Profissional:</span>{" "}
@@ -1042,7 +1147,7 @@ export function PublicBookingPage() {
                   {submitting ? (
                     <Loader2 className="animate-spin mx-auto" size={18} />
                   ) : isConfirmStep ? (
-                    "Confirmar Agendamento"
+                    depositPreview ? "Pagar sinal e confirmar" : "Confirmar Agendamento"
                   ) : (
                     "Próximo"
                   )}
