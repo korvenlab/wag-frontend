@@ -209,6 +209,19 @@ export function PublicBookingPage() {
     })();
   }, [slug]);
 
+  const anyOverlayOpen = bookingOpen || myBookingsOpen;
+
+  useEffect(() => {
+    if (anyOverlayOpen) {
+      const previous = document.body.style.overflow;
+      document.body.style.overflow = "hidden";
+      return () => {
+        document.body.style.overflow = previous;
+      };
+    }
+    return undefined;
+  }, [anyOverlayOpen]);
+
   const hasProviders = (site?.providers?.length ?? 0) > 0;
   const totalSteps = hasProviders ? 5 : 4;
 
@@ -402,7 +415,7 @@ export function PublicBookingPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center text-white">
+      <div className="min-h-[100dvh] bg-[#0a0a0a] flex items-center justify-center text-white">
         <Loader2 className="animate-spin text-[#64b34d]" size={28} />
       </div>
     );
@@ -410,7 +423,7 @@ export function PublicBookingPage() {
 
   if (notFound || !site) {
     return (
-      <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center text-white p-6">
+      <div className="min-h-[100dvh] bg-[#0a0a0a] flex items-center justify-center text-white p-6">
         <div className="text-center space-y-2">
           <p className="text-xl font-black">Agenda indisponível</p>
           <p className="text-white/50 text-sm">Este link não está publicado.</p>
@@ -425,9 +438,9 @@ export function PublicBookingPage() {
     : null;
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] text-white">
+    <div className="min-h-[100dvh] bg-[#0a0a0a] text-white overflow-x-hidden">
       {/* Hero */}
-      <section className="relative min-h-[85vh] flex items-center overflow-hidden">
+      <section className="relative min-h-[100dvh] flex flex-col justify-center overflow-hidden">
         <div className="absolute inset-0">
           {site.cover_url ? (
             <img src={site.cover_url} alt="" className="w-full h-full object-cover" />
@@ -437,7 +450,7 @@ export function PublicBookingPage() {
           <div className="absolute inset-0 bg-gradient-to-t from-black via-black/75 to-black/50" />
         </div>
 
-        <div className="relative z-10 max-w-3xl mx-auto px-6 py-20 text-center space-y-6 w-full">
+        <div className="relative z-10 max-w-3xl mx-auto px-4 sm:px-6 py-20 pb-40 md:pb-20 text-center space-y-6 w-full">
           {site.logo_url ? (
             <img
               src={site.logo_url}
@@ -465,18 +478,19 @@ export function PublicBookingPage() {
             <p className="text-white/60 font-medium text-lg max-w-xl mx-auto">{site.tagline}</p>
           ) : null}
 
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-4">
+          {/* CTAs — inline on desktop, sticky bar on mobile (below) */}
+          <div className="hidden md:flex items-center justify-center gap-3 pt-4">
             <button
               type="button"
               onClick={() => openWizard()}
-              className="w-full sm:w-auto px-8 py-4 rounded-2xl bg-[#64b34d] text-white font-black text-sm uppercase tracking-wide hover:bg-[#579c42] transition"
+              className="min-h-12 px-8 py-4 rounded-2xl bg-[#64b34d] text-white font-black text-sm uppercase tracking-wide hover:bg-[#579c42] transition"
             >
               Agendar agora
             </button>
             <button
               type="button"
               onClick={() => setMyBookingsOpen(true)}
-              className="w-full sm:w-auto px-8 py-4 rounded-2xl border border-white/20 text-white font-black text-sm uppercase tracking-wide hover:bg-white/10 transition"
+              className="min-h-12 px-8 py-4 rounded-2xl border border-white/20 text-white font-black text-sm uppercase tracking-wide hover:bg-white/10 transition"
             >
               Meus agendamentos
             </button>
@@ -493,19 +507,41 @@ export function PublicBookingPage() {
             </div>
           ) : null}
         </div>
+
+        {/* CTAs — sticky bottom bar on mobile */}
+        {!anyOverlayOpen ? (
+          <div className="md:hidden fixed inset-x-0 bottom-0 z-30 px-4 pt-4 pb-[calc(0.75rem+env(safe-area-inset-bottom))] bg-gradient-to-t from-black via-black/95 to-black/0">
+            <div className="flex flex-col gap-2">
+              <button
+                type="button"
+                onClick={() => openWizard()}
+                className="w-full min-h-12 h-12 rounded-2xl bg-[#64b34d] text-white font-black text-sm uppercase tracking-wide active:bg-[#579c42] transition"
+              >
+                Agendar agora
+              </button>
+              <button
+                type="button"
+                onClick={() => setMyBookingsOpen(true)}
+                className="w-full min-h-12 h-12 rounded-2xl border border-white/20 text-white font-black text-sm uppercase tracking-wide active:bg-white/10 transition"
+              >
+                Meus agendamentos
+              </button>
+            </div>
+          </div>
+        ) : null}
       </section>
 
       {/* Serviços */}
       {site.services.length > 0 ? (
-        <section id="servicos" className="max-w-3xl mx-auto px-6 py-16">
+        <section id="servicos" className="max-w-3xl mx-auto px-4 sm:px-6 py-12 md:py-16">
           <h2 className="text-2xl font-black mb-8 text-center">Serviços</h2>
-          <div className="grid sm:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {site.services.map((s) => (
               <button
                 key={s.id}
                 type="button"
                 onClick={() => openWizard(s.id)}
-                className="text-left rounded-2xl border border-white/10 bg-white/5 p-5 hover:border-[#64b34d]/50 hover:bg-white/[0.07] transition"
+                className="w-full text-left rounded-2xl border border-white/10 bg-white/5 p-5 hover:border-[#64b34d]/50 hover:bg-white/[0.07] active:bg-white/[0.09] transition"
               >
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
@@ -536,7 +572,7 @@ export function PublicBookingPage() {
 
       {/* Local */}
       {site.address ? (
-        <section id="local" className="max-w-3xl mx-auto px-6 py-16 border-t border-white/5">
+        <section id="local" className="max-w-3xl mx-auto px-4 sm:px-6 py-12 md:py-16 border-t border-white/5">
           <h2 className="text-2xl font-black mb-6 text-center">Localização</h2>
           <div className="rounded-2xl border border-white/10 bg-white/5 p-5 flex items-center justify-between gap-4">
             <div className="flex items-start gap-3 min-w-0">
@@ -546,7 +582,7 @@ export function PublicBookingPage() {
             <button
               type="button"
               onClick={copyAddress}
-              className="shrink-0 p-2.5 rounded-xl border border-white/15 hover:bg-white/10 transition"
+              className="shrink-0 p-3 rounded-xl border border-white/15 hover:bg-white/10 active:bg-white/15 transition"
               aria-label="Copiar endereço"
             >
               {addressCopied ? (
@@ -561,7 +597,7 @@ export function PublicBookingPage() {
 
       {/* Funcionamento */}
       {site.working_hours ? (
-        <section className="max-w-3xl mx-auto px-6 py-16 border-t border-white/5">
+        <section className="max-w-3xl mx-auto px-4 sm:px-6 py-12 md:py-16 border-t border-white/5">
           <h2 className="text-2xl font-black mb-6 text-center">Funcionamento</h2>
           <div className="rounded-2xl border border-white/10 bg-white/5 px-5 py-2 divide-y divide-white/5">
             {DAYS_ORDER.map((dayKey) => {
@@ -586,12 +622,12 @@ export function PublicBookingPage() {
       </footer>
 
       {/* WhatsApp flutuante */}
-      {whatsappHref ? (
+      {whatsappHref && !anyOverlayOpen ? (
         <a
           href={whatsappHref}
           target="_blank"
           rel="noreferrer"
-          className="fixed bottom-6 right-6 z-40 w-14 h-14 rounded-full bg-[#64b34d] flex items-center justify-center shadow-lg shadow-black/40 hover:scale-105 transition"
+          className="fixed right-5 md:right-6 bottom-[calc(1.25rem+env(safe-area-inset-bottom))] z-40 w-14 h-14 rounded-full bg-[#64b34d] flex items-center justify-center shadow-lg shadow-black/40 hover:scale-105 active:scale-95 transition"
           aria-label="Falar no WhatsApp"
         >
           <MessageCircle className="text-white" size={26} />
@@ -600,39 +636,41 @@ export function PublicBookingPage() {
 
       {/* Modal: Meus agendamentos */}
       {myBookingsOpen ? (
-        <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="w-full max-w-md rounded-3xl bg-[#0f0f0f] border border-white/10 overflow-hidden">
-            <div className="flex items-center justify-between px-5 py-4 border-b border-white/10">
+        <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-sm md:flex md:items-center md:justify-center md:p-4">
+          <div className="w-full h-[100dvh] md:h-auto md:max-h-[92vh] max-w-none md:max-w-md rounded-none md:rounded-3xl bg-[#0f0f0f] border-0 md:border md:border-white/10 flex flex-col overflow-hidden">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-white/10 shrink-0">
               <p className="font-black">Meus agendamentos</p>
               <button
                 type="button"
                 onClick={closeMyBookings}
-                className="p-1.5 rounded-lg hover:bg-white/10 transition"
+                className="p-3 rounded-lg hover:bg-white/10 active:bg-white/15 transition"
                 aria-label="Fechar"
               >
                 <X size={20} />
               </button>
             </div>
-            <div className="p-5 space-y-4">
+            <div className="p-5 space-y-4 overflow-y-auto flex-1">
               <p className="text-sm text-white/50">Informe o WhatsApp usado no agendamento.</p>
               <div className="flex gap-2">
                 <input
-                  className="flex-1 rounded-xl bg-black/40 border border-white/10 px-4 py-3 text-sm focus:outline-none focus:border-[#64b34d]/50"
+                  className="flex-1 min-w-0 rounded-xl bg-black/40 border border-white/10 px-4 py-3 text-base focus:outline-none focus:border-[#64b34d]/50"
                   value={myPhone}
                   onChange={(e) => setMyPhone(e.target.value)}
                   placeholder="(82) 99999-9999"
+                  inputMode="tel"
+                  type="tel"
                 />
                 <button
                   type="button"
                   onClick={() => void fetchMine()}
                   disabled={myLoading || myPhone.replace(/\D/g, "").length < 10}
-                  className="px-5 rounded-xl bg-[#64b34d] font-black shrink-0 disabled:opacity-40"
+                  className="min-h-12 px-5 rounded-xl bg-[#64b34d] font-black shrink-0 disabled:opacity-40"
                 >
                   {myLoading ? <Loader2 className="animate-spin" size={18} /> : "Buscar"}
                 </button>
               </div>
               {myList.length > 0 ? (
-                <div className="space-y-2 max-h-72 overflow-y-auto pr-1">
+                <div className="space-y-2">
                   {myList.map((a) => (
                     <div key={a.id} className="rounded-xl border border-white/10 p-3 text-sm">
                       <p className="font-bold">{a.booking_services?.name || "Serviço"}</p>
@@ -657,8 +695,8 @@ export function PublicBookingPage() {
 
       {/* Wizard de agendamento */}
       {bookingOpen ? (
-        <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="w-full max-w-lg max-h-[92vh] rounded-3xl bg-[#0f0f0f] border border-white/10 flex flex-col overflow-hidden">
+        <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-sm md:flex md:items-center md:justify-center md:p-4">
+          <div className="w-full h-[100dvh] md:h-auto md:max-h-[92vh] max-w-none md:max-w-lg rounded-none md:rounded-3xl bg-[#0f0f0f] border-0 md:border md:border-white/10 flex flex-col overflow-hidden">
             <div className="flex items-center justify-between px-5 py-4 border-b border-white/10 shrink-0">
               <div>
                 <p className="font-black text-sm">Agendar horário</p>
@@ -671,7 +709,7 @@ export function PublicBookingPage() {
               <button
                 type="button"
                 onClick={closeWizard}
-                className="p-1.5 rounded-lg hover:bg-white/10 transition"
+                className="p-3 rounded-lg hover:bg-white/10 active:bg-white/15 transition"
                 aria-label="Fechar"
               >
                 <X size={20} />
@@ -723,7 +761,7 @@ export function PublicBookingPage() {
                             : "itens selecionados"}
                         </span>
                       </div>
-                      <div className="space-y-2 max-h-[50vh] overflow-y-auto pr-1">
+                      <div className="space-y-2">
                         {site.services.map((s) => {
                           const checked = selectedServiceIds.includes(s.id);
                           return (
@@ -837,7 +875,7 @@ export function PublicBookingPage() {
                           type="button"
                           disabled={!canGoPrevMonth}
                           onClick={() => setCalendarMonth((m) => subMonths(m, 1))}
-                          className="p-2 rounded-xl border border-white/10 disabled:opacity-30"
+                          className="p-3 rounded-xl border border-white/10 disabled:opacity-30"
                           aria-label="Mês anterior"
                         >
                           <ChevronLeft size={18} />
@@ -848,7 +886,7 @@ export function PublicBookingPage() {
                         <button
                           type="button"
                           onClick={() => setCalendarMonth((m) => addMonths(m, 1))}
-                          className="p-2 rounded-xl border border-white/10"
+                          className="p-3 rounded-xl border border-white/10"
                           aria-label="Próximo mês"
                         >
                           <ChevronRight size={18} />
@@ -874,7 +912,7 @@ export function PublicBookingPage() {
                               disabled={disabled}
                               onClick={() => setSelectedDay(ymd)}
                               className={
-                                "aspect-square rounded-xl text-sm font-bold transition flex items-center justify-center " +
+                                "aspect-square min-h-10 rounded-xl text-sm font-bold transition flex items-center justify-center " +
                                 (!inMonth
                                   ? "text-white/10"
                                   : disabled
@@ -914,7 +952,7 @@ export function PublicBookingPage() {
                               type="button"
                               onClick={() => setSelectedSlot(s)}
                               className={
-                                "rounded-xl border py-3 font-bold text-sm transition " +
+                                "rounded-xl border py-3 min-h-12 font-bold text-sm transition " +
                                 (selectedSlot === s
                                   ? "border-[#64b34d] bg-[#64b34d]/15"
                                   : "border-white/10 hover:border-white/25")
@@ -932,16 +970,18 @@ export function PublicBookingPage() {
                     <>
                       <h2 className="text-lg font-black">Confirmar</h2>
                       <input
-                        className="w-full rounded-xl bg-black/40 border border-white/10 px-4 py-3 text-sm focus:outline-none focus:border-[#64b34d]/50"
+                        className="w-full rounded-xl bg-black/40 border border-white/10 px-4 py-3 text-base focus:outline-none focus:border-[#64b34d]/50"
                         placeholder="SEU NOME"
                         value={clientName}
                         onChange={(e) => setClientName(e.target.value)}
                       />
                       <input
-                        className="w-full rounded-xl bg-black/40 border border-white/10 px-4 py-3 text-sm focus:outline-none focus:border-[#64b34d]/50"
+                        className="w-full rounded-xl bg-black/40 border border-white/10 px-4 py-3 text-base focus:outline-none focus:border-[#64b34d]/50"
                         placeholder="WHATSAPP"
                         value={clientPhone}
                         onChange={(e) => setClientPhone(e.target.value)}
+                        inputMode="tel"
+                        type="tel"
                       />
                       <div className="rounded-2xl border border-white/10 p-4 text-sm space-y-2">
                         <div className="space-y-1">
@@ -983,12 +1023,12 @@ export function PublicBookingPage() {
             </div>
 
             {!confirmedAppointment ? (
-              <div className="px-5 py-4 border-t border-white/10 flex gap-2 shrink-0">
+              <div className="px-5 pt-4 pb-[calc(1rem+env(safe-area-inset-bottom))] border-t border-white/10 flex gap-2 shrink-0">
                 {step > 1 ? (
                   <button
                     type="button"
                     onClick={() => setStep((s) => Math.max(1, s - 1))}
-                    className="px-4 py-3 rounded-xl border border-white/15 font-bold flex items-center gap-1 hover:bg-white/5 transition"
+                    className="min-h-12 px-4 py-3 rounded-xl border border-white/15 font-bold flex items-center gap-1 hover:bg-white/5 active:bg-white/10 transition"
                   >
                     <ChevronLeft size={16} /> Voltar
                   </button>
@@ -997,7 +1037,7 @@ export function PublicBookingPage() {
                   type="button"
                   disabled={nextDisabled}
                   onClick={handleNext}
-                  className="flex-1 py-3 rounded-xl bg-[#64b34d] font-black disabled:opacity-40 hover:bg-[#579c42] transition"
+                  className="flex-1 min-h-12 py-3 rounded-xl bg-[#64b34d] font-black disabled:opacity-40 hover:bg-[#579c42] active:bg-[#4c8938] transition"
                 >
                   {submitting ? (
                     <Loader2 className="animate-spin mx-auto" size={18} />
@@ -1009,11 +1049,11 @@ export function PublicBookingPage() {
                 </button>
               </div>
             ) : (
-              <div className="px-5 py-4 border-t border-white/10 shrink-0">
+              <div className="px-5 pt-4 pb-[calc(1rem+env(safe-area-inset-bottom))] border-t border-white/10 shrink-0">
                 <button
                   type="button"
                   onClick={closeWizard}
-                  className="w-full py-3 rounded-xl bg-[#64b34d] font-black hover:bg-[#579c42] transition"
+                  className="w-full min-h-12 py-3 rounded-xl bg-[#64b34d] font-black hover:bg-[#579c42] active:bg-[#4c8938] transition"
                 >
                   Concluir
                 </button>
