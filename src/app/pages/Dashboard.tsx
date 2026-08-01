@@ -1048,8 +1048,8 @@ export function Dashboard() {
                 <div className="mb-2">
                   <h3 className="text-2xl font-black text-slate-900 tracking-tighter">Serviços</h3>
                   <p className="text-slate-500 font-medium mt-1 text-base leading-relaxed">
-                    Cadastre o que você oferece e o preço. A IA usa isso no WhatsApp e, se o sinal
-                    estiver ligado, para cobrar.
+                    Cadastre o que você oferece e o preço. A IA usa isso no WhatsApp para falar os
+                    valores — e, se o sinal estiver ligado, para cobrar.
                   </p>
                 </div>
                 <BookingServicesPanel />

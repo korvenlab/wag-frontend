@@ -26,7 +26,7 @@ type BookingServicesPanelProps = {
  * Cadastro de serviços (booking_services) — usado na Agenda Web e nos planos com IA.
  */
 export function BookingServicesPanel({
-  subtitle = "Cadastre o que você oferece, com preço e duração. A IA usa essa lista para responder e cobrar o sinal, se você ativar.",
+  subtitle = "Cadastre o que você oferece, com preço e duração. A IA usa essa lista para falar os valores no WhatsApp e, se o sinal estiver ligado, para cobrar.",
 }: BookingServicesPanelProps) {
   const [services, setServices] = useState<BookingService[]>([]);
   const [loading, setLoading] = useState(true);
@@ -146,11 +146,11 @@ export function BookingServicesPanel({
         <ul className="text-xs text-slate-500 font-medium space-y-1 mt-3">
           <li>
             <strong className="text-slate-700">Se não cadastrar:</strong> a IA não tem lista clara de
-            preços/duração e o sinal não consegue cobrar.
+            preços para passar ao cliente.
           </li>
           <li>
-            <strong className="text-slate-700">Se cadastrar:</strong> a IA usa esses serviços no
-            WhatsApp; com o sinal ligado, o cliente paga com base nesse preço.
+            <strong className="text-slate-700">Se cadastrar:</strong> a IA informa os valores no
+            WhatsApp; com o sinal ligado, também cobra com base nesse preço.
           </li>
         </ul>
       </CardHeader>
