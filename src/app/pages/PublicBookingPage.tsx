@@ -1098,8 +1098,7 @@ export function PublicBookingPage() {
                               {depositPreview.deposit.toFixed(2)}
                             </p>
                             <p className="text-white/45 font-medium">
-                              O horário só fica confirmado depois do pagamento. Você será
-                              redirecionado ao Checkout seguro da Stripe.
+                              O horário só fica confirmado depois do pagamento.
                             </p>
                           </div>
                         ) : null}

@@ -18,6 +18,8 @@ import { FeedbackFab } from "../components/FeedbackFab";
 import { DashboardSidebar, type DashboardNavId } from "../components/DashboardSidebar";
 import { PlanFeatureGate } from "../components/PlanFeatureGate";
 import { AgendaWebSettingsPanel } from "../components/AgendaWebSettingsPanel";
+import { AgendaWebPaymentsPanel } from "../components/AgendaWebPaymentsPanel";
+import { BookingServicesPanel } from "../components/BookingServicesPanel";
 import { apiFetch } from "../lib/apiFetch";
 import { planLabel, tierSupportsCsvExport, tierSupportsReminders } from "../lib/wagooPlans";
 import {
@@ -279,7 +281,16 @@ export function Dashboard() {
     const section = (location.state as { section?: string } | null)?.section;
     if (
       section &&
-      ["overview", "analytics", "hours", "reminders", "settings", "agenda-web"].includes(section)
+      [
+        "overview",
+        "analytics",
+        "hours",
+        "reminders",
+        "settings",
+        "services",
+        "payments",
+        "agenda-web",
+      ].includes(section)
     ) {
       setActiveSection(section);
     }
@@ -614,6 +625,8 @@ export function Dashboard() {
     activeSection === "hours" ||
     activeSection === "reminders" ||
     activeSection === "settings" ||
+    activeSection === "services" ||
+    activeSection === "payments" ||
     activeSection === "agenda-web"
       ? (activeSection as DashboardNavId)
       : "overview";
@@ -1030,6 +1043,32 @@ export function Dashboard() {
               </>
             )}
 
+            {activeSection === "services" && (
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="lg:col-span-3 space-y-4">
+                <div className="mb-2">
+                  <h3 className="text-2xl font-black text-slate-900 tracking-tighter">Serviços</h3>
+                  <p className="text-slate-500 font-medium mt-1 text-base leading-relaxed">
+                    Cadastre o que você oferece e o preço. A IA usa isso no WhatsApp e, se o sinal
+                    estiver ligado, para cobrar.
+                  </p>
+                </div>
+                <BookingServicesPanel />
+              </motion.div>
+            )}
+
+            {activeSection === "payments" && (
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="lg:col-span-3 space-y-4">
+                <div className="mb-2">
+                  <h3 className="text-2xl font-black text-slate-900 tracking-tighter">Pagamentos</h3>
+                  <p className="text-slate-500 font-medium mt-1 text-base leading-relaxed">
+                    Conta para receber e sinal opcional. Com o sinal ligado, o cliente paga para
+                    confirmar o horário — no WhatsApp e na Agenda Web.
+                  </p>
+                </div>
+                <AgendaWebPaymentsPanel />
+              </motion.div>
+            )}
+
             {activeSection === "agenda-web" && (
               <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="lg:col-span-3 space-y-4">
                 <div className="mb-2">
@@ -1103,8 +1142,16 @@ export function Dashboard() {
                             {nicheServiceLabel(businessNiche)}
                           </Label>
                           <p className="text-slate-500 text-xs font-medium mt-1 ml-1 leading-relaxed">
-                            Incluso em todos os planos (Basic, Pro e Pro+). Preencha os valores do
-                            seu nicho — a IA responde no WhatsApp quando perguntarem preço.
+                            Incluso em todos os planos (Basic, Pro e Pro+). A IA usa esses valores no
+                            WhatsApp. Para cobrar sinal, cadastre também em{" "}
+                            <button
+                              type="button"
+                              className="text-[#64b34d] font-bold underline-offset-2 hover:underline"
+                              onClick={() => setActiveSection("services")}
+                            >
+                              Serviços
+                            </button>{" "}
+                            (preço e duração oficiais).
                           </p>
                         </div>
                         <Button

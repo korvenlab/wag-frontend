@@ -4,13 +4,37 @@ import {
   CreditCard,
   ExternalLink,
   Loader2,
-  Shield,
   Wallet,
 } from "lucide-react";
 import { useSearchParams } from "react-router";
 import { apiFetch } from "../lib/apiFetch";
 import { Button } from "./ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
+
+type FeePreview = {
+  total_brl: number;
+  deposit_brl: number;
+  wagoo_fee_brl: number;
+  shop_receives_brl: number;
+  note: string;
+  summary?: string;
+  wagoo?: { percent: number; fee_brl: number; label: string };
+  stripe?: {
+    pix: {
+      percent: number;
+      fee_brl: number;
+      shop_receives_brl: number;
+      label: string;
+    };
+    card: {
+      percent: number;
+      fixed_brl: number;
+      fee_brl: number;
+      shop_receives_brl: number;
+      label: string;
+    };
+  };
+};
 
 type ConnectStatus = {
   connected: boolean;
@@ -24,20 +48,16 @@ type ConnectStatus = {
   wagoo_fee_percent: number;
   hold_minutes: number;
   tip: string;
+  fees?: {
+    wagoo_percent: number;
+    stripe_pix_percent: number;
+    stripe_card_percent: number;
+    stripe_card_fixed_brl: number;
+    summary: string;
+  };
 };
 
-type FeePreview = {
-  total_brl: number;
-  deposit_brl: number;
-  wagoo_fee_brl: number;
-  shop_receives_brl: number;
-  note: string;
-};
-
-/**
- * Onboarding Connect Express + configuração do sinal (2% Wagoo + taxa Stripe).
- * Gestão de saldo/saques/disputas: Express Dashboard via login link.
- */
+/** Pagamentos e sinal antecipado — copy focado no que o dono precisa decidir. */
 export function AgendaWebPaymentsPanel() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [status, setStatus] = useState<ConnectStatus | null>(null);
@@ -55,7 +75,7 @@ export function AgendaWebPaymentsPanel() {
       const res = await apiFetch("/api/stripe/connect/status");
       const data = await res.json().catch(() => null);
       if (!res.ok) {
-        setError(data?.error || "Não foi possível carregar status Stripe.");
+        setError(data?.error || "Não foi possível carregar os pagamentos.");
         return;
       }
       setStatus(data as ConnectStatus);
@@ -63,7 +83,7 @@ export function AgendaWebPaymentsPanel() {
       setDepositPercent(Number(data.deposit_percent) || 30);
       setError(null);
     } catch {
-      setError("Erro de rede ao carregar Stripe Connect.");
+      setError("Erro de rede ao carregar pagamentos.");
     } finally {
       setLoading(false);
     }
@@ -90,8 +110,8 @@ export function AgendaWebPaymentsPanel() {
     if (connectFlag === "return" || connectFlag === "refresh") {
       setMsg(
         connectFlag === "return"
-          ? "Retorno do cadastro Stripe. Atualizando status…"
-          : "Link de cadastro expirado — abra novamente se ainda faltar verificação.",
+          ? "Cadastro atualizado."
+          : "Abra de novo o cadastro se ainda faltar alguma informação.",
       );
       void load().then(() => {
         const next = new URLSearchParams(searchParams);
@@ -119,12 +139,12 @@ export function AgendaWebPaymentsPanel() {
       const res = await apiFetch("/api/stripe/connect/onboard", { method: "POST" });
       const data = await res.json().catch(() => ({}));
       if (!res.ok || !data.url) {
-        setError(data.error || "Não foi possível iniciar o cadastro Stripe.");
+        setError(data.error || "Não foi possível abrir o cadastro.");
         return;
       }
       window.location.href = data.url;
     } catch {
-      setError("Erro de rede ao abrir onboarding Stripe.");
+      setError("Erro de rede ao abrir o cadastro.");
     } finally {
       setBusy(false);
     }
@@ -137,12 +157,12 @@ export function AgendaWebPaymentsPanel() {
       const res = await apiFetch("/api/stripe/connect/dashboard", { method: "POST" });
       const data = await res.json().catch(() => ({}));
       if (!res.ok || !data.url) {
-        setError(data.error || "Não foi possível abrir o painel Stripe.");
+        setError(data.error || "Não foi possível abrir o painel.");
         return;
       }
       window.open(data.url, "_blank", "noopener,noreferrer");
     } catch {
-      setError("Erro de rede ao abrir Express Dashboard.");
+      setError("Erro de rede ao abrir o painel.");
     } finally {
       setBusy(false);
     }
@@ -166,7 +186,7 @@ export function AgendaWebPaymentsPanel() {
         setError(data.error || "Não foi possível salvar.");
         return;
       }
-      setMsg("Configuração do sinal salva.");
+      setMsg("Salvo.");
       void load();
     } catch {
       setError("Erro de rede ao salvar.");
@@ -178,7 +198,7 @@ export function AgendaWebPaymentsPanel() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-16 text-slate-400">
-        <Loader2 className="animate-spin mr-2" size={20} /> Carregando pagamentos…
+        <Loader2 className="animate-spin mr-2" size={20} /> Carregando…
       </div>
     );
   }
@@ -192,10 +212,18 @@ export function AgendaWebPaymentsPanel() {
             Receber pagamentos
           </CardTitle>
           <p className="text-sm text-slate-500 font-medium leading-relaxed">
-            Conecte a Stripe se quiser receber pagamentos. O sinal antecipado é{' '}
-            <strong className="text-slate-800 font-bold">opcional</strong>: você escolhe se o
-            cliente agenda de graça ou só confirma depois de pagar.
+            Cadastre a conta onde o dinheiro cai. Sem isso, o cliente agenda sem pagar pelo app.
           </p>
+          <ul className="text-xs text-slate-500 font-medium space-y-1 mt-2">
+            <li>
+              <strong className="text-slate-700">Se não configurar:</strong> você não recebe pelo
+              app — só agenda.
+            </li>
+            <li>
+              <strong className="text-slate-700">Se configurar:</strong> pode pedir sinal; o valor
+              cai na sua conta bancária.
+            </li>
+          </ul>
         </CardHeader>
         <CardContent className="space-y-4">
           {error ? (
@@ -218,7 +246,7 @@ export function AgendaWebPaymentsPanel() {
                 ) : (
                   <span className="w-3.5 h-3.5 rounded-full border border-slate-300" />
                 )}
-                Conta Connect criada
+                Conta criada
               </li>
               <li className="flex items-center gap-2">
                 {status?.details_submitted ? (
@@ -226,7 +254,7 @@ export function AgendaWebPaymentsPanel() {
                 ) : (
                   <span className="w-3.5 h-3.5 rounded-full border border-slate-300" />
                 )}
-                Dados e verificação enviados
+                Dados enviados
               </li>
               <li className="flex items-center gap-2">
                 {status?.charges_enabled ? (
@@ -234,7 +262,7 @@ export function AgendaWebPaymentsPanel() {
                 ) : (
                   <span className="w-3.5 h-3.5 rounded-full border border-slate-300" />
                 )}
-                Cobranças liberadas
+                Pronto para receber
               </li>
               <li className="flex items-center gap-2">
                 {status?.payouts_enabled ? (
@@ -242,7 +270,7 @@ export function AgendaWebPaymentsPanel() {
                 ) : (
                   <span className="w-3.5 h-3.5 rounded-full border border-slate-300" />
                 )}
-                Saques liberados
+                Transferência para o banco liberada
               </li>
             </ul>
           </div>
@@ -254,8 +282,12 @@ export function AgendaWebPaymentsPanel() {
               disabled={busy}
               onClick={() => void startOnboard()}
             >
-              {busy ? <Loader2 className="animate-spin mr-2" size={16} /> : <CreditCard className="mr-2" size={16} />}
-              {status?.connected ? "Continuar verificação Stripe" : "Conectar Stripe"}
+              {busy ? (
+                <Loader2 className="animate-spin mr-2" size={16} />
+              ) : (
+                <CreditCard className="mr-2" size={16} />
+              )}
+              {status?.connected ? "Continuar cadastro" : "Cadastrar conta"}
             </Button>
             {status?.connected ? (
               <Button
@@ -266,16 +298,10 @@ export function AgendaWebPaymentsPanel() {
                 onClick={() => void openDashboard()}
               >
                 <ExternalLink className="mr-2" size={16} />
-                Abrir painel Stripe
+                Ver saldo e transferências
               </Button>
             ) : null}
           </div>
-
-          <p className="text-xs text-slate-400 font-medium leading-relaxed flex gap-2">
-            <Shield size={14} className="shrink-0 mt-0.5" />
-            No painel Express você gerencia saldo, saques, reembolsos, disputas e dados da conta.
-            A Stripe coleta CPF/CNPJ e documentos exigidos no Brasil.
-          </p>
         </CardContent>
       </Card>
 
@@ -283,14 +309,29 @@ export function AgendaWebPaymentsPanel() {
         <CardHeader className="pb-2">
           <CardTitle className="text-lg font-extrabold">Sinal antecipado (opcional)</CardTitle>
           <p className="text-sm text-slate-500 font-medium">
-            Desligado por padrão. Se você ligar, o horário{' '}
-            <strong className="text-slate-800 font-bold">só confirma depois do pagamento</strong>.
-            Se deixar desligado, o cliente agenda normalmente sem pagar. Com o sinal ligado, o slot
-            fica reservado por {status?.hold_minutes ?? 30} min até o Checkout; Google/WhatsApp só
-            disparam após o pagamento.
+            Pedir uma parte do serviço na hora de marcar. O horário só confirma depois do
+            pagamento — no WhatsApp e no link da Agenda Web.
           </p>
+          <ul className="text-xs text-slate-500 font-medium space-y-1 mt-2">
+            <li>
+              <strong className="text-slate-700">Desligado:</strong> o cliente agenda sem pagar.
+            </li>
+            <li>
+              <strong className="text-slate-700">Ligado:</strong> ele paga o sinal para confirmar; a
+              IA confirma no WhatsApp depois do pagamento.
+            </li>
+          </ul>
         </CardHeader>
         <CardContent className="space-y-4">
+          <div className="rounded-2xl border border-slate-100 bg-slate-50 p-4 space-y-2 text-sm text-slate-600 font-medium">
+            <p className="text-[11px] font-black uppercase tracking-wider text-slate-400">
+              Quanto você recebe (simulação)
+            </p>
+            <p className="text-xs text-slate-500">
+              O cliente paga só o sinal. As taxas saem do que você recebe — veja o exemplo abaixo.
+            </p>
+          </div>
+
           <label className="flex items-center gap-3 cursor-pointer">
             <input
               type="checkbox"
@@ -300,13 +341,13 @@ export function AgendaWebPaymentsPanel() {
               onChange={(e) => setDepositEnabled(e.target.checked)}
             />
             <span className="text-sm font-bold text-slate-800">
-              Ativar sinal antecipado neste link
+              Pedir sinal para confirmar o horário
             </span>
           </label>
 
           <div>
             <label className="text-xs font-black uppercase tracking-wider text-slate-400">
-              Percentual do sinal ({depositPercent}%)
+              Quanto do serviço cobrar agora ({depositPercent}%)
             </label>
             <input
               type="range"
@@ -321,7 +362,7 @@ export function AgendaWebPaymentsPanel() {
 
           <div className="rounded-2xl border border-slate-100 bg-slate-50 p-4 space-y-2">
             <p className="text-xs font-black uppercase tracking-wider text-slate-400">
-              Simulação (serviço de R$)
+              Exemplo — serviço de R$
             </p>
             <input
               type="text"
@@ -331,27 +372,69 @@ export function AgendaWebPaymentsPanel() {
               className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm font-bold"
             />
             {preview ? (
-              <ul className="text-sm text-slate-600 font-medium space-y-1 pt-1">
-                <li>
+              <div className="text-sm text-slate-600 font-medium space-y-3 pt-1">
+                <p>
                   Cliente paga agora:{" "}
                   <strong className="text-slate-900">
                     R$ {preview.deposit_brl.toFixed(2)}
                   </strong>
-                </li>
-                <li>
-                  Taxa Wagoo ({status?.wagoo_fee_percent ?? 2}%):{" "}
-                  <strong className="text-slate-900">
-                    R$ {preview.wagoo_fee_brl.toFixed(2)}
-                  </strong>
-                </li>
-                <li>
-                  Você recebe do sinal (antes da taxa Stripe):{" "}
-                  <strong className="text-slate-900">
-                    R$ {preview.shop_receives_brl.toFixed(2)}
-                  </strong>
-                </li>
-                <li className="text-xs text-slate-400 pt-1">{preview.note}</li>
-              </ul>
+                </p>
+
+                <div className="rounded-xl bg-white border border-slate-100 p-3 space-y-1.5">
+                  <p className="text-[11px] font-black uppercase tracking-wider text-slate-400">
+                    Taxas (sobre o sinal)
+                  </p>
+                  <p>
+                    Wagoo:{" "}
+                    <strong className="text-slate-900">
+                      {preview.wagoo?.percent ?? status?.wagoo_fee_percent ?? 2}% = R${" "}
+                      {(preview.wagoo?.fee_brl ?? preview.wagoo_fee_brl).toFixed(2)}
+                    </strong>
+                  </p>
+                  <p>
+                    No Pix:{" "}
+                    <strong className="text-slate-900">
+                      {preview.stripe?.pix.percent ?? 1.19}% = R${" "}
+                      {(preview.stripe?.pix.fee_brl ?? 0).toFixed(2)}
+                    </strong>
+                  </p>
+                  <p>
+                    No cartão:{" "}
+                    <strong className="text-slate-900">
+                      {preview.stripe?.card.percent ?? 3.99}% + R${" "}
+                      {(preview.stripe?.card.fixed_brl ?? 0.39).toFixed(2)} = R${" "}
+                      {(preview.stripe?.card.fee_brl ?? 0).toFixed(2)}
+                    </strong>
+                  </p>
+                </div>
+
+                <div className="rounded-xl bg-white border border-slate-100 p-3 space-y-1.5">
+                  <p className="text-[11px] font-black uppercase tracking-wider text-slate-400">
+                    Você recebe (estimado)
+                  </p>
+                  <p>
+                    Se pagar no Pix: ~R${" "}
+                    <strong className="text-slate-900">
+                      {(
+                        preview.stripe?.pix.shop_receives_brl ?? preview.shop_receives_brl
+                      ).toFixed(2)}
+                    </strong>
+                  </p>
+                  <p>
+                    Se pagar no cartão: ~R${" "}
+                    <strong className="text-slate-900">
+                      {(preview.stripe?.card.shop_receives_brl ?? 0).toFixed(2)}
+                    </strong>
+                  </p>
+                </div>
+
+                <p className="text-xs text-slate-400">
+                  {preview.summary ||
+                    preview.note ||
+                    status?.fees?.summary ||
+                    "Wagoo 2%. No Pix 1,19%; no cartão 3,99% + R$ 0,39."}
+                </p>
+              </div>
             ) : null}
           </div>
 
@@ -362,7 +445,7 @@ export function AgendaWebPaymentsPanel() {
             onClick={() => void saveDepositSettings()}
           >
             {busy ? <Loader2 className="animate-spin mr-2" size={16} /> : null}
-            Salvar sinal
+            Salvar
           </Button>
         </CardContent>
       </Card>

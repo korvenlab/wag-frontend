@@ -69,7 +69,7 @@ const NAV: {
   {
     id: "pagamentos",
     label: "Pagamentos",
-    hint: "Stripe e sinal",
+    hint: "Receber e sinal",
     icon: CreditCard,
   },
   {
@@ -117,8 +117,7 @@ const SECTION_COPY: Record<
   },
   pagamentos: {
     title: "Pagamentos",
-    subtitle:
-      "Conecte a Stripe se quiser. O sinal antecipado é opcional — você decide se o cliente paga para confirmar.",
+    subtitle: "Receba dos clientes e, se quiser, peça um sinal na hora de agendar.",
   },
   google: {
     title: "Google Agenda",

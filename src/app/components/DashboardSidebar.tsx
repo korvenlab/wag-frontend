@@ -13,6 +13,8 @@ import {
   ChevronRight,
   Bell,
   Link2,
+  Scissors,
+  Wallet,
 } from "lucide-react";
 import { Button } from "./ui/button";
 import { useNavigate } from "react-router";
@@ -24,6 +26,8 @@ export type DashboardNavId =
   | "reminders"
   | "team"
   | "calendar"
+  | "services"
+  | "payments"
   | "agenda-web"
   | "settings";
 
@@ -160,6 +164,18 @@ export function DashboardSidebar({
                   navigate("/dashboard/equipe");
                   setIsSidebarOpen(false);
                 }}
+              />
+              <NavItem
+                icon={<Scissors size={20} />}
+                label="Serviços"
+                active={active === "services"}
+                onClick={() => goDashboard("services")}
+              />
+              <NavItem
+                icon={<Wallet size={20} />}
+                label="Pagamentos"
+                active={active === "payments"}
+                onClick={() => goDashboard("payments")}
               />
               <NavItem
                 icon={<Link2 size={20} />}
