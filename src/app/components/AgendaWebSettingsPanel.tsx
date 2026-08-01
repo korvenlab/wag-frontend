@@ -96,7 +96,8 @@ export type AgendaWebSection =
   | "servicos"
   | "profissionais"
   | "agendamentos"
-  | "whatsapp";
+  | "whatsapp"
+  | "google";
 
 export function AgendaWebSettingsPanel({
   embedded = false,
@@ -179,6 +180,7 @@ export function AgendaWebSettingsPanel({
       profissionais: "profissionais",
       agendamentos: "agendamentos",
       whatsapp: "links",
+      google: "links",
     };
     scrollToSection(map[id]);
   };

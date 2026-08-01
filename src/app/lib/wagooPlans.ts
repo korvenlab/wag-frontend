@@ -26,6 +26,7 @@ export const AGENDA_WEB_PLAN: WagooPlanCard = {
     "Profissionais ilimitados (barbeiros / atendentes)",
     "WhatsApp da loja (QR) — confirmação automática",
     "Lembretes no WhatsApp antes do horário",
+    "Sincroniza com Google Agenda (opcional)",
     "Logo, capa, serviços, preços e fotos",
   ],
 };

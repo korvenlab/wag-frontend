@@ -46,7 +46,7 @@ export const TermsPage = () => {
 
         <h2 style={{ color: '#111827', marginTop: '40px' }}>3. Assinaturas e Pagamentos</h2>
         <ul style={{ paddingLeft: '20px' }}>
-          <li><strong>Agenda Web:</strong> R$ 20,00/mês — dashboard próprio com link público de agendamento, profissionais ilimitados, horários, vista pública da agenda; WhatsApp opcional da loja (QR) para confirmação e lembretes por script, sem atendimento por IA.</li>
+          <li><strong>Agenda Web:</strong> R$ 20,00/mês — dashboard próprio com link público de agendamento, profissionais ilimitados, horários, vista pública da agenda; WhatsApp opcional da loja (QR) para confirmação e lembretes; sincronização opcional com Google Agenda; sem atendimento conversacional por IA no WhatsApp.</li>
           <li><strong>Basic:</strong> R$ 59,00/mês — 1 usuário (WhatsApp, Google Agenda, IA) + Agenda Web inclusa no painel.</li>
           <li><strong>Pro:</strong> R$ 149,00/mês — até 3 usuários na equipe IA, lembretes, export CSV, gestão de equipe + Agenda Web inclusa.</li>
           <li><strong>Pro+:</strong> R$ 259,00/mês — até 5 usuários na equipe IA, mesmos recursos avançados do Pro + Agenda Web inclusa.</li>

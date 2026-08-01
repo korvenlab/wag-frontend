@@ -20,6 +20,7 @@ import {
   type AgendaWebSection,
 } from "../components/AgendaWebSettingsPanel";
 import { AgendaWebWhatsAppPanel } from "../components/AgendaWebWhatsAppPanel";
+import { AgendaWebGooglePanel } from "../components/AgendaWebGooglePanel";
 
 const NAV: {
   id: AgendaWebSection;
@@ -64,6 +65,12 @@ const NAV: {
     icon: CalendarDays,
   },
   {
+    id: "google",
+    label: "Google Agenda",
+    hint: "Salvar no calendário",
+    icon: CalendarDays,
+  },
+  {
     id: "whatsapp",
     label: "WhatsApp",
     hint: "Confirmação e lembretes",
@@ -99,6 +106,10 @@ const SECTION_COPY: Record<
   agendamentos: {
     title: "Agendamentos",
     subtitle: "Quem já marcou horário pelo seu link.",
+  },
+  google: {
+    title: "Google Agenda",
+    subtitle: "Salve os horários do link na sua agenda Google e evite conflito com o que já está lá.",
   },
   whatsapp: {
     title: "WhatsApp",
@@ -266,6 +277,8 @@ export function AgendaWebDashboardPage() {
 
             {section === "whatsapp" ? (
               <AgendaWebWhatsAppPanel />
+            ) : section === "google" ? (
+              <AgendaWebGooglePanel />
             ) : (
               <AgendaWebSettingsPanel
                 section={section}

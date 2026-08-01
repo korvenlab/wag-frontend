@@ -313,8 +313,8 @@ export function AgendaWebOnboarding({ onComplete }: AgendaWebOnboardingProps) {
                       "Você monta a página: logo, serviços e preços.",
                       "Define os horários de funcionamento (manhã, tarde, noite).",
                       "O cliente abre o link, escolhe serviço, data e horário.",
-                      "Os agendamentos ficam no painel Wagoo (banco próprio).",
-                      "Não inclui IA no WhatsApp nem Google Calendar — isso é dos planos Basic/Pro.",
+                      "Os agendamentos ficam no painel — e na Google Agenda, se você conectar.",
+                      "Opcional: WhatsApp da loja para confirmação e lembretes.",
                     ].map((text) => (
                       <li
                         key={text}
