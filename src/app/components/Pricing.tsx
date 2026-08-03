@@ -15,6 +15,7 @@ const SUPPORT_WHATSAPP_URL = "https://wa.me/5582999450453";
 export function Pricing() {
   const navigate = useNavigate();
   const [loadingTier, setLoadingTier] = useState<WagooPlanTier | null>(null);
+  const [checkoutError, setCheckoutError] = useState<string | null>(null);
   const [user, setUser] = useState<{ id: string; email?: string | null } | null>(null);
 
   useEffect(() => {
@@ -30,6 +31,7 @@ export function Pricing() {
   const handleCheckout = async (planTier: WagooPlanTier) => {
     if (!user) return navigate("/login");
     setLoadingTier(planTier);
+    setCheckoutError(null);
     try {
       const {
         data: { session },
@@ -48,9 +50,9 @@ export function Pricing() {
       });
       const data = await response.json();
       if (data.url) window.location.href = data.url;
-      else alert(data.error || "Checkout indisponível.");
+      else setCheckoutError(data.error || "Checkout indisponível.");
     } catch {
-      alert("Erro de conexão. Verifique se o servidor está online.");
+      setCheckoutError("Erro de conexão. Verifique se o servidor está online.");
     } finally {
       setLoadingTier(null);
     }
@@ -77,6 +79,11 @@ export function Pricing() {
             Basic/Pro — que já incluem a Agenda Web no menu.
             Basic, Pro e Pro+.
           </p>
+          {checkoutError ? (
+            <p className="text-sm font-semibold text-red-600 bg-red-50 border border-red-100 rounded-2xl px-4 py-3 max-w-lg mx-auto">
+              {checkoutError}
+            </p>
+          ) : null}
         </div>
 
         <article

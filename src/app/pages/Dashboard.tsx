@@ -115,11 +115,13 @@ export function Dashboard() {
   const [remindBeforeMinutes, setRemindBeforeMinutes] = useState(60);
   const [isSavingReminders, setIsSavingReminders] = useState(false);
   const [showRemindersSuccess, setShowRemindersSuccess] = useState(false);
+  const [remindersError, setRemindersError] = useState<string | null>(null);
   const [responseTemplates, setResponseTemplates] = useState<ResponseTemplates>({
     ...EMPTY_RESPONSE_TEMPLATES,
   });
   const [isSavingTemplates, setIsSavingTemplates] = useState(false);
   const [showTemplatesSuccess, setShowTemplatesSuccess] = useState(false);
+  const [templatesError, setTemplatesError] = useState<string | null>(null);
   const [csvRange, setCsvRange] = useState(defaultCsvRange);
   const [isExportingCsv, setIsExportingCsv] = useState(false);
   const [csvExportError, setCsvExportError] = useState<string | null>(null);
@@ -393,6 +395,7 @@ export function Dashboard() {
   const handleSaveReminders = async () => {
     setIsSavingReminders(true);
     setShowRemindersSuccess(false);
+    setRemindersError(null);
     try {
       const response = await apiFetch("/api/settings/reminders", {
         method: "POST",
@@ -403,7 +406,7 @@ export function Dashboard() {
       });
       if (!response.ok) {
         const body = (await response.json().catch(() => null)) as { error?: string } | null;
-        alert(body?.error || "Não foi possível salvar os lembretes.");
+        setRemindersError(body?.error || "Não foi possível salvar os lembretes.");
         return;
       }
       const data = await response.json();
@@ -429,7 +432,7 @@ export function Dashboard() {
       setShowRemindersSuccess(true);
       window.setTimeout(() => setShowRemindersSuccess(false), 2500);
     } catch {
-      alert("Erro de rede ao salvar lembretes.");
+      setRemindersError("Erro de rede ao salvar lembretes.");
     } finally {
       setIsSavingReminders(false);
     }
@@ -438,6 +441,7 @@ export function Dashboard() {
   const handleSaveTemplates = async () => {
     setIsSavingTemplates(true);
     setShowTemplatesSuccess(false);
+    setTemplatesError(null);
     try {
       const response = await apiFetch("/api/settings/templates", {
         method: "POST",
@@ -445,7 +449,7 @@ export function Dashboard() {
       });
       if (!response.ok) {
         const body = (await response.json().catch(() => null)) as { error?: string } | null;
-        alert(body?.error || "Não foi possível salvar os templates.");
+        setTemplatesError(body?.error || "Não foi possível salvar os templates.");
         return;
       }
       const data = await response.json();
@@ -453,7 +457,7 @@ export function Dashboard() {
       setShowTemplatesSuccess(true);
       window.setTimeout(() => setShowTemplatesSuccess(false), 2500);
     } catch {
-      alert("Erro de rede ao salvar templates.");
+      setTemplatesError("Erro de rede ao salvar templates.");
     } finally {
       setIsSavingTemplates(false);
     }
@@ -778,7 +782,12 @@ export function Dashboard() {
                         ))}
                       </div>
                     </div>
-                    <div className="relative">
+                    <div className="relative space-y-2">
+                      {remindersError ? (
+                        <p className="text-sm font-semibold text-red-600 bg-red-50 rounded-2xl px-4 py-3">
+                          {remindersError}
+                        </p>
+                      ) : null}
                       <Button
                         type="button"
                         onClick={() => void handleSaveReminders()}
@@ -1170,7 +1179,12 @@ export function Dashboard() {
                           />
                         </div>
                       ))}
-                      <div className="relative">
+                      <div className="relative space-y-2">
+                        {templatesError ? (
+                          <p className="text-sm font-semibold text-red-600 bg-red-50 rounded-2xl px-4 py-3">
+                            {templatesError}
+                          </p>
+                        ) : null}
                         <Button
                           type="button"
                           onClick={() => void handleSaveTemplates()}
