@@ -55,10 +55,13 @@ export const TermsPage = () => {
           <li><strong>Cancelamento:</strong> Pode ser solicitado a qualquer momento através do painel do usuário ou suporte, sem taxas de fidelidade.</li>
         </ul>
 
-        <h2 style={{ color: '#111827', marginTop: '40px' }}>4. Uso das APIs de Terceiros</h2>
+        <h2 style={{ color: '#111827', marginTop: '40px' }}>4. Uso de plataformas de terceiros</h2>
         <p>
-          O Wagoo depende das APIs da <strong>Meta (WhatsApp)</strong> e do <strong>Google (Calendar)</strong>. 
-          O usuário concede ao Wagoo as permissões necessárias para ler a disponibilidade da agenda e inserir novos eventos em seu nome, estritamente para a finalidade de agendamento automático.
+          O Wagoo depende da <strong>conexão WhatsApp</strong> (pareamento por QR, no estilo
+          WhatsApp Web) e das APIs do <strong>Google (Calendar)</strong>.
+          O usuário concede ao Wagoo as permissões necessárias para ler a disponibilidade da agenda
+          e inserir novos eventos em seu nome, estritamente para a finalidade de agendamento
+          automático. Interrupções, bloqueios ou mudanças nessas plataformas podem afetar o serviço.
         </p>
 
         <h2 style={{ color: '#111827', marginTop: '40px' }}>5. Responsabilidades do Usuário</h2>
@@ -68,12 +71,14 @@ export const TermsPage = () => {
         <ul style={{ marginTop: '10px', paddingLeft: '20px' }}>
           <li>Manter a segurança de suas credenciais de acesso.</li>
           <li>Garantir que as informações de horários em sua agenda estejam corretas.</li>
-          <li>Cumprir as políticas anti-spam do WhatsApp/Meta.</li>
+          <li>Usar o WhatsApp de forma responsável e em conformidade com as regras da plataforma.</li>
         </ul>
 
         <h2 style={{ color: '#111827', marginTop: '40px' }}>6. Limitação de Responsabilidade</h2>
         <p>
-          A Korven Lab não se responsabiliza por perdas financeiras ou conflitos de agenda decorrentes de falhas técnicas nas plataformas de terceiros (Google/Meta) ou por má configuração por parte do usuário.
+          A Korven Lab não se responsabiliza por perdas financeiras ou conflitos de agenda
+          decorrentes de falhas técnicas nas plataformas de terceiros (Google/WhatsApp) ou por má
+          configuração por parte do usuário.
         </p>
 
         <h2 style={{ color: '#111827', marginTop: '40px' }}>7. Foro</h2>
