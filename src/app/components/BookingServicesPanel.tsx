@@ -5,6 +5,16 @@ import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 import { Textarea } from "./ui/textarea";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "./ui/alert-dialog";
 
 type BookingService = {
   id: string;
@@ -49,6 +59,11 @@ export function BookingServicesPanel({
   const [error, setError] = useState<string | null>(null);
   const [formOpen, setFormOpen] = useState(false);
   const [showExtras, setShowExtras] = useState(false);
+  const [pendingDelete, setPendingDelete] = useState<{
+    id: string;
+    name: string;
+  } | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   const [newName, setNewName] = useState("");
   const [newDesc, setNewDesc] = useState("");
@@ -174,13 +189,25 @@ export function BookingServicesPanel({
     }
   }
 
-  async function removeService(id: string, name: string) {
-    if (!confirm(`Remover “${name}”?`)) return;
-    const res = await apiFetch(`/api/booking/services/${id}`, { method: "DELETE" });
-    if (res.ok) {
-      setServices((s) => s.filter((x) => x.id !== id));
-      setMsg("Serviço removido.");
-      setError(null);
+  async function confirmRemoveService() {
+    if (!pendingDelete) return;
+    setDeleting(true);
+    setError(null);
+    try {
+      const res = await apiFetch(`/api/booking/services/${pendingDelete.id}`, {
+        method: "DELETE",
+      });
+      if (res.ok) {
+        setServices((s) => s.filter((x) => x.id !== pendingDelete.id));
+        setMsg("Serviço removido.");
+        setPendingDelete(null);
+      } else {
+        setError("Não foi possível remover.");
+      }
+    } catch {
+      setError("Erro de rede ao remover.");
+    } finally {
+      setDeleting(false);
     }
   }
 
@@ -261,7 +288,7 @@ export function BookingServicesPanel({
                 <button
                   type="button"
                   aria-label={`Remover ${s.name}`}
-                  onClick={() => void removeService(s.id, s.name)}
+                  onClick={() => setPendingDelete({ id: s.id, name: s.name })}
                   className="h-10 w-10 rounded-xl text-slate-300 hover:text-red-500 hover:bg-red-50 flex items-center justify-center transition-colors shrink-0"
                 >
                   <Trash2 size={16} />
@@ -465,6 +492,44 @@ export function BookingServicesPanel({
           </Button>
         </form>
       ) : null}
+
+      <AlertDialog
+        open={pendingDelete !== null}
+        onOpenChange={(open) => {
+          if (!open && !deleting) setPendingDelete(null);
+        }}
+      >
+        <AlertDialogContent className="rounded-[24px] border-none shadow-2xl max-w-md">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="font-black text-slate-900">
+              Remover serviço?
+            </AlertDialogTitle>
+            <AlertDialogDescription className="font-medium text-slate-500 leading-relaxed">
+              {pendingDelete ? (
+                <>
+                  <span className="font-bold text-slate-700">{pendingDelete.name}</span> sai
+                  da lista. A IA deixa de informar este preço no WhatsApp.
+                </>
+              ) : null}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="gap-2 sm:gap-0">
+            <AlertDialogCancel className="rounded-xl font-bold" disabled={deleting}>
+              Cancelar
+            </AlertDialogCancel>
+            <AlertDialogAction
+              className="rounded-xl bg-red-600 hover:bg-red-700 font-black"
+              disabled={deleting}
+              onClick={(e) => {
+                e.preventDefault();
+                void confirmRemoveService();
+              }}
+            >
+              {deleting ? <Loader2 className="w-4 h-4 animate-spin" /> : "Remover"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

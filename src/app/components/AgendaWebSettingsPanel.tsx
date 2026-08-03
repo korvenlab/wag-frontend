@@ -24,6 +24,16 @@ import { Textarea } from "./ui/textarea";
 import { Switch } from "./ui/switch";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "./ui/alert-dialog";
+import {
   WorkingHoursEditor,
   createDefaultWorkingHours,
   hasAnyOpenWindow,
@@ -141,6 +151,15 @@ export function AgendaWebSettingsPanel({
   const [provName, setProvName] = useState("");
   const [provBio, setProvBio] = useState("");
   const [provPhoto, setProvPhoto] = useState<string | null>(null);
+  const [pendingDeleteService, setPendingDeleteService] = useState<{
+    id: string;
+    name: string;
+  } | null>(null);
+  const [pendingDeleteProvider, setPendingDeleteProvider] = useState<{
+    id: string;
+    name: string;
+  } | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   const localMissing = useMemo(() => {
     const m: PublishMissing[] = [];
@@ -341,12 +360,20 @@ export function AgendaWebSettingsPanel({
     }
   }
 
-  async function removeService(id: string) {
-    if (!confirm("Remover este serviço?")) return;
-    const res = await apiFetch(`/api/booking/services/${id}`, { method: "DELETE" });
-    if (res.ok) {
-      setServices((s) => s.filter((x) => x.id !== id));
-      await load();
+  async function confirmRemoveService() {
+    if (!pendingDeleteService) return;
+    setDeleting(true);
+    try {
+      const res = await apiFetch(`/api/booking/services/${pendingDeleteService.id}`, {
+        method: "DELETE",
+      });
+      if (res.ok) {
+        setServices((s) => s.filter((x) => x.id !== pendingDeleteService.id));
+        setPendingDeleteService(null);
+        await load();
+      }
+    } finally {
+      setDeleting(false);
     }
   }
 
@@ -381,10 +408,20 @@ export function AgendaWebSettingsPanel({
     }
   }
 
-  async function removeProvider(id: string) {
-    if (!confirm("Remover este profissional?")) return;
-    const res = await apiFetch(`/api/booking/providers/${id}`, { method: "DELETE" });
-    if (res.ok) setProviders((p) => p.filter((x) => x.id !== id));
+  async function confirmRemoveProvider() {
+    if (!pendingDeleteProvider) return;
+    setDeleting(true);
+    try {
+      const res = await apiFetch(`/api/booking/providers/${pendingDeleteProvider.id}`, {
+        method: "DELETE",
+      });
+      if (res.ok) {
+        setProviders((p) => p.filter((x) => x.id !== pendingDeleteProvider.id));
+        setPendingDeleteProvider(null);
+      }
+    } finally {
+      setDeleting(false);
+    }
   }
 
   async function cancelAppointment(id: string) {
@@ -779,7 +816,7 @@ export function AgendaWebSettingsPanel({
                     type="button"
                     variant="ghost"
                     size="icon"
-                    onClick={() => void removeService(s.id)}
+                    onClick={() => setPendingDeleteService({ id: s.id, name: s.name })}
                   >
                     <Trash2 size={16} className="text-red-500" />
                   </Button>
@@ -905,7 +942,7 @@ export function AgendaWebSettingsPanel({
                     type="button"
                     variant="ghost"
                     size="icon"
-                    onClick={() => void removeProvider(p.id)}
+                    onClick={() => setPendingDeleteProvider({ id: p.id, name: p.name })}
                   >
                     <Trash2 size={16} className="text-red-500" />
                   </Button>
@@ -1021,6 +1058,82 @@ export function AgendaWebSettingsPanel({
         </CardContent>
       </Card>
       ) : null}
+
+      <AlertDialog
+        open={pendingDeleteService !== null}
+        onOpenChange={(open) => {
+          if (!open && !deleting) setPendingDeleteService(null);
+        }}
+      >
+        <AlertDialogContent className="rounded-[24px] border-none shadow-2xl max-w-md">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="font-black text-slate-900">
+              Remover serviço?
+            </AlertDialogTitle>
+            <AlertDialogDescription className="font-medium text-slate-500 leading-relaxed">
+              {pendingDeleteService ? (
+                <>
+                  <span className="font-bold text-slate-700">{pendingDeleteService.name}</span>{" "}
+                  sai da lista do link de agendamento.
+                </>
+              ) : null}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="gap-2 sm:gap-0">
+            <AlertDialogCancel className="rounded-xl font-bold" disabled={deleting}>
+              Cancelar
+            </AlertDialogCancel>
+            <AlertDialogAction
+              className="rounded-xl bg-red-600 hover:bg-red-700 font-black"
+              disabled={deleting}
+              onClick={(e) => {
+                e.preventDefault();
+                void confirmRemoveService();
+              }}
+            >
+              {deleting ? <Loader2 className="w-4 h-4 animate-spin" /> : "Remover"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog
+        open={pendingDeleteProvider !== null}
+        onOpenChange={(open) => {
+          if (!open && !deleting) setPendingDeleteProvider(null);
+        }}
+      >
+        <AlertDialogContent className="rounded-[24px] border-none shadow-2xl max-w-md">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="font-black text-slate-900">
+              Remover profissional?
+            </AlertDialogTitle>
+            <AlertDialogDescription className="font-medium text-slate-500 leading-relaxed">
+              {pendingDeleteProvider ? (
+                <>
+                  <span className="font-bold text-slate-700">{pendingDeleteProvider.name}</span>{" "}
+                  sai da equipe da Agenda Web.
+                </>
+              ) : null}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="gap-2 sm:gap-0">
+            <AlertDialogCancel className="rounded-xl font-bold" disabled={deleting}>
+              Cancelar
+            </AlertDialogCancel>
+            <AlertDialogAction
+              className="rounded-xl bg-red-600 hover:bg-red-700 font-black"
+              disabled={deleting}
+              onClick={(e) => {
+                e.preventDefault();
+                void confirmRemoveProvider();
+              }}
+            >
+              {deleting ? <Loader2 className="w-4 h-4 animate-spin" /> : "Remover"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
