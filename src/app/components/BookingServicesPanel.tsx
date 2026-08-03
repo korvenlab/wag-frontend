@@ -1,8 +1,7 @@
-import { useCallback, useEffect, useState } from "react";
-import { Check, Loader2, Trash2 } from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { ImagePlus, Loader2, Plus, Scissors, Trash2, X } from "lucide-react";
 import { apiFetch } from "../lib/apiFetch";
 import { Button } from "./ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 import { Textarea } from "./ui/textarea";
@@ -18,27 +17,49 @@ type BookingService = {
 };
 
 type BookingServicesPanelProps = {
-  /** Texto curto sob o título — o que configurar / para que serve */
   subtitle?: string;
 };
+
+const DURATION_PRESETS = [15, 30, 45, 60, 90] as const;
+
+function formatBrl(value: number): string {
+  return value.toLocaleString("pt-BR", {
+    style: "currency",
+    currency: "BRL",
+  });
+}
+
+function parsePriceInput(raw: string): number {
+  const cleaned = raw.replace(/[^\d,.-]/g, "").replace(",", ".");
+  const n = Number(cleaned);
+  return Number.isFinite(n) ? Math.round(n * 100) / 100 : 0;
+}
 
 /**
  * Cadastro de serviços (booking_services) — usado na Agenda Web e nos planos com IA.
  */
 export function BookingServicesPanel({
-  subtitle = "Único lugar para cadastrar o que você oferece, com preço e duração. A IA usa essa lista no WhatsApp (valores e, se o sinal estiver ligado, cobrança).",
+  subtitle = "A IA usa esta lista no WhatsApp para falar preços. Com o sinal ligado, também cobra daqui.",
 }: BookingServicesPanelProps) {
   const [services, setServices] = useState<BookingService[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [formOpen, setFormOpen] = useState(false);
+  const [showExtras, setShowExtras] = useState(false);
 
   const [newName, setNewName] = useState("");
   const [newDesc, setNewDesc] = useState("");
   const [newPrice, setNewPrice] = useState("");
-  const [newDuration, setNewDuration] = useState("");
+  const [newDuration, setNewDuration] = useState("30");
   const [newImage, setNewImage] = useState<string | null>(null);
+  const nameRef = useRef<HTMLInputElement>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  const activeServices = services.filter((s) => s.active !== false);
+  const isEmpty = activeServices.length === 0;
 
   const load = useCallback(async () => {
     try {
@@ -61,35 +82,70 @@ export function BookingServicesPanel({
     void load();
   }, [load]);
 
+  useEffect(() => {
+    if (isEmpty) setFormOpen(true);
+  }, [isEmpty]);
+
+  useEffect(() => {
+    if (formOpen) {
+      const t = window.setTimeout(() => nameRef.current?.focus(), 50);
+      return () => window.clearTimeout(t);
+    }
+  }, [formOpen]);
+
+  function resetForm() {
+    setNewName("");
+    setNewDesc("");
+    setNewPrice("");
+    setNewDuration("30");
+    setNewImage(null);
+    setShowExtras(false);
+    if (fileRef.current) fileRef.current.value = "";
+  }
+
   async function uploadServiceImage(file: File) {
-    const reader = new FileReader();
-    const dataUrl = await new Promise<string>((resolve, reject) => {
-      reader.onload = () => resolve(String(reader.result || ""));
-      reader.onerror = () => reject(new Error("Falha ao ler imagem"));
-      reader.readAsDataURL(file);
-    });
-    const res = await apiFetch("/api/booking/upload", {
-      method: "POST",
-      body: JSON.stringify({ dataUrl, kind: "service" }),
-    });
-    const data = await res.json().catch(() => ({}));
-    if (!res.ok || !data.url) throw new Error(data.error || "Upload falhou");
-    return String(data.url);
+    setUploading(true);
+    setError(null);
+    try {
+      const reader = new FileReader();
+      const dataUrl = await new Promise<string>((resolve, reject) => {
+        reader.onload = () => resolve(String(reader.result || ""));
+        reader.onerror = () => reject(new Error("Falha ao ler imagem"));
+        reader.readAsDataURL(file);
+      });
+      const res = await apiFetch("/api/booking/upload", {
+        method: "POST",
+        body: JSON.stringify({ dataUrl, kind: "service" }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data.url) throw new Error(data.error || "Upload falhou");
+      setNewImage(String(data.url));
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Upload falhou");
+    } finally {
+      setUploading(false);
+    }
   }
 
   async function addService() {
-    if (newName.trim().length < 2) {
-      setError("Informe o nome do serviço.");
+    const name = newName.trim();
+    const price = parsePriceInput(newPrice);
+    const duration = Number(newDuration) || 0;
+
+    if (name.length < 2) {
+      setError("Digite o nome do serviço.");
+      nameRef.current?.focus();
       return;
     }
-    if (!newPrice.trim()) {
-      setError("Informe o preço (R$).");
+    if (!newPrice.trim() || price <= 0) {
+      setError("Informe um preço válido (ex.: 50 ou 45,90).");
       return;
     }
-    if (!newDuration.trim()) {
-      setError("Informe a duração (minutos).");
+    if (duration < 5) {
+      setError("Escolha a duração (mínimo 5 minutos).");
       return;
     }
+
     setSaving(true);
     setError(null);
     setMsg(null);
@@ -97,22 +153,19 @@ export function BookingServicesPanel({
       const res = await apiFetch("/api/booking/services", {
         method: "POST",
         body: JSON.stringify({
-          name: newName,
-          description: newDesc,
-          price_brl: Number(newPrice) || 0,
-          duration_minutes: Number(newDuration) || 30,
+          name,
+          description: newDesc.trim(),
+          price_brl: price,
+          duration_minutes: duration,
           image_url: newImage,
         }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Erro ao adicionar");
       setServices((s) => [...s, data]);
-      setNewName("");
-      setNewDesc("");
-      setNewPrice("");
-      setNewDuration("");
-      setNewImage(null);
-      setMsg("Serviço adicionado.");
+      resetForm();
+      setMsg(`“${name}” adicionado.`);
+      if (!isEmpty) setFormOpen(false);
       await load();
     } catch (e) {
       setError(e instanceof Error ? e.message : "Erro ao adicionar");
@@ -121,12 +174,13 @@ export function BookingServicesPanel({
     }
   }
 
-  async function removeService(id: string) {
-    if (!confirm("Remover este serviço?")) return;
+  async function removeService(id: string, name: string) {
+    if (!confirm(`Remover “${name}”?`)) return;
     const res = await apiFetch(`/api/booking/services/${id}`, { method: "DELETE" });
     if (res.ok) {
       setServices((s) => s.filter((x) => x.id !== id));
       setMsg("Serviço removido.");
+      setError(null);
     }
   }
 
@@ -139,145 +193,278 @@ export function BookingServicesPanel({
   }
 
   return (
-    <Card className="rounded-3xl border-slate-200 shadow-wg-subtle">
-      <CardHeader>
-        <CardTitle className="text-xl font-extrabold">Serviços</CardTitle>
-        <p className="text-sm text-slate-500 font-medium mt-1 leading-relaxed">{subtitle}</p>
-        <ul className="text-xs text-slate-500 font-medium space-y-1 mt-3">
-          <li>
-            <strong className="text-slate-700">Se não cadastrar:</strong> a IA não tem lista clara de
-            preços para passar ao cliente.
-          </li>
-          <li>
-            <strong className="text-slate-700">Se cadastrar:</strong> a IA informa os valores no
-            WhatsApp; com o sinal ligado, também cobra com base nesse preço.
-          </li>
-        </ul>
-      </CardHeader>
-      <CardContent className="space-y-6">
-        {error ? (
-          <p className="text-sm font-semibold text-red-600 bg-red-50 rounded-2xl px-4 py-3">
-            {error}
-          </p>
-        ) : null}
-        {msg ? (
-          <p className="text-sm font-semibold text-[#64b34d] bg-[#64b34d]/10 rounded-2xl px-4 py-3">
-            {msg}
-          </p>
-        ) : null}
+    <div className="space-y-5">
+      {subtitle.trim() ? (
+        <p className="text-sm text-slate-500 font-medium leading-relaxed max-w-2xl">
+          {subtitle}
+        </p>
+      ) : null}
 
-        {services.filter((s) => s.active !== false).length === 0 ? (
-          <p className="text-sm text-amber-800 bg-amber-50 border border-amber-100 rounded-xl px-4 py-3 font-medium">
-            Ainda não há serviços. Adicione o primeiro abaixo.
-          </p>
-        ) : (
-          <div className="grid gap-3">
-            {services
-              .filter((s) => s.active !== false)
-              .map((s) => (
-                <div
-                  key={s.id}
-                  className="flex items-center gap-3 p-3 rounded-2xl border border-slate-100 bg-white"
-                >
-                  <div className="w-14 h-14 rounded-xl bg-slate-100 overflow-hidden shrink-0">
-                    {s.image_url ? (
-                      <img src={s.image_url} alt="" className="w-full h-full object-cover" />
-                    ) : null}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-bold text-slate-900 truncate">{s.name}</p>
-                    <p className="text-xs text-slate-500">
-                      {s.duration_minutes} min · R$ {Number(s.price_brl).toFixed(2)}
-                    </p>
-                  </div>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => void removeService(s.id)}
-                  >
-                    <Trash2 size={16} className="text-red-500" />
-                  </Button>
-                </div>
-              ))}
-          </div>
-        )}
+      {error ? (
+        <p className="text-sm font-semibold text-red-600 bg-red-50 rounded-2xl px-4 py-3">
+          {error}
+        </p>
+      ) : null}
+      {msg ? (
+        <p className="text-sm font-semibold text-[#64b34d] bg-[#64b34d]/10 rounded-2xl px-4 py-3">
+          {msg}
+        </p>
+      ) : null}
 
-        <div className="rounded-2xl border border-dashed border-slate-200 p-4 space-y-4 bg-slate-50/50">
-          <p className="text-sm font-bold text-slate-800">Adicionar serviço</p>
-          <div className="grid md:grid-cols-2 gap-4">
-            <div className="space-y-1.5">
-              <Label className="text-xs font-bold uppercase tracking-wider text-slate-500">
-                Nome
-              </Label>
-              <Input
-                placeholder="Ex.: Corte"
-                value={newName}
-                onChange={(e) => setNewName(e.target.value)}
-              />
+      {/* Lista */}
+      {!isEmpty ? (
+        <div className="rounded-[28px] border border-slate-100 bg-white shadow-wg-subtle overflow-hidden">
+          <div className="flex items-center justify-between gap-3 px-5 py-4 border-b border-slate-100">
+            <div>
+              <p className="text-sm font-black text-slate-900">
+                {activeServices.length}{" "}
+                {activeServices.length === 1 ? "serviço" : "serviços"}
+              </p>
+              <p className="text-xs text-slate-400 font-medium">O que o cliente vê e a IA responde</p>
             </div>
-            <div className="space-y-1.5">
-              <Label className="text-xs font-bold uppercase tracking-wider text-slate-500">
-                Preço (R$)
-              </Label>
-              <Input
-                placeholder="Ex.: 50"
-                inputMode="decimal"
-                value={newPrice}
-                onChange={(e) => setNewPrice(e.target.value)}
-              />
-            </div>
-            <div className="space-y-1.5">
-              <Label className="text-xs font-bold uppercase tracking-wider text-slate-500">
-                Duração (minutos)
-              </Label>
-              <Input
-                placeholder="Ex.: 30"
-                inputMode="numeric"
-                value={newDuration}
-                onChange={(e) => setNewDuration(e.target.value)}
-              />
-            </div>
-            <div className="space-y-1.5">
-              <Label className="text-xs font-bold uppercase tracking-wider text-slate-500">
-                Foto (opcional)
-              </Label>
-              <Input
-                type="file"
-                accept="image/png,image/jpeg,image/webp"
-                onChange={(e) => {
-                  const f = e.target.files?.[0];
-                  if (!f) return;
-                  void uploadServiceImage(f)
-                    .then(setNewImage)
-                    .catch((err) =>
-                      setError(err instanceof Error ? err.message : "Upload falhou"),
-                    );
+            {!formOpen ? (
+              <Button
+                type="button"
+                onClick={() => {
+                  setFormOpen(true);
+                  setMsg(null);
+                  setError(null);
                 }}
-              />
-            </div>
+                className="h-11 rounded-2xl bg-[#64b34d] hover:bg-[#58a344] text-white font-bold gap-1.5"
+              >
+                <Plus size={18} />
+                Novo
+              </Button>
+            ) : null}
           </div>
+          <ul className="divide-y divide-slate-50">
+            {activeServices.map((s) => (
+              <li
+                key={s.id}
+                className="flex items-center gap-4 px-5 py-4 hover:bg-slate-50/80 transition-colors"
+              >
+                <div className="w-12 h-12 rounded-2xl bg-slate-100 overflow-hidden shrink-0 flex items-center justify-center text-slate-300">
+                  {s.image_url ? (
+                    <img src={s.image_url} alt="" className="w-full h-full object-cover" />
+                  ) : (
+                    <Scissors size={18} />
+                  )}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="font-bold text-slate-900 truncate">{s.name}</p>
+                  <p className="text-sm text-slate-500 font-medium mt-0.5">
+                    <span className="text-slate-900 font-bold">{formatBrl(Number(s.price_brl))}</span>
+                    <span className="text-slate-300 mx-1.5">·</span>
+                    {s.duration_minutes} min
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  aria-label={`Remover ${s.name}`}
+                  onClick={() => void removeService(s.id, s.name)}
+                  className="h-10 w-10 rounded-xl text-slate-300 hover:text-red-500 hover:bg-red-50 flex items-center justify-center transition-colors shrink-0"
+                >
+                  <Trash2 size={16} />
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
+
+      {/* Formulário */}
+      {formOpen || isEmpty ? (
+        <form
+          className="rounded-[28px] border border-slate-100 bg-white shadow-wg-subtle p-5 sm:p-6 space-y-5"
+          onSubmit={(e) => {
+            e.preventDefault();
+            void addService();
+          }}
+        >
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <p className="text-lg font-black text-slate-900 tracking-tight">
+                {isEmpty ? "Primeiro serviço" : "Novo serviço"}
+              </p>
+              <p className="text-sm text-slate-500 font-medium mt-0.5">
+                Nome, preço e duração — o essencial.
+              </p>
+            </div>
+            {!isEmpty ? (
+              <button
+                type="button"
+                aria-label="Fechar"
+                onClick={() => {
+                  setFormOpen(false);
+                  resetForm();
+                  setError(null);
+                }}
+                className="h-9 w-9 rounded-xl text-slate-400 hover:bg-slate-50 flex items-center justify-center"
+              >
+                <X size={18} />
+              </button>
+            ) : null}
+          </div>
+
           <div className="space-y-1.5">
-            <Label className="text-xs font-bold uppercase tracking-wider text-slate-500">
-              Descrição (opcional)
+            <Label htmlFor="svc-name" className="text-xs font-bold text-slate-600">
+              Nome
             </Label>
-            <Textarea
-              placeholder="Detalhe curto do serviço"
-              value={newDesc}
-              onChange={(e) => setNewDesc(e.target.value)}
+            <Input
+              id="svc-name"
+              ref={nameRef}
+              placeholder="Ex.: Corte, Barba, Escova…"
+              value={newName}
+              onChange={(e) => setNewName(e.target.value)}
+              className="h-14 px-5 rounded-2xl bg-slate-50 border-none font-bold text-base focus-visible:ring-1 focus-visible:ring-[#64b34d]"
+              autoComplete="off"
             />
           </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <Label htmlFor="svc-price" className="text-xs font-bold text-slate-600">
+                Preço
+              </Label>
+              <div className="relative">
+                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-sm pointer-events-none">
+                  R$
+                </span>
+                <Input
+                  id="svc-price"
+                  placeholder="50"
+                  inputMode="decimal"
+                  value={newPrice}
+                  onChange={(e) => setNewPrice(e.target.value)}
+                  className="h-14 pl-12 pr-4 rounded-2xl bg-slate-50 border-none font-bold text-base focus-visible:ring-1 focus-visible:ring-[#64b34d]"
+                />
+              </div>
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="svc-duration" className="text-xs font-bold text-slate-600">
+                Duração
+              </Label>
+              <div className="relative">
+                <Input
+                  id="svc-duration"
+                  inputMode="numeric"
+                  value={newDuration}
+                  onChange={(e) => setNewDuration(e.target.value.replace(/\D/g, "").slice(0, 3))}
+                  className="h-14 px-4 pr-12 rounded-2xl bg-slate-50 border-none font-bold text-base focus-visible:ring-1 focus-visible:ring-[#64b34d]"
+                />
+                <span className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-xs pointer-events-none">
+                  min
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex flex-wrap gap-2">
+            {DURATION_PRESETS.map((mins) => {
+              const active = Number(newDuration) === mins;
+              return (
+                <button
+                  key={mins}
+                  type="button"
+                  onClick={() => setNewDuration(String(mins))}
+                  className={`h-9 px-3 rounded-xl text-xs font-bold transition-colors ${
+                    active
+                      ? "bg-[#64b34d] text-white"
+                      : "bg-slate-50 text-slate-600 hover:bg-slate-100"
+                  }`}
+                >
+                  {mins} min
+                </button>
+              );
+            })}
+          </div>
+
+          {!showExtras ? (
+            <button
+              type="button"
+              onClick={() => setShowExtras(true)}
+              className="text-sm font-bold text-slate-500 hover:text-[#64b34d] transition-colors"
+            >
+              + Foto ou descrição (opcional)
+            </button>
+          ) : (
+            <div className="space-y-4 pt-1 border-t border-slate-100">
+              <div className="space-y-2">
+                <Label className="text-xs font-bold text-slate-600">Foto (opcional)</Label>
+                <input
+                  ref={fileRef}
+                  type="file"
+                  accept="image/png,image/jpeg,image/webp"
+                  className="hidden"
+                  onChange={(e) => {
+                    const f = e.target.files?.[0];
+                    if (f) void uploadServiceImage(f);
+                  }}
+                />
+                {newImage ? (
+                  <div className="flex items-center gap-3">
+                    <div className="w-16 h-16 rounded-2xl overflow-hidden bg-slate-100 shrink-0">
+                      <img src={newImage} alt="" className="w-full h-full object-cover" />
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setNewImage(null);
+                        if (fileRef.current) fileRef.current.value = "";
+                      }}
+                      className="text-xs font-bold text-slate-500 hover:text-red-500"
+                    >
+                      Remover foto
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    disabled={uploading}
+                    onClick={() => fileRef.current?.click()}
+                    className="w-full h-24 rounded-2xl border border-dashed border-slate-200 bg-slate-50 hover:bg-slate-100/80 flex flex-col items-center justify-center gap-1.5 text-slate-400 transition-colors"
+                  >
+                    {uploading ? (
+                      <Loader2 className="animate-spin" size={20} />
+                    ) : (
+                      <>
+                        <ImagePlus size={22} />
+                        <span className="text-xs font-bold">Escolher imagem</span>
+                      </>
+                    )}
+                  </button>
+                )}
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="svc-desc" className="text-xs font-bold text-slate-600">
+                  Descrição (opcional)
+                </Label>
+                <Textarea
+                  id="svc-desc"
+                  placeholder="Ex.: inclui lavagem"
+                  value={newDesc}
+                  onChange={(e) => setNewDesc(e.target.value)}
+                  rows={2}
+                  className="rounded-2xl bg-slate-50 border-none font-medium resize-none focus-visible:ring-1 focus-visible:ring-[#64b34d]"
+                />
+              </div>
+            </div>
+          )}
+
           <Button
-            type="button"
-            onClick={() => void addService()}
-            disabled={saving}
-            className="font-bold bg-[#64b34d] hover:bg-[#58a344] text-white"
+            type="submit"
+            disabled={saving || uploading}
+            className="w-full h-14 rounded-2xl bg-[#64b34d] hover:bg-[#58a344] text-white font-black text-base gap-2"
           >
-            {saving ? <Loader2 className="animate-spin mr-2" size={16} /> : <Check className="mr-2" size={16} />}
-            Adicionar
+            {saving ? (
+              <Loader2 className="animate-spin" size={18} />
+            ) : (
+              <Plus size={18} />
+            )}
+            {isEmpty ? "Salvar serviço" : "Adicionar à lista"}
           </Button>
-        </div>
-      </CardContent>
-    </Card>
+        </form>
+      ) : null}
+    </div>
   );
 }

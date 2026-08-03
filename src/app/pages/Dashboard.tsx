@@ -1015,11 +1015,10 @@ export function Dashboard() {
                 <div className="mb-2">
                   <h3 className="text-2xl font-black text-slate-900 tracking-tighter">Serviços</h3>
                   <p className="text-slate-500 font-medium mt-1 text-base leading-relaxed">
-                    Cadastre aqui o que você oferece e o preço. É a única lista que a IA usa no
-                    WhatsApp — para falar valores e, se o sinal estiver ligado, para cobrar.
+                    Cadastre o que você oferece. A IA usa esta lista no WhatsApp.
                   </p>
                 </div>
-                <BookingServicesPanel />
+                <BookingServicesPanel subtitle="" />
               </motion.div>
             )}
 
