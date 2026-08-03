@@ -26,7 +26,7 @@ type BookingServicesPanelProps = {
  * Cadastro de serviços (booking_services) — usado na Agenda Web e nos planos com IA.
  */
 export function BookingServicesPanel({
-  subtitle = "Cadastre o que você oferece, com preço e duração. A IA usa essa lista para falar os valores no WhatsApp e, se o sinal estiver ligado, para cobrar.",
+  subtitle = "Único lugar para cadastrar o que você oferece, com preço e duração. A IA usa essa lista no WhatsApp (valores e, se o sinal estiver ligado, cobrança).",
 }: BookingServicesPanelProps) {
   const [services, setServices] = useState<BookingService[]>([]);
   const [loading, setLoading] = useState(true);

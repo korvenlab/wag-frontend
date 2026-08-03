@@ -4,7 +4,6 @@ import {
   QrCode,
   Bot, Phone, MessageSquare, Bell, Smile,
   CalendarCheck, Zap, Loader2, Check, Coffee, Moon, Sun, Copy, Download, MessageSquareText,
-  Plus, Trash2
 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/card";
 import { Button } from "../components/ui/button";
@@ -38,15 +37,6 @@ import {
   normalizeTemplatesFromApi,
   type ResponseTemplates,
 } from "../lib/responseTemplates";
-import {
-  emptyServicePriceRow,
-  hasNoFilledPrices,
-  missingNicheSuggestions,
-  nicheServiceLabel,
-  normalizeServicePricesFromApi,
-  templatesForNiche,
-  type ServicePrice,
-} from "../lib/servicePrices";
 
 const REMIND_PRESETS = [15, 30, 60, 120] as const;
 
@@ -118,7 +108,6 @@ export function Dashboard() {
   const [storeName, setStoreName] = useState("");
   const [businessNiche, setBusinessNiche] = useState<BusinessNicheId | null>(null);
   const [businessNicheCustom, setBusinessNicheCustom] = useState("");
-  const [servicePrices, setServicePrices] = useState<ServicePrice[]>([emptyServicePriceRow()]);
   const [messagesAnswered, setMessagesAnswered] = useState(0);
   const [appointmentsMade, setAppointmentsMade] = useState(0);
   const [profileHydrating, setProfileHydrating] = useState(true);
@@ -153,11 +142,6 @@ export function Dashboard() {
         setBusinessNicheCustom(
           cached.business_niche_custom || user.businessNicheCustom || "",
         );
-        if (cached.service_prices?.length) {
-          setServicePrices(normalizeServicePricesFromApi(cached.service_prices));
-        } else if (isBusinessNicheId(cached.business_niche)) {
-          setServicePrices(templatesForNiche(cached.business_niche));
-        }
         setIsAIEnabled(cached.is_ai_enabled ?? true);
         setAiUseEmojis(!!cached.ai_use_emojis);
         setIsWhatsAppConnected(!!cached.whatsapp_connected);
@@ -197,16 +181,6 @@ export function Dashboard() {
               ? data.business_niche_custom
               : "",
           );
-          {
-            const prices = normalizeServicePricesFromApi(data.service_prices);
-            if (prices.length) {
-              setServicePrices(prices);
-            } else if (isBusinessNicheId(data.business_niche)) {
-              setServicePrices(templatesForNiche(data.business_niche));
-            } else {
-              setServicePrices([emptyServicePriceRow()]);
-            }
-          }
           setIsAIEnabled(data.is_ai_enabled ?? true);
           setAiUseEmojis(!!data.ai_use_emojis);
           setIsWhatsAppConnected(!!data.whatsapp_connected);
@@ -235,7 +209,6 @@ export function Dashboard() {
               typeof data.business_niche_custom === "string"
                 ? data.business_niche_custom
                 : null,
-            service_prices: normalizeServicePricesFromApi(data.service_prices),
             is_ai_enabled: data.is_ai_enabled ?? true,
             ai_use_emojis: !!data.ai_use_emojis,
             whatsapp_connected: !!data.whatsapp_connected,
@@ -565,12 +538,6 @@ export function Dashboard() {
           businessNiche,
           businessNicheCustom:
             businessNiche === "outro" ? businessNicheCustom.trim() : undefined,
-          servicePrices: servicePrices
-            .map((row) => ({
-              name: row.name.trim(),
-              price: row.price.trim(),
-            }))
-            .filter((row) => row.name && row.price),
         }),
       });
       if (response.ok) {
@@ -1048,8 +1015,8 @@ export function Dashboard() {
                 <div className="mb-2">
                   <h3 className="text-2xl font-black text-slate-900 tracking-tighter">Serviços</h3>
                   <p className="text-slate-500 font-medium mt-1 text-base leading-relaxed">
-                    Cadastre o que você oferece e o preço. A IA usa isso no WhatsApp para falar os
-                    valores — e, se o sinal estiver ligado, para cobrar.
+                    Cadastre aqui o que você oferece e o preço. É a única lista que a IA usa no
+                    WhatsApp — para falar valores e, se o sinal estiver ligado, para cobrar.
                   </p>
                 </div>
                 <BookingServicesPanel />
@@ -1088,7 +1055,8 @@ export function Dashboard() {
                   <div className="mb-10">
                     <h3 className="text-2xl font-black text-slate-900 tracking-tighter">Configurações do Perfil</h3>
                     <p className="text-slate-500 font-medium mt-1 text-base leading-relaxed">
-                      Nome da loja, nicho e valores — a IA usa isso no WhatsApp no tom certo e para responder preços.
+                      Nome da loja e nicho — a IA usa isso no WhatsApp no tom certo. Preços e
+                      duração ficam em Serviços.
                     </p>
                   </div>
                   <div className="space-y-8 max-w-lg">
@@ -1105,14 +1073,7 @@ export function Dashboard() {
                             <button
                               key={opt.id}
                               type="button"
-                              onClick={() => {
-                                setBusinessNiche(opt.id);
-                                setServicePrices((prev) =>
-                                  hasNoFilledPrices(prev)
-                                    ? templatesForNiche(opt.id)
-                                    : prev,
-                                );
-                              }}
+                              onClick={() => setBusinessNiche(opt.id)}
                               className={`text-left rounded-2xl border-2 px-4 py-3 transition-all ${
                                 active
                                   ? "border-[#64b34d] bg-green-50/60"
@@ -1135,129 +1096,20 @@ export function Dashboard() {
                       )}
                     </div>
 
-                    <div className="space-y-3">
-                      <div className="flex items-end justify-between gap-3">
-                        <div>
-                          <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 ml-1">
-                            {nicheServiceLabel(businessNiche)}
-                          </Label>
-                          <p className="text-slate-500 text-xs font-medium mt-1 ml-1 leading-relaxed">
-                            Incluso em todos os planos (Basic, Pro e Pro+). A IA usa esses valores no
-                            WhatsApp. Para cobrar sinal, cadastre também em{" "}
-                            <button
-                              type="button"
-                              className="text-[#64b34d] font-bold underline-offset-2 hover:underline"
-                              onClick={() => setActiveSection("services")}
-                            >
-                              Serviços
-                            </button>{" "}
-                            (preço e duração oficiais).
-                          </p>
-                        </div>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          onClick={() =>
-                            setServicePrices((prev) =>
-                              prev.length >= 40 ? prev : [...prev, emptyServicePriceRow()],
-                            )
-                          }
-                          className="h-10 shrink-0 rounded-xl border-slate-200 font-bold text-xs gap-1.5"
-                        >
-                          <Plus size={14} />
-                          Serviço
-                        </Button>
-                      </div>
-
-                      {businessNiche && hasNoFilledPrices(servicePrices) && (
-                        <button
-                          type="button"
-                          onClick={() => setServicePrices(templatesForNiche(businessNiche))}
-                          className="text-left w-full rounded-2xl border border-dashed border-[#64b34d]/40 bg-green-50/40 px-4 py-3 hover:bg-green-50/70 transition-colors"
-                        >
-                          <p className="text-sm font-black text-slate-900">
-                            Usar serviços típicos de {BUSINESS_NICHE_OPTIONS.find((o) => o.id === businessNiche)?.label}
-                          </p>
-                          <p className="text-[11px] text-slate-500 font-medium mt-0.5">
-                            Monta a lista pronta — você só digita os preços.
-                          </p>
-                        </button>
-                      )}
-
-                      <div className="space-y-2">
-                        {servicePrices.map((row, index) => (
-                          <div key={index} className="flex gap-2 items-center">
-                            <Input
-                              value={row.name}
-                              onChange={(e) => {
-                                const value = e.target.value;
-                                setServicePrices((prev) =>
-                                  prev.map((r, i) => (i === index ? { ...r, name: value } : r)),
-                                );
-                              }}
-                              placeholder={
-                                businessNiche === "barbearia"
-                                  ? "Ex.: Corte masculino"
-                                  : businessNiche === "salao"
-                                    ? "Ex.: Escova"
-                                    : businessNiche === "manicure"
-                                      ? "Ex.: Manicure"
-                                      : businessNiche === "estetica"
-                                        ? "Ex.: Limpeza de pele"
-                                        : "Ex.: Serviço"
-                              }
-                              className="h-12 flex-1 px-4 rounded-2xl bg-slate-50 border-none font-bold"
-                            />
-                            <Input
-                              value={row.price}
-                              onChange={(e) => {
-                                const value = e.target.value;
-                                setServicePrices((prev) =>
-                                  prev.map((r, i) => (i === index ? { ...r, price: value } : r)),
-                                );
-                              }}
-                              placeholder="R$ 45"
-                              className="h-12 w-[7.5rem] shrink-0 px-3 rounded-2xl bg-slate-50 border-none font-bold"
-                            />
-                            <button
-                              type="button"
-                              aria-label="Remover serviço"
-                              onClick={() =>
-                                setServicePrices((prev) => {
-                                  const next = prev.filter((_, i) => i !== index);
-                                  return next.length ? next : [emptyServicePriceRow()];
-                                })
-                              }
-                              className="h-12 w-12 shrink-0 rounded-2xl bg-slate-50 text-slate-400 hover:text-red-500 hover:bg-red-50 flex items-center justify-center transition-colors"
-                            >
-                              <Trash2 size={16} />
-                            </button>
-                          </div>
-                        ))}
-                      </div>
-
-                      {missingNicheSuggestions(businessNiche, servicePrices).length > 0 && (
-                        <div className="flex flex-wrap gap-2 pt-1">
-                          {missingNicheSuggestions(businessNiche, servicePrices)
-                            .slice(0, 8)
-                            .map((name) => (
-                              <button
-                                key={name}
-                                type="button"
-                                onClick={() =>
-                                  setServicePrices((prev) =>
-                                    prev.length >= 40
-                                      ? prev
-                                      : [...prev.filter((r) => r.name.trim() || r.price.trim()), { name, price: "" }],
-                                  )
-                                }
-                                className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-[11px] font-bold text-slate-600 hover:border-[#64b34d] hover:text-[#64b34d] transition-colors"
-                              >
-                                + {name}
-                              </button>
-                            ))}
-                        </div>
-                      )}
+                    <div className="rounded-2xl border border-slate-100 bg-slate-50/80 px-4 py-4 space-y-2">
+                      <p className="text-sm font-bold text-slate-800">Preços e serviços</p>
+                      <p className="text-xs text-slate-500 font-medium leading-relaxed">
+                        Cadastre nomes, preços e duração só no menu Serviços. A IA usa essa lista
+                        no WhatsApp — e o sinal, se estiver ligado.
+                      </p>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => setActiveSection("services")}
+                        className="h-10 rounded-xl border-slate-200 font-bold text-xs"
+                      >
+                        Ir para Serviços
+                      </Button>
                     </div>
 
                     <Button
