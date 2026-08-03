@@ -1055,8 +1055,7 @@ export function Dashboard() {
                   <div className="mb-10">
                     <h3 className="text-2xl font-black text-slate-900 tracking-tighter">Configurações do Perfil</h3>
                     <p className="text-slate-500 font-medium mt-1 text-base leading-relaxed">
-                      Nome da loja e nicho — a IA usa isso no WhatsApp no tom certo. Preços e
-                      duração ficam em Serviços.
+                      Nome da loja e nicho — a IA usa isso no WhatsApp no tom certo.
                     </p>
                   </div>
                   <div className="space-y-8 max-w-lg">
@@ -1094,22 +1093,6 @@ export function Dashboard() {
                           className="h-12 px-4 rounded-2xl bg-slate-50 border-none font-bold"
                         />
                       )}
-                    </div>
-
-                    <div className="rounded-2xl border border-slate-100 bg-slate-50/80 px-4 py-4 space-y-2">
-                      <p className="text-sm font-bold text-slate-800">Preços e serviços</p>
-                      <p className="text-xs text-slate-500 font-medium leading-relaxed">
-                        Cadastre nomes, preços e duração só no menu Serviços. A IA usa essa lista
-                        no WhatsApp — e o sinal, se estiver ligado.
-                      </p>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        onClick={() => setActiveSection("services")}
-                        className="h-10 rounded-xl border-slate-200 font-bold text-xs"
-                      >
-                        Ir para Serviços
-                      </Button>
                     </div>
 
                     <Button
