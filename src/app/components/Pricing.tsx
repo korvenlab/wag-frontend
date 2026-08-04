@@ -88,11 +88,8 @@ export function Pricing() {
 
         <article
           data-gsap="item"
-          className="mb-10 relative flex flex-col md:flex-row md:items-stretch gap-0 rounded-[32px] border-2 border-[#64b34d] ring-2 ring-[#64b34d]/20 bg-white shadow-wg-elevated overflow-hidden md:scale-[1.01] z-10"
+          className="mb-10 relative flex flex-col md:flex-row md:items-stretch gap-0 rounded-[32px] border border-[#64b34d]/40 bg-white shadow-wg-elevated overflow-hidden"
         >
-          <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-slate-900 text-white px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-widest z-10">
-            Mais popular
-          </div>
           <div className="flex-1 p-8 md:p-10 space-y-5">
             <div className="inline-flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-[#4d8f3b] bg-green-50 border border-green-100 px-3 py-1 rounded-full">
               <Link2 size={12} /> Sem IA · só agendamento web
@@ -119,7 +116,7 @@ export function Pricing() {
               ))}
             </ul>
           </div>
-          <div className="md:w-64 p-8 md:p-10 flex flex-col justify-center border-t md:border-t-0 md:border-l border-[#64b34d]/20 bg-[#64b34d]/5">
+          <div className="md:w-64 p-8 md:p-10 flex flex-col justify-center border-t md:border-t-0 md:border-l border-slate-100 bg-[var(--wagoo-paper)]">
             <button
               type="button"
               onClick={() => void handleCheckout(AGENDA_WEB_PLAN.tier)}

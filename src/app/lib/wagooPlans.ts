@@ -19,7 +19,6 @@ export const AGENDA_WEB_PLAN: WagooPlanCard = {
   priceBrl: 20,
   maxUsers: 0,
   description: "Link público para o cliente agendar, com confirmação e lembretes no WhatsApp",
-  highlight: true,
   kind: "booking",
   extras: [
     "Página pública com link exclusivo",
@@ -48,6 +47,7 @@ export const WAGOO_PLAN_CARDS: WagooPlanCard[] = [
     priceBrl: 149,
     maxUsers: 3,
     description: "Até 3 usuários na equipe com o mesmo WhatsApp",
+    highlight: true,
     kind: "ai",
     extras: [
       "Agenda Web inclusa no painel",
