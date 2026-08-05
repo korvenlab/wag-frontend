@@ -214,10 +214,10 @@ export function PublicCommissionPage() {
 
   const sourceLabel =
     data?.source === "manual"
-      ? "Valor da planilha / lançamento do salão"
+      ? "Valor final da planilha / lançamento (Analytics)"
       : data?.source === "automatic"
-        ? `Comissão automática (${data.commission_percent}%)`
-        : "Sem movimento neste mês";
+        ? `Soma das comissões dos atendimentos pagos (${data.commission_percent}%)`
+        : "Sem ganhos neste mês no Analytics";
 
   return (
     <div className="min-h-screen bg-[#0c1210] text-white">
@@ -290,7 +290,7 @@ export function PublicCommissionPage() {
               <div className="flex items-center gap-2 text-[#64b34d]">
                 <Wallet className="h-5 w-5" />
                 <span className="text-[11px] font-black uppercase tracking-widest">
-                  Ganho do mês
+                  Total Analytics do mês
                 </span>
               </div>
               <p className="mt-3 text-4xl font-black tracking-tight sm:text-5xl">
@@ -298,8 +298,11 @@ export function PublicCommissionPage() {
               </p>
               <p className="mt-2 text-sm text-white/50 font-medium">{sourceLabel}</p>
               <p className="mt-3 text-[11px] text-white/35 font-medium leading-relaxed">
-                Valor do Analytics do salão (planilha ou comissão dos atendimentos
-                pagos no app). Não usa saldo de pagamento online.
+                Mesmo valor do Analytics: soma das comissões dos atendimentos
+                pagos no app
+                {data.manual_amount_brl != null
+                  ? " e o valor lançado na planilha (quando houver)."
+                  : "."}
               </p>
             </div>
 
@@ -320,16 +323,24 @@ export function PublicCommissionPage() {
                   {money(data.faturamento_brl)}
                 </dd>
               </div>
-              {data.source !== "manual" ? (
-                <div className="rounded-2xl border border-white/8 bg-white/[0.04] p-5 sm:col-span-2">
-                  <dt className="text-[10px] font-black uppercase tracking-widest text-white/40">
-                    Comissão calculada ({data.commission_percent}%)
-                  </dt>
-                  <dd className="mt-1 text-2xl font-black">
-                    {money(data.auto_commission_brl)}
-                  </dd>
-                </div>
-              ) : null}
+              <div className="rounded-2xl border border-white/8 bg-white/[0.04] p-5">
+                <dt className="text-[10px] font-black uppercase tracking-widest text-white/40">
+                  Comissão app ({data.commission_percent}%)
+                </dt>
+                <dd className="mt-1 text-2xl font-black">
+                  {money(data.auto_commission_brl)}
+                </dd>
+              </div>
+              <div className="rounded-2xl border border-white/8 bg-white/[0.04] p-5">
+                <dt className="text-[10px] font-black uppercase tracking-widest text-white/40">
+                  Planilha / lançamento
+                </dt>
+                <dd className="mt-1 text-2xl font-black">
+                  {data.manual_amount_brl != null
+                    ? money(data.manual_amount_brl)
+                    : "—"}
+                </dd>
+              </div>
             </dl>
 
             <section className="space-y-4">
