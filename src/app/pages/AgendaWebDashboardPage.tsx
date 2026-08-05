@@ -300,10 +300,12 @@ export function AgendaWebDashboardPage() {
             ) : section === "google" ? (
               <AgendaWebGooglePanel />
             ) : section === "pagamentos" ? (
-              <AgendaWebPaymentsPanel />
-              <div className="pt-4">
-                <ClubMembershipPanel />
-              </div>
+              <>
+                <AgendaWebPaymentsPanel />
+                <div className="pt-4">
+                  <ClubMembershipPanel />
+                </div>
+              </>
             ) : (
               <AgendaWebSettingsPanel
                 section={section}
