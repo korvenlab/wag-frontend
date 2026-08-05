@@ -153,6 +153,7 @@ export function AnalyticsEarningsPanel({
   const [merging, setMerging] = useState(false);
 
   const period = useMemo(() => periodFromRange(range.from), [range.from]);
+  const monthLabel = `${String(period.month).padStart(2, "0")}/${period.year}`;
 
   const loadSummary = useCallback(async () => {
     setLoadingSummary(true);
@@ -354,75 +355,69 @@ export function AnalyticsEarningsPanel({
       const res = await apiFetch("/api/analytics/export/template");
       if (!res.ok) return;
       const blob = await res.blob();
-      downloadBlob(blob, "wagoo-ganhos-template.csv");
+      downloadBlob(blob, "wagoo-planilha-salao.csv");
     } catch {
       /* ignore */
     }
   };
 
-  const handleMergeFile = async (file: File | null) => {
+  /** Baixa template → preenche no Excel → sobe e grava no banco. */
+  const handleUploadSpreadsheet = async (file: File | null) => {
     if (!file) return;
     setMerging(true);
     setExportError(null);
     setMergeInfo(null);
     try {
       const text = await file.text();
-
-      // Atualiza o dashboard (caixa da loja + ganhos) com a planilha
-      const previewRes = await apiFetch("/api/analytics/summary/preview", {
+      const res = await apiFetch("/api/analytics/earnings-upload", {
         method: "POST",
         body: JSON.stringify({
-          from: range.from,
-          to: range.to,
           csv: text,
+          from: range.from,
+          period_year: period.year,
+          period_month: period.month,
         }),
       });
-      if (previewRes.ok) {
-        const preview = await previewRes.json();
-        setBarbers(preview.barbers ?? []);
-        setStore(preview.store ?? null);
-        const caixa = preview.store?.caixa_loja_brl;
-        if (caixa != null) {
-          setMergeInfo(
-            `Planilha aplicada: caixa da loja ${moneyLabel(Number(caixa))} (${preview.store?.caixa_fonte === "planilha" ? "da planilha" : "Stripe"}).`,
-          );
-        }
-      }
-
-      const res = await apiFetch("/api/analytics/export/merge", {
-        method: "POST",
-        body: JSON.stringify({
-          from: range.from,
-          to: range.to,
-          csv: text,
-          columns,
-        }),
-      });
+      const body = await res.json().catch(() => ({}));
       if (!res.ok) {
-        const body = await res.json().catch(() => ({}));
-        setExportError(body.error || "Não foi possível mesclar o CSV.");
+        setExportError(body.error || "Não foi possível importar a planilha.");
         return;
       }
-      const rows = res.headers.get("X-Wagoo-Merge-Rows");
-      const matches = res.headers.get("X-Wagoo-Merge-Matches");
-      if (rows) {
-        setMergeInfo((prev) =>
-          `${prev ? `${prev} ` : ""}${rows} linha(s) lidas${matches != null ? `, ${matches} com a equipe` : ""}.`,
-        );
-      }
-      const blob = await res.blob();
-      downloadBlob(
-        blob,
-        `wagoo-analytics-merge-${toDateInputValue(range.from)}.csv`,
+      const saved = Number(body.saved) || 0;
+      setMergeInfo(
+        body.store_saved
+          ? `${saved} valor(es) salvos no mês ${monthLabel} (inclui caixa da loja).`
+          : `${saved} valor(es) salvos no mês ${monthLabel}.`,
       );
+      await Promise.all([loadSummary(), loadEntries()]);
     } catch {
-      setExportError("Erro ao ler ou mesclar o arquivo.");
+      setExportError("Erro ao ler ou enviar o arquivo.");
     } finally {
       setMerging(false);
     }
   };
 
-  const monthLabel = `${String(period.month).padStart(2, "0")}/${period.year}`;
+  const handleClearStoreOverride = async () => {
+    try {
+      const qs = new URLSearchParams({
+        year: String(period.year),
+        month: String(period.month),
+      });
+      const res = await apiFetch(
+        `/api/analytics/earnings-store-override?${qs}`,
+        { method: "DELETE" },
+      );
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        setExportError(body.error || "Não foi possível limpar o caixa da planilha.");
+        return;
+      }
+      setMergeInfo("Caixa da loja voltou aos valores do Stripe.");
+      await Promise.all([loadSummary(), loadEntries()]);
+    } catch {
+      setExportError("Erro de rede.");
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -436,9 +431,9 @@ export function AnalyticsEarningsPanel({
               Faturamento da loja
             </h3>
             <p className="text-slate-500 text-sm font-medium mt-1 leading-relaxed">
-              Caixa = o que sobra no salão depois das taxas Stripe e Wagoo (2%). Comissão
-              dos barbeiros é outro bloco, à parte. Depois da planilha, o valor segue o
-              seu arquivo.
+              Caixa = o que sobra no salão depois das taxas. Comissão dos barbeiros é
+              outro bloco. Se você enviou a planilha com a linha Loja, o caixa segue
+              esse valor.
             </p>
           </div>
         </div>
@@ -512,11 +507,6 @@ export function AnalyticsEarningsPanel({
                   ? ` · clube líq. ${moneyLabel(store.clube_liquido_brl)}`
                   : ""}
               </p>
-              <p className="text-[10px] text-slate-400 font-medium">
-                Estimativa Stripe no{" "}
-                {store.stripe_fee_method === "pix" ? "Pix" : "cartão"} · sem descontar
-                comissão de barbeiro
-              </p>
             </div>
             <div className="rounded-2xl border border-slate-100 bg-slate-50/60 p-5 space-y-1">
               <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">
@@ -526,7 +516,7 @@ export function AnalyticsEarningsPanel({
                 {moneyLabel(store.faturamento_servicos_brl)}
               </p>
               <p className="text-[11px] text-slate-500 font-medium">
-                {store.paid_appointments} pago(s) · preço dos serviços
+                {store.paid_appointments} pago(s)
               </p>
             </div>
             <div className="rounded-2xl border border-slate-100 bg-slate-50/60 p-5 space-y-1">
@@ -537,8 +527,7 @@ export function AnalyticsEarningsPanel({
                 {store.barbeiros_equipe}
               </p>
               <p className="text-[11px] text-slate-500 font-medium">
-                {store.barbeiros_com_movimento} com movimento · ganhos{" "}
-                {moneyLabel(store.ganhos_barbeiros_brl)}
+                Ganhos {moneyLabel(store.ganhos_barbeiros_brl)}
               </p>
             </div>
           </div>
@@ -555,8 +544,7 @@ export function AnalyticsEarningsPanel({
               Ganhos por profissional
             </h3>
             <p className="text-slate-500 text-sm font-medium mt-1 leading-relaxed">
-              Comissão automática dos agendamentos pagos, ou valor manual se você lançar
-              (o manual substitui o automático).
+              Comissão automática, ou o valor da planilha (substitui o automático).
             </p>
           </div>
         </div>
@@ -569,7 +557,7 @@ export function AnalyticsEarningsPanel({
           <p className="text-red-600 text-sm font-medium">{summaryError}</p>
         ) : barbers.length === 0 ? (
           <p className="text-slate-400 text-sm font-medium text-center py-6">
-            Sem dados neste período. Cadastre a equipe ou lance ganhos manuais.
+            Sem dados neste período. Envie a planilha ou cadastre a equipe.
           </p>
         ) : (
           <div className="grid sm:grid-cols-2 gap-3">
@@ -582,7 +570,7 @@ export function AnalyticsEarningsPanel({
                   <p className="font-black text-slate-900">{b.profissional}</p>
                   {b.source === "manual" ? (
                     <Badge className="bg-amber-100 text-amber-800 border-0 font-bold text-[10px]">
-                      Manual
+                      Planilha
                     </Badge>
                   ) : b.source === "automatic" ? (
                     <Badge className="bg-emerald-100 text-emerald-800 border-0 font-bold text-[10px]">
@@ -601,7 +589,7 @@ export function AnalyticsEarningsPanel({
                   {b.paid_appointments_count} pago(s) · auto{" "}
                   {moneyLabel(b.auto_commission_brl)}
                   {b.manual_amount_brl != null
-                    ? ` · manual ${moneyLabel(b.manual_amount_brl)}`
+                    ? ` · planilha ${moneyLabel(b.manual_amount_brl)}`
                     : ""}
                 </p>
               </div>
@@ -610,14 +598,78 @@ export function AnalyticsEarningsPanel({
         )}
       </Card>
 
+      <Card className="rounded-[32px] border-none shadow-wg-elevated bg-white p-8 md:p-10 space-y-6">
+        <div className="flex items-start gap-4">
+          <div className="w-12 h-12 rounded-2xl bg-slate-50 flex items-center justify-center text-[#64b34d] shrink-0">
+            <FileSpreadsheet size={22} />
+          </div>
+          <div>
+            <h3 className="font-black text-xl text-slate-900 tracking-tight">
+              Planilha do salão ({monthLabel})
+            </h3>
+            <p className="text-slate-500 text-sm font-medium mt-1 leading-relaxed">
+              1) Baixe o modelo · 2) Preencha no Excel o que rolou no salão · 3) Envie de
+              volta — gravamos os valores no Wagoo.
+            </p>
+          </div>
+        </div>
+
+        <ol className="text-sm text-slate-600 font-medium space-y-2 list-decimal list-inside">
+          <li>
+            Linha <strong className="text-slate-900">Loja</strong> = caixa da loja
+          </li>
+          <li>Outras linhas = ganhos de cada profissional</li>
+          <li>Colunas: profissional e valor</li>
+        </ol>
+
+        <div className="flex flex-wrap gap-2 items-center">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => void handleTemplate()}
+            className="rounded-xl h-11 text-sm font-black gap-2"
+          >
+            <Download size={16} /> Baixar modelo
+          </Button>
+          <label className="inline-flex items-center gap-2 h-11 px-5 rounded-xl bg-[#64b34d] text-white font-black text-sm cursor-pointer hover:bg-[#4d8f3b]">
+            {merging ? <Loader2 className="animate-spin w-4 h-4" /> : <Upload size={16} />}
+            Enviar planilha
+            <input
+              type="file"
+              accept=".csv,text/csv,application/vnd.ms-excel"
+              className="hidden"
+              disabled={merging}
+              onChange={(e) => {
+                const f = e.target.files?.[0] ?? null;
+                e.target.value = "";
+                void handleUploadSpreadsheet(f);
+              }}
+            />
+          </label>
+        </div>
+
+        {mergeInfo && (
+          <p className="text-emerald-700 text-sm font-bold">{mergeInfo}</p>
+        )}
+        {store?.caixa_fonte === "planilha" && (
+          <Button
+            type="button"
+            variant="outline"
+            className="rounded-xl h-9 text-xs font-black"
+            onClick={() => void handleClearStoreOverride()}
+          >
+            Voltar ao caixa Stripe
+          </Button>
+        )}
+      </Card>
+
       <Card className="rounded-[32px] border-none shadow-wg-elevated bg-white p-8 md:p-10 space-y-5">
         <div>
           <h3 className="font-black text-lg text-slate-900 tracking-tight">
-            Lançamento manual ({monthLabel})
+            Lançamento rápido ({monthLabel})
           </h3>
           <p className="text-slate-500 text-sm font-medium mt-1">
-            Informe quanto o profissional ganhou no mês. Substitui a comissão
-            automática no dashboard e no CSV.
+            Ajuste um profissional sem abrir a planilha.
           </p>
         </div>
         <div className="grid sm:grid-cols-3 gap-3">
@@ -692,6 +744,7 @@ export function AnalyticsEarningsPanel({
                   <p className="font-bold text-slate-800 text-sm">{e.barber_name}</p>
                   <p className="text-xs text-slate-500 font-medium">
                     {moneyLabel(Number(e.amount_brl) || 0)}
+                    {e.note === "planilha" ? " · planilha" : ""}
                   </p>
                 </div>
                 <Button
@@ -712,15 +765,14 @@ export function AnalyticsEarningsPanel({
       <Card className="rounded-[32px] border-none shadow-wg-elevated bg-white p-8 md:p-10 space-y-6">
         <div className="flex items-start gap-4">
           <div className="w-12 h-12 rounded-2xl bg-slate-50 flex items-center justify-center text-[#64b34d] shrink-0">
-            <FileSpreadsheet size={22} />
+            <Download size={22} />
           </div>
           <div>
             <h3 className="font-black text-xl text-slate-900 tracking-tight">
-              Montar planilha
+              Exportar relatório
             </h3>
             <p className="text-slate-500 text-sm font-medium mt-1 leading-relaxed">
-              Escolha as colunas e baixe o CSV do período. Requer Google Agenda para
-              listar eventos (agendamentos pagos entram mesmo sem Google).
+              Baixe o CSV do período com as colunas que preferir.
             </p>
           </div>
         </div>
@@ -771,63 +823,12 @@ export function AnalyticsEarningsPanel({
         </div>
         {!googleConnected && (
           <p className="text-amber-600 text-xs font-bold">
-            Sem Google Agenda: o CSV inclui só agendamentos pagos e lançamentos manuais.
+            Sem Google Agenda: o CSV inclui só agendamentos pagos e lançamentos salvos.
           </p>
         )}
 
-        <div className="border-t border-slate-100 pt-6 space-y-4">
-          <h4 className="font-black text-slate-900">Enviar planilha e mesclar</h4>
-          <p className="text-slate-500 text-sm font-medium">
-            Envie um CSV com <code className="text-xs">profissional,valor</code>. Use a
-            linha <code className="text-xs">Loja</code> (ou Caixa / Faturamento) para o
-            caixa da loja; as outras linhas atualizam os ganhos dos barbeiros. O Wagoo
-            mescla e devolve a planilha completa.
-          </p>
-          <div className="flex flex-wrap gap-2 items-center">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => void handleTemplate()}
-              className="rounded-xl h-10 text-xs font-black gap-2"
-            >
-              <Download size={14} /> Template
-            </Button>
-            <label className="inline-flex items-center gap-2 h-10 px-4 rounded-xl bg-[#64b34d] text-white font-black text-xs cursor-pointer hover:bg-[#4d8f3b]">
-              {merging ? <Loader2 className="animate-spin w-4 h-4" /> : <Upload size={14} />}
-              Mesclar e baixar
-              <input
-                type="file"
-                accept=".csv,text/csv"
-                className="hidden"
-                disabled={merging}
-                onChange={(e) => {
-                  const f = e.target.files?.[0] ?? null;
-                  e.target.value = "";
-                  void handleMergeFile(f);
-                }}
-              />
-            </label>
-          </div>
-          {mergeInfo && (
-            <p className="text-emerald-700 text-xs font-bold">{mergeInfo}</p>
-          )}
-          {store?.caixa_fonte === "planilha" && (
-            <Button
-              type="button"
-              variant="outline"
-              className="rounded-xl h-9 text-xs font-black"
-              onClick={() => {
-                setMergeInfo(null);
-                void loadSummary();
-              }}
-            >
-              Voltar ao caixa Stripe
-            </Button>
-          )}
-        </div>
-
         {exportError && (
-          <p className="text-red-600 text-xs font-medium">{exportError}</p>
+          <p className="text-red-600 text-sm font-medium">{exportError}</p>
         )}
       </Card>
     </div>
