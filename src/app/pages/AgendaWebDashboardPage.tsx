@@ -13,7 +13,7 @@ import {
   Users,
   X,
 } from "lucide-react";
-import { useNavigate, useSearchParams } from "react-router";
+import { Link, useNavigate, useSearchParams } from "react-router";
 import { useAuth } from "../context/AuthContext";
 import { Button } from "../components/ui/button";
 import { FeedbackFab } from "../components/FeedbackFab";
@@ -217,7 +217,14 @@ export function AgendaWebDashboardPage() {
             >
               <Menu size={20} />
             </Button>
-            <img src="/logo.png" alt="Wagoo" className="h-8 w-auto" />
+            <Link
+              to="/"
+              title="Wagoo — página inicial"
+              aria-label="Ir para a página inicial do Wagoo"
+              className="shrink-0"
+            >
+              <img src="/logo.png" alt="Wagoo" className="h-8 w-auto" />
+            </Link>
             <div className="min-w-0">
               <p className="text-xs font-black uppercase tracking-widest text-[#64b34d]">
                 Agenda Web

@@ -18,7 +18,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import { Button } from "./ui/button";
-import { useNavigate } from "react-router";
+import { Link, useNavigate } from "react-router";
 
 export type DashboardNavId =
   | "overview"
@@ -95,7 +95,9 @@ export function DashboardSidebar({
   return (
     <>
       <div className="lg:hidden fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-md border-b px-6 py-4 flex items-center justify-between">
-        <img src="/logo.png" alt="Wagoo Logo" className="w-12 h-12 object-contain" />
+        <Link to="/" title="Wagoo — página inicial" aria-label="Ir para a página inicial do Wagoo">
+          <img src="/logo.png" alt="Wagoo Logo" className="w-12 h-12 object-contain" />
+        </Link>
         <Button
           variant="ghost"
           size="icon"
@@ -117,11 +119,18 @@ export function DashboardSidebar({
             className="fixed top-0 left-0 h-screen w-72 bg-white border-r border-slate-100 z-40 flex flex-col shadow-wg-popover lg:shadow-none"
           >
             <div className="pt-14 lg:pt-10 pb-6 px-6 flex flex-col items-center justify-center shrink-0">
-              <img
-                src="/logo.png"
-                alt="Wagoo Logo"
-                className="w-full max-w-[220px] h-auto object-contain"
-              />
+              <Link
+                to="/"
+                title="Wagoo — página inicial"
+                aria-label="Ir para a página inicial do Wagoo"
+                className="block w-full max-w-[220px]"
+              >
+                <img
+                  src="/logo.png"
+                  alt="Wagoo Logo"
+                  className="w-full h-auto object-contain"
+                />
+              </Link>
             </div>
 
             <nav className="flex-1 px-6 space-y-2">
