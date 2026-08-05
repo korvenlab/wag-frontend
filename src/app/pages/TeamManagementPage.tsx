@@ -686,8 +686,8 @@ export function TeamManagementPage() {
                               </div>
                             </div>
                             <p className="text-[11px] text-slate-400 font-medium">
-                              Só {b.nome} vê os ganhos dele neste link. Envie por WhatsApp ou
-                              mensagem.
+                              Só {b.nome} vê os ganhos (Analytics) e os horários dele.
+                              Envie por WhatsApp ou mensagem.
                             </p>
                           </>
                         ) : (
