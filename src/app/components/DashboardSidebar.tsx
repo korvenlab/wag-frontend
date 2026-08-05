@@ -15,6 +15,7 @@ import {
   Link2,
   Scissors,
   Wallet,
+  Sparkles,
 } from "lucide-react";
 import { Button } from "./ui/button";
 import { useNavigate } from "react-router";
@@ -28,6 +29,7 @@ export type DashboardNavId =
   | "calendar"
   | "services"
   | "payments"
+  | "club"
   | "agenda-web"
   | "settings";
 
@@ -176,6 +178,12 @@ export function DashboardSidebar({
                 label="Pagamentos"
                 active={active === "payments"}
                 onClick={() => goDashboard("payments")}
+              />
+              <NavItem
+                icon={<Sparkles size={20} />}
+                label="Clube"
+                active={active === "club"}
+                onClick={() => goDashboard("club")}
               />
               <NavItem
                 icon={<Link2 size={20} />}

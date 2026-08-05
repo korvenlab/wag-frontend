@@ -8,6 +8,7 @@ import {
   Menu,
   MessageCircle,
   Settings2,
+  Sparkles,
   Store,
   Users,
   X,
@@ -74,6 +75,12 @@ const NAV: {
     icon: CreditCard,
   },
   {
+    id: "clube",
+    label: "Clube",
+    hint: "Assinatura mensal",
+    icon: Sparkles,
+  },
+  {
     id: "google",
     label: "Google Agenda",
     hint: "Salvar no calendário",
@@ -119,6 +126,10 @@ const SECTION_COPY: Record<
   pagamentos: {
     title: "Pagamentos",
     subtitle: "Receba dos clientes e, se quiser, peça um sinal na hora de agendar.",
+  },
+  clube: {
+    title: "Clube",
+    subtitle: "Ative ou desative o clube e copie o link para o cliente.",
   },
   google: {
     title: "Google Agenda",
@@ -300,12 +311,9 @@ export function AgendaWebDashboardPage() {
             ) : section === "google" ? (
               <AgendaWebGooglePanel />
             ) : section === "pagamentos" ? (
-              <>
-                <AgendaWebPaymentsPanel />
-                <div className="pt-4">
-                  <ClubMembershipPanel />
-                </div>
-              </>
+              <AgendaWebPaymentsPanel />
+            ) : section === "clube" ? (
+              <ClubMembershipPanel />
             ) : (
               <AgendaWebSettingsPanel
                 section={section}

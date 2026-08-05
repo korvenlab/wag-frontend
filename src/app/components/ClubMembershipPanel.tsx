@@ -2,9 +2,9 @@ import { useCallback, useEffect, useState } from "react";
 import {
   CheckCircle2,
   Copy,
-  CreditCard,
   ExternalLink,
   Loader2,
+  Sparkles,
   Users,
 } from "lucide-react";
 import { apiFetch } from "../lib/apiFetch";
@@ -40,7 +40,22 @@ type ClubMe = {
   wagoo_fee_percent: number;
 };
 
-/** Configuração do Clube mensal (assinatura do cliente via cartão). */
+function memberStatusLabel(status: string) {
+  switch (status) {
+    case "active":
+      return "Ativo";
+    case "pending":
+      return "Pendente";
+    case "past_due":
+      return "Em atraso";
+    case "canceled":
+      return "Cancelado";
+    default:
+      return status;
+  }
+}
+
+/** Configuração do Clube mensal. */
 export function ClubMembershipPanel() {
   const [data, setData] = useState<ClubMe | null>(null);
   const [loading, setLoading] = useState(true);
@@ -104,7 +119,7 @@ export function ClubMembershipPanel() {
         setError(body.error || "Não foi possível salvar o clube.");
         return;
       }
-      setMsg("Clube salvo. Link do cliente e Payment Link atualizados.");
+      setMsg(active ? "Clube ativo." : "Clube desativado.");
       await load();
     } catch {
       setError("Erro de rede ao salvar.");
@@ -129,27 +144,34 @@ export function ClubMembershipPanel() {
       <Card className="rounded-[32px] border-none shadow-wg-elevated bg-white">
         <CardHeader>
           <CardTitle className="text-lg font-black flex items-center gap-2">
-            <CreditCard className="text-[#64b34d]" size={20} />
-            Clube mensal
+            <Sparkles className="text-[#64b34d]" size={20} />
+            Clube
           </CardTitle>
-          <p className="text-slate-500 text-sm font-medium leading-relaxed">
-            Cliente paga todo mês no cartão e usa o salão. Taxa Wagoo:{" "}
-            {data?.wagoo_fee_percent ?? 2}% sobre a mensalidade. Link da loja:{" "}
-            <code className="text-xs">/a/seu-slug/cliente</code>
-          </p>
         </CardHeader>
         <CardContent className="space-y-5">
           {!data?.connect_ready && (
             <p className="text-amber-700 text-sm font-bold bg-amber-50 rounded-xl px-4 py-3">
-              Conecte a conta em Pagamentos e termine o cadastro Stripe antes de
-              ativar o clube.
+              Conecte a conta em Pagamentos antes de ativar o clube.
             </p>
           )}
+
+          <div className="flex items-center justify-between rounded-2xl bg-slate-50 px-4 py-3">
+            <div>
+              <p className="font-bold text-slate-800 text-sm">
+                {active ? "Clube ativo" : "Clube desativado"}
+              </p>
+            </div>
+            <Switch
+              checked={active}
+              onCheckedChange={setActive}
+              className="data-[state=checked]:bg-[#64b34d]"
+            />
+          </div>
 
           <div className="grid sm:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400">
-                Nome do clube
+                Nome
               </Label>
               <Input
                 value={name}
@@ -183,27 +205,13 @@ export function ClubMembershipPanel() {
             />
           </div>
 
-          <div className="flex items-center justify-between rounded-2xl bg-slate-50 px-4 py-3">
-            <div>
-              <p className="font-bold text-slate-800 text-sm">Clube ativo</p>
-              <p className="text-xs text-slate-500 font-medium">
-                Aparece em /a/…/cliente quando ligado
-              </p>
-            </div>
-            <Switch
-              checked={active}
-              onCheckedChange={setActive}
-              className="data-[state=checked]:bg-[#64b34d]"
-            />
-          </div>
-
           <Button
             type="button"
             onClick={() => void save()}
             disabled={saving || !data?.connect_ready}
             className="h-12 px-6 rounded-xl bg-[#64b34d] hover:bg-[#4d8f3b] text-white font-black gap-2"
           >
-            {saving ? <Loader2 className="animate-spin" /> : "Salvar e gerar links"}
+            {saving ? <Loader2 className="animate-spin" /> : "Salvar"}
           </Button>
 
           {error && <p className="text-red-600 text-sm font-medium">{error}</p>}
@@ -215,50 +223,36 @@ export function ClubMembershipPanel() {
         </CardContent>
       </Card>
 
-      {(portalUrl || payLink) && (
+      {portalUrl && (
         <Card className="rounded-[32px] border-none shadow-wg-elevated bg-white">
           <CardHeader>
-            <CardTitle className="text-lg font-black">Links do clube</CardTitle>
+            <CardTitle className="text-lg font-black">Link do cliente</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
-            {portalUrl && (
-              <div className="rounded-2xl border-2 border-[#64b34d]/30 bg-[#64b34d]/5 p-5 space-y-3">
-                <p className="text-sm font-black text-slate-900">
-                  Página do cliente (marque no Instagram / WhatsApp)
-                </p>
-                <p className="text-xs text-slate-600 font-medium leading-relaxed">
-                  O cliente confirma o número com um código enviado no WhatsApp do salão
-                  (zap precisa estar conectado). Assim ninguém usa o WhatsApp de outra
-                  pessoa para ver o clube ou pular o sinal.
-                </p>
-                <code className="block text-xs font-bold text-slate-700 bg-white/80 px-3 py-2 rounded-xl break-all">
-                  {portalUrl}
-                </code>
-                <div className="flex flex-wrap gap-2">
-                  <Button
-                    type="button"
-                    size="sm"
-                    className="bg-[#64b34d] hover:bg-[#4d8f3b] text-white font-bold"
-                    onClick={() => {
-                      void navigator.clipboard.writeText(portalUrl);
-                      setMsg("Link do cliente copiado.");
-                    }}
-                  >
-                    <Copy size={14} className="mr-1" /> Copiar
-                  </Button>
-                  <Button type="button" variant="outline" size="sm" asChild>
-                    <a href={portalUrl} target="_blank" rel="noreferrer">
-                      <ExternalLink size={14} className="mr-1" /> Abrir
-                    </a>
-                  </Button>
-                </div>
-              </div>
-            )}
-            {payLink && (
-              <div className="rounded-2xl border border-slate-200 p-5 space-y-2">
-                <p className="text-sm font-black text-slate-900">
-                  Payment Link Stripe (só pagamento)
-                </p>
+          <CardContent className="space-y-3">
+            <code className="block text-xs font-bold text-slate-700 bg-slate-50 px-3 py-2 rounded-xl break-all">
+              {portalUrl}
+            </code>
+            <div className="flex flex-wrap gap-2">
+              <Button
+                type="button"
+                size="sm"
+                className="bg-[#64b34d] hover:bg-[#4d8f3b] text-white font-bold"
+                onClick={() => {
+                  void navigator.clipboard.writeText(portalUrl);
+                  setMsg("Link copiado.");
+                }}
+              >
+                <Copy size={14} className="mr-1" /> Copiar
+              </Button>
+              <Button type="button" variant="outline" size="sm" asChild>
+                <a href={portalUrl} target="_blank" rel="noreferrer">
+                  <ExternalLink size={14} className="mr-1" /> Abrir
+                </a>
+              </Button>
+            </div>
+            {payLink ? (
+              <div className="pt-2 space-y-2">
+                <p className="text-sm font-black text-slate-900">Link de pagamento</p>
                 <code className="block text-xs font-bold text-slate-600 bg-slate-50 px-3 py-2 rounded-xl break-all">
                   {payLink}
                 </code>
@@ -268,13 +262,13 @@ export function ClubMembershipPanel() {
                   size="sm"
                   onClick={() => {
                     void navigator.clipboard.writeText(payLink);
-                    setMsg("Payment Link copiado.");
+                    setMsg("Link de pagamento copiado.");
                   }}
                 >
                   <Copy size={14} className="mr-1" /> Copiar
                 </Button>
               </div>
-            )}
+            ) : null}
           </CardContent>
         </Card>
       )}
@@ -303,7 +297,7 @@ export function ClubMembershipPanel() {
                 </div>
                 <div className="text-right">
                   <p className="text-xs font-black uppercase tracking-wider text-slate-500">
-                    {m.status}
+                    {memberStatusLabel(m.status)}
                   </p>
                   {m.current_period_end && (
                     <p className="text-[11px] text-slate-400 font-medium">

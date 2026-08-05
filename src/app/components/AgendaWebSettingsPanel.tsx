@@ -108,6 +108,7 @@ export type AgendaWebSection =
   | "profissionais"
   | "agendamentos"
   | "pagamentos"
+  | "clube"
   | "whatsapp"
   | "google";
 
@@ -202,6 +203,7 @@ export function AgendaWebSettingsPanel({
       profissionais: "profissionais",
       agendamentos: "agendamentos",
       pagamentos: "links",
+      clube: "links",
       whatsapp: "links",
       google: "links",
     };
@@ -626,18 +628,14 @@ export function AgendaWebSettingsPanel({
                 <CreditCard size={20} />
               </div>
               <div>
-                <p className="text-sm font-black text-slate-900">Link do clube (cliente)</p>
+                <p className="text-sm font-black text-slate-900">Link do clube</p>
                 <p className="text-[10px] font-black uppercase tracking-wider text-slate-400">
-                  Mensalidade · área do membro
+                  Para o cliente
                 </p>
               </div>
             </div>
-            <p className="text-sm text-slate-600 font-medium leading-relaxed">
-              O cliente assina o clube mensal no cartão, vê dias restantes e os horários da
-              loja. Configure o valor em Pagamentos.
-            </p>
             <code className="block text-xs font-bold text-slate-700 bg-slate-50 border border-slate-100 px-3 py-2 rounded-xl break-all">
-              {clientUrl || (slug ? `/a/${slug}/cliente` : "Disponível após salvar o negócio")}
+              {clientUrl || "Salve o negócio para gerar o link"}
             </code>
             {clientUrl ? (
               <div className="flex flex-wrap gap-2">
@@ -647,7 +645,7 @@ export function AgendaWebSettingsPanel({
                   size="sm"
                   onClick={() => {
                     void navigator.clipboard.writeText(clientUrl);
-                    setMsg("Link do clube (cliente) copiado.");
+                    setMsg("Link do clube copiado.");
                   }}
                 >
                   <Copy size={14} className="mr-1" /> Copiar
@@ -657,6 +655,16 @@ export function AgendaWebSettingsPanel({
                     <ExternalLink size={14} className="mr-1" /> Abrir
                   </a>
                 </Button>
+                {onNavigateSection ? (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => onNavigateSection("clube")}
+                  >
+                    Abrir Clube
+                  </Button>
+                ) : null}
               </div>
             ) : null}
           </div>
@@ -665,8 +673,7 @@ export function AgendaWebSettingsPanel({
             <Link2 className="shrink-0 mt-0.5 text-slate-400" size={16} />
             <p>
               Dica: no bio do Instagram e no status do WhatsApp, use o{" "}
-              <strong className="text-slate-800 font-bold">link verde (agendar)</strong>. O link de
-              consulta e o do clube são opcionais.
+              <strong className="text-slate-800 font-bold">link de agendar</strong>.
             </p>
           </div>
         </CardContent>

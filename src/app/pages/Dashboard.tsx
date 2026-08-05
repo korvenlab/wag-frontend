@@ -245,6 +245,7 @@ export function Dashboard() {
         "settings",
         "services",
         "payments",
+        "club",
         "agenda-web",
       ].includes(section)
     ) {
@@ -549,6 +550,7 @@ export function Dashboard() {
     activeSection === "settings" ||
     activeSection === "services" ||
     activeSection === "payments" ||
+    activeSection === "club" ||
     activeSection === "agenda-web"
       ? (activeSection as DashboardNavId)
       : "overview";
@@ -895,15 +897,22 @@ export function Dashboard() {
                 <div className="mb-2">
                   <h3 className="text-2xl font-black text-slate-900 tracking-tighter">Pagamentos</h3>
                   <p className="text-slate-500 font-medium mt-1 text-base leading-relaxed">
-                    Conta para receber, sinal e clube mensal. Com o sinal ligado, o cliente
-                    precisa pagar para confirmar. Com o sinal desligado, você decide se libera o
-                    pagamento adiantado opcional (100% do serviço).
+                    Conta para receber e sinal do agendamento.
                   </p>
                 </div>
                 <AgendaWebPaymentsPanel />
-                <div className="pt-4">
-                  <ClubMembershipPanel />
+              </motion.div>
+            )}
+
+            {activeSection === "club" && (
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="lg:col-span-3 space-y-4">
+                <div className="mb-2">
+                  <h3 className="text-2xl font-black text-slate-900 tracking-tighter">Clube</h3>
+                  <p className="text-slate-500 font-medium mt-1 text-base leading-relaxed">
+                    Ative ou desative o clube e copie o link para o cliente.
+                  </p>
                 </div>
+                <ClubMembershipPanel />
               </motion.div>
             )}
 
