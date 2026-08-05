@@ -58,10 +58,27 @@ type ConnectStatus = {
   };
 };
 
+type ConnectBalance = {
+  currency: string;
+  available_brl: number;
+  pending_brl: number;
+  total_brl: number;
+  payouts_enabled: boolean;
+  charges_enabled?: boolean;
+};
+
+function moneyBrl(n: number) {
+  return n.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+}
+
 /** Pagamentos e sinal antecipado — copy focado no que o dono precisa decidir. */
 export function AgendaWebPaymentsPanel() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [status, setStatus] = useState<ConnectStatus | null>(null);
+  const [balance, setBalance] = useState<ConnectBalance | null>(null);
+  const [balanceError, setBalanceError] = useState<string | null>(null);
+  const [balanceLoading, setBalanceLoading] = useState(false);
+  const [payoutBusy, setPayoutBusy] = useState(false);
   const [preview, setPreview] = useState<FeePreview | null>(null);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
@@ -71,6 +88,26 @@ export function AgendaWebPaymentsPanel() {
   const [depositPercent, setDepositPercent] = useState(30);
   const [advancePayEnabled, setAdvancePayEnabled] = useState(false);
   const [exampleTotal, setExampleTotal] = useState("100");
+
+  const loadBalance = useCallback(async () => {
+    setBalanceLoading(true);
+    try {
+      const res = await apiFetch("/api/stripe/connect/balance");
+      const data = await res.json().catch(() => null);
+      if (!res.ok) {
+        setBalance(null);
+        setBalanceError(data?.error || "Não foi possível carregar o saldo.");
+        return;
+      }
+      setBalance(data as ConnectBalance);
+      setBalanceError(null);
+    } catch {
+      setBalance(null);
+      setBalanceError("Erro de rede ao carregar o saldo.");
+    } finally {
+      setBalanceLoading(false);
+    }
+  }, []);
 
   const load = useCallback(async () => {
     try {
@@ -85,12 +122,18 @@ export function AgendaWebPaymentsPanel() {
       setDepositPercent(Number(data.deposit_percent) || 30);
       setAdvancePayEnabled(Boolean(data.advance_pay_enabled));
       setError(null);
+      if (data.connected) {
+        void loadBalance();
+      } else {
+        setBalance(null);
+        setBalanceError(null);
+      }
     } catch {
       setError("Erro de rede ao carregar pagamentos.");
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [loadBalance]);
 
   const loadPreview = useCallback(async (total: number, percent: number) => {
     try {
@@ -160,14 +203,43 @@ export function AgendaWebPaymentsPanel() {
       const res = await apiFetch("/api/stripe/connect/dashboard", { method: "POST" });
       const data = await res.json().catch(() => ({}));
       if (!res.ok || !data.url) {
-        setError(data.error || "Não foi possível abrir o painel.");
+        setError(data.error || "Não foi possível abrir a gestão da conta.");
         return;
       }
       window.open(data.url, "_blank", "noopener,noreferrer");
     } catch {
-      setError("Erro de rede ao abrir o painel.");
+      setError("Erro de rede ao abrir a gestão da conta.");
     } finally {
       setBusy(false);
+    }
+  }
+
+  async function transferAvailable() {
+    if (!balance || balance.available_brl < 1) return;
+    setPayoutBusy(true);
+    setError(null);
+    setMsg(null);
+    try {
+      const res = await apiFetch("/api/stripe/connect/payout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ amount_brl: balance.available_brl }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setError(data.error || "Não foi possível transferir agora.");
+        return;
+      }
+      if (data.balance) setBalance(data.balance as ConnectBalance);
+      else void loadBalance();
+      setMsg(
+        data.message ||
+          `Transferência de ${moneyBrl(Number(data.amount_brl) || 0)} solicitada para sua conta bancária.`,
+      );
+    } catch {
+      setError("Erro de rede ao transferir.");
+    } finally {
+      setPayoutBusy(false);
     }
   }
 
@@ -216,16 +288,17 @@ export function AgendaWebPaymentsPanel() {
             Receber pagamentos
           </CardTitle>
           <p className="text-sm text-slate-500 font-medium leading-relaxed">
-            Cadastre a conta onde o dinheiro cai. Sem isso, o cliente agenda sem pagar pelo app.
+            Para ver saldo e transferir para o banco aqui no Wagoo, você precisa primeiro criar
+            sua conta de recebimentos (cadastro seguro com documentos e conta bancária).
           </p>
           <ul className="text-xs text-slate-500 font-medium space-y-1 mt-2">
             <li>
-              <strong className="text-slate-700">Se não configurar:</strong> você não recebe pelo
-              app — só agenda.
+              <strong className="text-slate-700">Sem cadastro:</strong> sem saldo no app e sem
+              cobrança de sinal/pagamento pelo link.
             </li>
             <li>
-              <strong className="text-slate-700">Se configurar:</strong> pode pedir sinal; o valor
-              cai na sua conta bancária.
+              <strong className="text-slate-700">Com cadastro completo:</strong> o saldo aparece
+              aqui e você transfere para o banco sem sair do Wagoo.
             </li>
           </ul>
         </CardHeader>
@@ -279,10 +352,111 @@ export function AgendaWebPaymentsPanel() {
             </ul>
           </div>
 
+          {!status?.connected ? (
+            <div className="rounded-2xl border border-amber-200 bg-amber-50 p-5 space-y-2">
+              <p className="text-sm font-black text-amber-900">Saldo bloqueado</p>
+              <p className="text-sm text-amber-800 font-medium leading-relaxed">
+                Cadastre a conta de recebimentos para liberar saldo, cobranças e transferência
+                para o banco aqui no Wagoo.
+              </p>
+            </div>
+          ) : (
+            <div className="rounded-2xl border border-[#64b34d]/25 bg-[#64b34d]/5 p-5 space-y-4">
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2">
+                  <Wallet className="text-[#64b34d]" size={18} />
+                  <p className="text-sm font-black text-slate-900">Saldo na conta</p>
+                </div>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="h-8 text-xs font-bold text-slate-500"
+                  disabled={busy || balanceLoading || payoutBusy}
+                  onClick={() => void loadBalance()}
+                >
+                  {balanceLoading ? (
+                    <Loader2 className="animate-spin" size={14} />
+                  ) : (
+                    "Atualizar"
+                  )}
+                </Button>
+              </div>
+
+              {balanceError ? (
+                <p className="text-xs font-semibold text-amber-700">{balanceError}</p>
+              ) : balance ? (
+                <div className="grid sm:grid-cols-3 gap-3">
+                  <div className="rounded-xl bg-white border border-slate-100 px-4 py-3">
+                    <p className="text-[10px] font-black uppercase tracking-wider text-slate-400">
+                      Disponível
+                    </p>
+                    <p className="text-xl font-black text-slate-900 mt-1">
+                      {moneyBrl(balance.available_brl)}
+                    </p>
+                  </div>
+                  <div className="rounded-xl bg-white border border-slate-100 px-4 py-3">
+                    <p className="text-[10px] font-black uppercase tracking-wider text-slate-400">
+                      A caminho
+                    </p>
+                    <p className="text-xl font-black text-slate-900 mt-1">
+                      {moneyBrl(balance.pending_brl)}
+                    </p>
+                  </div>
+                  <div className="rounded-xl bg-white border border-slate-100 px-4 py-3">
+                    <p className="text-[10px] font-black uppercase tracking-wider text-slate-400">
+                      Total
+                    </p>
+                    <p className="text-xl font-black text-[#4d8f3b] mt-1">
+                      {moneyBrl(balance.total_brl)}
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                <p className="text-xs font-medium text-slate-500 flex items-center gap-2">
+                  <Loader2 className="animate-spin" size={14} /> Carregando saldo…
+                </p>
+              )}
+
+              <p className="text-xs text-slate-500 font-medium leading-relaxed">
+                Disponível já pode ir para sua conta bancária. A caminho ainda está processando.
+              </p>
+
+              {!status.payouts_enabled ? (
+                <p className="text-xs font-semibold text-amber-800 bg-amber-50 border border-amber-100 rounded-xl px-3 py-2">
+                  Transferência ainda bloqueada: termine o cadastro (documentos e conta bancária)
+                  pelo botão abaixo.
+                </p>
+              ) : null}
+
+              <Button
+                type="button"
+                className="w-full sm:w-auto bg-[#64b34d] hover:bg-[#58a344] text-white font-bold rounded-2xl"
+                disabled={
+                  busy ||
+                  payoutBusy ||
+                  !status.payouts_enabled ||
+                  !balance ||
+                  balance.available_brl < 1
+                }
+                onClick={() => void transferAvailable()}
+              >
+                {payoutBusy ? (
+                  <Loader2 className="animate-spin mr-2" size={16} />
+                ) : (
+                  <Wallet className="mr-2" size={16} />
+                )}
+                {balance && balance.available_brl >= 1
+                  ? `Transferir ${moneyBrl(balance.available_brl)} para o banco`
+                  : "Transferir para o banco"}
+              </Button>
+            </div>
+          )}
+
           <div className="flex flex-col sm:flex-row gap-2">
             <Button
               type="button"
-              className="bg-[#64b34d] hover:bg-[#58a344] text-white font-bold rounded-2xl"
+              className="bg-slate-900 hover:bg-[#64b34d] text-white font-bold rounded-2xl"
               disabled={busy}
               onClick={() => void startOnboard()}
             >
@@ -291,7 +465,11 @@ export function AgendaWebPaymentsPanel() {
               ) : (
                 <CreditCard className="mr-2" size={16} />
               )}
-              {status?.connected ? "Continuar cadastro" : "Cadastrar conta"}
+              {status?.connected
+                ? status.payouts_enabled && status.charges_enabled
+                  ? "Atualizar cadastro de recebimentos"
+                  : "Continuar cadastro de recebimentos"
+                : "Criar conta de recebimentos"}
             </Button>
             {status?.connected ? (
               <Button
@@ -302,10 +480,14 @@ export function AgendaWebPaymentsPanel() {
                 onClick={() => void openDashboard()}
               >
                 <ExternalLink className="mr-2" size={16} />
-                Ver saldo e transferências
+                Conta bancária e documentos
               </Button>
             ) : null}
           </div>
+          <p className="text-[11px] text-slate-400 font-medium leading-relaxed">
+            O cadastro e a troca de conta bancária são feitos em uma página segura parceira. Depois
+            disso, saldo e transferência ficam aqui no Wagoo.
+          </p>
         </CardContent>
       </Card>
 

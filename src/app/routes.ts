@@ -17,6 +17,7 @@ import { AgendaWhatsappGoogleCalendarPage } from "./pages/AgendaWhatsappGoogleCa
 import { WagooVsPlanilhaPage } from "./pages/WagooVsPlanilhaPage";
 import { RedirectAutomatizarAgendamentoWhatsapp } from "./pages/RedirectAutomatizarAgendamentoWhatsapp";
 import { PricingPage } from "./pages/PricingPage";
+import { PublicCommissionPage } from "./pages/PublicCommissionPage";
 
 export const router = createBrowserRouter([
   {
@@ -94,5 +95,9 @@ export const router = createBrowserRouter([
   {
     path: "/a/:slug/cliente",
     Component: PublicClubClientPage,
+  },
+  {
+    path: "/comissao/:token",
+    Component: PublicCommissionPage,
   },
 ]);

@@ -8,6 +8,10 @@ import {
   UserRound,
   Crown,
   Trash2,
+  Link2,
+  Copy,
+  Check,
+  RefreshCw,
 } from "lucide-react";
 import { useNavigate } from "react-router";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/card";
@@ -49,6 +53,7 @@ type Barbeiro = {
   google_calendar_email: string;
   ativo: boolean;
   commission_percent: number;
+  commission_share_token: string | null;
 };
 
 export function TeamManagementPage() {
@@ -66,6 +71,8 @@ export function TeamManagementPage() {
   const [commissionPercent, setCommissionPercent] = useState("50");
   const [saving, setSaving] = useState(false);
   const [savingCommissionId, setSavingCommissionId] = useState<string | null>(null);
+  const [shareBusyId, setShareBusyId] = useState<string | null>(null);
+  const [copiedShareId, setCopiedShareId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [barbeiroToDelete, setBarbeiroToDelete] = useState<Barbeiro | null>(null);
   const [upgrading, setUpgrading] = useState<WagooPlanTier | null>(null);
@@ -103,6 +110,9 @@ export function TeamManagementPage() {
       const list = ((data.barbeiros ?? []) as Barbeiro[]).map((b) => ({
         ...b,
         commission_percent: Number(b.commission_percent) || 0,
+        commission_share_token: b.commission_share_token
+          ? String(b.commission_share_token)
+          : null,
       }));
       setBarbeiros(list);
       setCachedTeam(user.id, list);
@@ -250,6 +260,56 @@ export function TeamManagementPage() {
       setError("Erro ao salvar comissão.");
     } finally {
       setSavingCommissionId(null);
+    }
+  };
+
+  const commissionShareUrl = (token: string) =>
+    `${window.location.origin}/comissao/${token}`;
+
+  const handleCopyCommissionLink = async (b: Barbeiro, rotate = false) => {
+    if (!user?.subscriptionTier) return;
+    setShareBusyId(b.id);
+    setError(null);
+    try {
+      const authToken = await getToken();
+      const res = await fetch(`${backendUrl}/api/barbeiros/${b.id}/commission-share`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${authToken}`,
+        },
+        body: JSON.stringify({ rotate }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setError(data.message || data.error || "Não foi possível gerar o link.");
+        return;
+      }
+      const shareToken = String(data.commission_share_token || "");
+      if (!shareToken) {
+        setError("Resposta inválida ao gerar o link.");
+        return;
+      }
+      const url =
+        typeof data.share_url === "string" && data.share_url.startsWith("http")
+          ? data.share_url
+          : commissionShareUrl(shareToken);
+      await navigator.clipboard.writeText(url);
+      setBarbeiros((prev) => {
+        const next = prev.map((x) =>
+          x.id === b.id ? { ...x, commission_share_token: shareToken } : x,
+        );
+        if (user?.id) setCachedTeam(user.id, next);
+        return next;
+      });
+      setCopiedShareId(b.id);
+      window.setTimeout(() => {
+        setCopiedShareId((cur) => (cur === b.id ? null : cur));
+      }, 2000);
+    } catch {
+      setError("Erro ao copiar o link de comissão.");
+    } finally {
+      setShareBusyId(null);
     }
   };
 
@@ -564,7 +624,52 @@ export function TeamManagementPage() {
                             Salva ao sair do campo
                           </p>
                         )}
+                        <div className="flex flex-wrap items-center gap-2 sm:ml-auto">
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            className="rounded-xl border-[#64b34d]/30 text-[#64b34d] hover:bg-green-50 font-bold gap-2"
+                            disabled={shareBusyId === b.id}
+                            onClick={() => void handleCopyCommissionLink(b, false)}
+                          >
+                            {shareBusyId === b.id ? (
+                              <Loader2 className="w-4 h-4 animate-spin" />
+                            ) : copiedShareId === b.id ? (
+                              <Check className="w-4 h-4" />
+                            ) : b.commission_share_token ? (
+                              <Copy className="w-4 h-4" />
+                            ) : (
+                              <Link2 className="w-4 h-4" />
+                            )}
+                            {copiedShareId === b.id
+                              ? "Copiado"
+                              : b.commission_share_token
+                                ? "Copiar link de comissão"
+                                : "Gerar link de comissão"}
+                          </Button>
+                          {b.commission_share_token ? (
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              className="rounded-xl text-slate-500 hover:text-slate-800 font-bold gap-1.5"
+                              disabled={shareBusyId === b.id}
+                              title="Gera um link novo e invalida o anterior"
+                              onClick={() => void handleCopyCommissionLink(b, true)}
+                            >
+                              <RefreshCw className="w-3.5 h-3.5" />
+                              Novo link
+                            </Button>
+                          ) : null}
+                        </div>
                       </div>
+                      {b.commission_share_token ? (
+                        <p className="text-[11px] text-slate-400 font-medium -mt-1">
+                          Link exclusivo de {b.nome}: ele vê só os ganhos dele no mês
+                          (app + planilha).
+                        </p>
+                      ) : null}
                     </div>
                   ))
                 )}
