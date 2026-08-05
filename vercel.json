@@ -1,6 +1,11 @@
 {
   "redirects": [
     {
+      "source": "/prices",
+      "destination": "/precos",
+      "permanent": true
+    },
+    {
       "source": "/automatizar-agendamento-whatsapp",
       "destination": "/agendamento/whatsapp",
       "permanent": true

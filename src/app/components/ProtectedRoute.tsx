@@ -49,7 +49,7 @@ export function ProtectedRoute({ children, requirePayment = false }: ProtectedRo
 
   useEffect(() => {
     if (!requirePayment || !user || user.hasPaid || checkoutSuccess || loading) return;
-    navigate("/#precos", { replace: true });
+    navigate("/precos", { replace: true });
   }, [requirePayment, user?.id, user?.hasPaid, checkoutSuccess, loading, navigate]);
 
   useEffect(() => {
@@ -118,7 +118,7 @@ export function ProtectedRoute({ children, requirePayment = false }: ProtectedRo
             </button>
             <button
               type="button"
-              onClick={() => navigate("/#precos")}
+              onClick={() => navigate("/precos")}
               className="text-sm font-bold text-slate-400 hover:text-slate-600 transition-colors"
             >
               Ver planos

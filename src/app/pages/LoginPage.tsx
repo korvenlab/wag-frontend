@@ -121,7 +121,7 @@ export function LoginPage() {
         }
 
         setStatus("Escolha um plano para continuar...");
-        navigate("/#precos", { replace: true });
+        navigate("/precos", { replace: true });
       } catch {
         syncProcessed.current = false;
         setShowLoginButton(true);

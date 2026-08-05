@@ -72,6 +72,16 @@ export const CONTENT_SEO_PAGES: SeoPageMeta[] = [
       "Planilha não responde o cliente à noite. Veja a diferença na operação do dia a dia.",
     breadcrumbs: [{ name: "Wagoo vs planilha", path: "/wagoo-vs-planilha" }],
   },
+  {
+    path: "/precos",
+    title: "Preços e planos Wagoo | Agenda Web, Basic, Pro e Pro+",
+    description:
+      "Compare Agenda Web, Basic, Pro e Pro+: preços, usuários e tudo o que cada plano inclui — WhatsApp com IA, Analytics, equipe e Clube.",
+    ogTitle: "Preços Wagoo — planos completos",
+    ogDescription:
+      "Agenda Web, Basic, Pro e Pro+: veja o que cada plano oferece de ponta a ponta.",
+    breadcrumbs: [{ name: "Preços", path: "/precos" }],
+  },
 ];
 
 export function getSeoPageByPath(path: string): SeoPageMeta | undefined {

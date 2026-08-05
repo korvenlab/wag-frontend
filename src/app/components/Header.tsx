@@ -39,6 +39,20 @@ export function Header() {
     }
   };
 
+  const goHomeSection = (id: string) => {
+    if (location.pathname === "/") {
+      scrollToSection(id);
+      return;
+    }
+    navigate(`/#${id}`);
+    setIsMobileMenuOpen(false);
+  };
+
+  const goPrecosPage = () => {
+    navigate("/precos");
+    setIsMobileMenuOpen(false);
+  };
+
   // Função para rolar até o topo ou navegar para a home
   const handleLogoClick = () => {
     if (location.pathname === "/") {
@@ -96,16 +110,16 @@ export function Header() {
           </motion.div>
 
           <nav className="hidden md:flex items-center gap-6 absolute left-1/2 -translate-x-1/2">
-            <NavLink onClick={() => scrollToSection("como-funciona")}>
+            <NavLink onClick={() => goHomeSection("como-funciona")}>
               Como Funciona
             </NavLink>
-            <NavLink onClick={() => scrollToSection("investimento")}>
+            <NavLink onClick={() => goHomeSection("investimento")}>
               Valor
             </NavLink>
-            <NavLink onClick={() => scrollToSection("precos")}>
+            <NavLink onClick={goPrecosPage}>
               Preços
             </NavLink>
-            <NavLink onClick={() => scrollToSection("faq")}>FAQ</NavLink>
+            <NavLink onClick={() => goHomeSection("faq")}>FAQ</NavLink>
           </nav>
 
           <div className="hidden md:flex items-center flex-shrink-0">
@@ -206,16 +220,16 @@ export function Header() {
             className="md:hidden mt-3 mx-4 rounded-3xl bg-white/95 backdrop-blur-xl border border-gray-200 shadow-wg-popover overflow-hidden"
           >
             <div className="px-6 py-6 flex flex-col gap-4">
-              <MobileNavLink onClick={() => scrollToSection("como-funciona")}>
+              <MobileNavLink onClick={() => goHomeSection("como-funciona")}>
                 Como Funciona
               </MobileNavLink>
-              <MobileNavLink onClick={() => scrollToSection("investimento")}>
+              <MobileNavLink onClick={() => goHomeSection("investimento")}>
                 Valor
               </MobileNavLink>
-              <MobileNavLink onClick={() => scrollToSection("precos")}>
+              <MobileNavLink onClick={goPrecosPage}>
                 Preços
               </MobileNavLink>
-              <MobileNavLink onClick={() => scrollToSection("faq")}>
+              <MobileNavLink onClick={() => goHomeSection("faq")}>
                 FAQ
               </MobileNavLink>
 

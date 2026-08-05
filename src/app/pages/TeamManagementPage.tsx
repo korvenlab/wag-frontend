@@ -116,7 +116,7 @@ export function TeamManagementPage() {
   useEffect(() => {
     if (loading || !user) return;
     if (!user.hasPaid) {
-      navigate("/#precos");
+      navigate("/precos");
       return;
     }
     if (!tierSupportsTeamManagement(user.subscriptionTier)) {
@@ -365,7 +365,7 @@ export function TeamManagementPage() {
             </div>
             <p className="text-slate-500 font-medium">
               Cadastre profissionais, defina a comissão de cada um e a IA direciona agendamentos
-              com convite no Google Agenda. O percentual entra no CSV de Analytics nos
+              com convite no Google Agenda. O percentual entra no Analytics (Pro / Pro+) nos
               agendamentos pagos.
             </p>
             {subscriptionTier ? (
@@ -587,12 +587,12 @@ export function TeamManagementPage() {
                     Escolha um plano Wagoo
                   </h2>
                   <p className="text-slate-500 font-medium leading-relaxed">
-                    Basic (1 usuário), Pro (até 3) ou Pro+ (até 5). Todos têm WhatsApp, Agenda, IA e
-                    tabela de preços; Pro e Pro+ incluem lembretes, export CSV e equipe.
+                    Basic (1 usuário), Pro (até 3) ou Pro+ (até 5). Todos têm WhatsApp, Agenda, IA,
+                    Clube e tabela de preços; Pro e Pro+ incluem lembretes, Analytics e equipe.
                   </p>
                 </div>
                 <Button
-                  onClick={() => navigate("/#precos")}
+                  onClick={() => navigate("/precos")}
                   className="w-full h-14 rounded-2xl bg-[#64b34d] hover:bg-[#4d8f3b] font-black text-base shadow-wg-green-cta"
                 >
                   Ver planos

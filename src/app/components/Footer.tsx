@@ -56,6 +56,7 @@ export function Footer() {
                 WhatsApp + Calendar
               </FooterLink>
               <FooterLink to="/wagoo-vs-planilha">Wagoo vs planilha</FooterLink>
+              <FooterLink to="/precos">Preços</FooterLink>
             </ul>
           </motion.div>
         </div>

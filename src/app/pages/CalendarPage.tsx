@@ -123,7 +123,7 @@ export function CalendarPage() {
   useEffect(() => {
     if (loading || !user) return;
     if (!user.hasPaid) {
-      navigate("/#precos");
+      navigate("/precos");
       return;
     }
     void loadShare();

@@ -1,4 +1,4 @@
-import { createBrowserRouter } from "react-router";
+import { createBrowserRouter, redirect } from "react-router";
 import { HomePage } from "./App";
 import { LoginPage } from "./pages/LoginPage";
 import { ProtectedDashboard } from "./pages/ProtectedDashboard";
@@ -16,11 +16,20 @@ import { AgendamentoWhatsappPage } from "./pages/AgendamentoWhatsappPage";
 import { AgendaWhatsappGoogleCalendarPage } from "./pages/AgendaWhatsappGoogleCalendarPage";
 import { WagooVsPlanilhaPage } from "./pages/WagooVsPlanilhaPage";
 import { RedirectAutomatizarAgendamentoWhatsapp } from "./pages/RedirectAutomatizarAgendamentoWhatsapp";
+import { PricingPage } from "./pages/PricingPage";
 
 export const router = createBrowserRouter([
   {
     path: "/",
     Component: HomePage,
+  },
+  {
+    path: "/precos",
+    Component: PricingPage,
+  },
+  {
+    path: "/prices",
+    loader: () => redirect("/precos"),
   },
   {
     path: "/agendamento",

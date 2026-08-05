@@ -326,42 +326,44 @@ export function AnalyticsEarningsPanel({
     setIsExporting(true);
     setExportError(null);
     try {
-      await saveColumns();
+      // Garante colunas necessárias para reenviar a planilha
+      const exportCols = [...columns];
+      for (const need of ["profissional", "ganho_final_brl"]) {
+        if (!exportCols.includes(need)) exportCols.push(need);
+      }
+      if (exportCols.join(",") !== columns.join(",")) {
+        setColumns(exportCols);
+        await apiFetch("/api/analytics/export-preferences", {
+          method: "PUT",
+          body: JSON.stringify({ columns: exportCols }),
+        });
+      } else {
+        await saveColumns();
+      }
       const qs = new URLSearchParams({
         from: range.from,
         to: range.to,
-        columns: columns.join(","),
+        columns: exportCols.join(","),
       });
       const res = await apiFetch(`/api/analytics/export?${qs}`);
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
-        setExportError(body.error || "Não foi possível exportar.");
+        setExportError(body.error || "Não foi possível baixar a planilha.");
         return;
       }
       const blob = await res.blob();
       downloadBlob(
         blob,
-        `wagoo-analytics-${toDateInputValue(range.from)}_${toDateInputValue(range.to)}.csv`,
+        `wagoo-planilha-${toDateInputValue(range.from)}_${toDateInputValue(range.to)}.csv`,
       );
     } catch {
-      setExportError("Erro de rede ao exportar.");
+      setExportError("Erro de rede ao baixar.");
     } finally {
       setIsExporting(false);
     }
   };
 
-  const handleTemplate = async () => {
-    try {
-      const res = await apiFetch("/api/analytics/export/template");
-      if (!res.ok) return;
-      const blob = await res.blob();
-      downloadBlob(blob, "wagoo-planilha-salao.csv");
-    } catch {
-      /* ignore */
-    }
-  };
-
-  /** Baixa template → preenche no Excel → sobe e grava no banco. */
+  /** Baixa planilha → preenche no Excel → sobe e grava no banco. */
   const handleUploadSpreadsheet = async (file: File | null) => {
     if (!file) return;
     setMerging(true);
@@ -605,31 +607,57 @@ export function AnalyticsEarningsPanel({
           </div>
           <div>
             <h3 className="font-black text-xl text-slate-900 tracking-tight">
-              Planilha do salão ({monthLabel})
+              Planilha ({monthLabel})
             </h3>
             <p className="text-slate-500 text-sm font-medium mt-1 leading-relaxed">
-              1) Baixe o modelo · 2) Preencha no Excel o que rolou no salão · 3) Envie de
-              volta — gravamos os valores no Wagoo.
+              Escolha as colunas, baixe, preencha no Excel o que cada um ganhou (e a linha
+              Loja) e envie de volta — o dashboard atualiza.
             </p>
           </div>
         </div>
 
-        <ol className="text-sm text-slate-600 font-medium space-y-2 list-decimal list-inside">
-          <li>
-            Linha <strong className="text-slate-900">Loja</strong> = caixa da loja
-          </li>
-          <li>Outras linhas = ganhos de cada profissional</li>
-          <li>Colunas: profissional e valor</li>
-        </ol>
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-2">
+          {(availableColumns.length ? availableColumns : Object.keys(COLUMN_LABELS)).map(
+            (key) => (
+              <label
+                key={key}
+                className="flex items-center gap-2 rounded-xl bg-slate-50 px-3 py-2.5 cursor-pointer"
+              >
+                <Checkbox
+                  checked={columns.includes(key)}
+                  onCheckedChange={() => toggleColumn(key)}
+                />
+                <span className="text-xs font-bold text-slate-700">
+                  {COLUMN_LABELS[key] || key}
+                </span>
+              </label>
+            ),
+          )}
+        </div>
 
         <div className="flex flex-wrap gap-2 items-center">
           <Button
             type="button"
             variant="outline"
-            onClick={() => void handleTemplate()}
-            className="rounded-xl h-11 text-sm font-black gap-2"
+            onClick={() => void saveColumns()}
+            disabled={savingColumns || columns.length === 0}
+            className="rounded-xl h-10 text-xs font-black"
           >
-            <Download size={16} /> Baixar modelo
+            {savingColumns ? <Loader2 className="animate-spin" /> : "Salvar colunas"}
+          </Button>
+          <Button
+            type="button"
+            onClick={() => void handleExport()}
+            disabled={isExporting || columns.length === 0}
+            className="h-11 px-5 rounded-xl bg-slate-900 hover:bg-[#64b34d] text-white font-black gap-2"
+          >
+            {isExporting ? (
+              <Loader2 className="animate-spin" />
+            ) : (
+              <>
+                <Download size={16} /> Baixar planilha
+              </>
+            )}
           </Button>
           <label className="inline-flex items-center gap-2 h-11 px-5 rounded-xl bg-[#64b34d] text-white font-black text-sm cursor-pointer hover:bg-[#4d8f3b]">
             {merging ? <Loader2 className="animate-spin w-4 h-4" /> : <Upload size={16} />}
@@ -648,6 +676,11 @@ export function AnalyticsEarningsPanel({
           </label>
         </div>
 
+        {!googleConnected && (
+          <p className="text-amber-600 text-xs font-bold">
+            Sem Google Agenda: a planilha inclui só agendamentos pagos e lançamentos salvos.
+          </p>
+        )}
         {mergeInfo && (
           <p className="text-emerald-700 text-sm font-bold">{mergeInfo}</p>
         )}
@@ -660,6 +693,9 @@ export function AnalyticsEarningsPanel({
           >
             Voltar ao caixa Stripe
           </Button>
+        )}
+        {exportError && (
+          <p className="text-red-600 text-sm font-medium">{exportError}</p>
         )}
       </Card>
 
@@ -759,76 +795,6 @@ export function AnalyticsEarningsPanel({
               </div>
             ))}
           </div>
-        )}
-      </Card>
-
-      <Card className="rounded-[32px] border-none shadow-wg-elevated bg-white p-8 md:p-10 space-y-6">
-        <div className="flex items-start gap-4">
-          <div className="w-12 h-12 rounded-2xl bg-slate-50 flex items-center justify-center text-[#64b34d] shrink-0">
-            <Download size={22} />
-          </div>
-          <div>
-            <h3 className="font-black text-xl text-slate-900 tracking-tight">
-              Exportar relatório
-            </h3>
-            <p className="text-slate-500 text-sm font-medium mt-1 leading-relaxed">
-              Baixe o CSV do período com as colunas que preferir.
-            </p>
-          </div>
-        </div>
-
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-2">
-          {(availableColumns.length ? availableColumns : Object.keys(COLUMN_LABELS)).map(
-            (key) => (
-              <label
-                key={key}
-                className="flex items-center gap-2 rounded-xl bg-slate-50 px-3 py-2.5 cursor-pointer"
-              >
-                <Checkbox
-                  checked={columns.includes(key)}
-                  onCheckedChange={() => toggleColumn(key)}
-                />
-                <span className="text-xs font-bold text-slate-700">
-                  {COLUMN_LABELS[key] || key}
-                </span>
-              </label>
-            ),
-          )}
-        </div>
-
-        <div className="flex flex-wrap gap-2">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => void saveColumns()}
-            disabled={savingColumns || columns.length === 0}
-            className="rounded-xl h-10 text-xs font-black"
-          >
-            {savingColumns ? <Loader2 className="animate-spin" /> : "Salvar colunas"}
-          </Button>
-          <Button
-            type="button"
-            onClick={() => void handleExport()}
-            disabled={isExporting || columns.length === 0}
-            className="h-11 px-6 rounded-2xl bg-slate-900 hover:bg-[#64b34d] text-white font-black gap-2"
-          >
-            {isExporting ? (
-              <Loader2 className="animate-spin" />
-            ) : (
-              <>
-                <Download size={16} /> Baixar CSV
-              </>
-            )}
-          </Button>
-        </div>
-        {!googleConnected && (
-          <p className="text-amber-600 text-xs font-bold">
-            Sem Google Agenda: o CSV inclui só agendamentos pagos e lançamentos salvos.
-          </p>
-        )}
-
-        {exportError && (
-          <p className="text-red-600 text-sm font-medium">{exportError}</p>
         )}
       </Card>
     </div>

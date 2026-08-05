@@ -6,15 +6,24 @@ type PlanFeatureGateProps = {
   icon: LucideIcon;
   title: string;
   description: string;
+  /** Badge do plano exigido (ex.: "Pro e Pro+" ou "Pro+"). */
+  badge?: string;
+  /** Texto do botão de upgrade com handler. */
+  upgradeLabel?: string;
+  /** Texto do botão genérico (link para preços). */
+  browseLabel?: string;
   onUpgrade?: () => void;
   upgrading?: boolean;
 };
 
-/** Tela de bloqueio para recursos exclusivos Pro / Pro+ (plano Basic). */
+/** Tela de bloqueio para recursos exclusivos de planos superiores. */
 export function PlanFeatureGate({
   icon: Icon,
   title,
   description,
+  badge = "Pro e Pro+",
+  upgradeLabel = "Fazer upgrade para Pro",
+  browseLabel = "Ver planos Pro e Pro+",
   onUpgrade,
   upgrading,
 }: PlanFeatureGateProps) {
@@ -25,7 +34,7 @@ export function PlanFeatureGate({
       </div>
       <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-900 text-white text-[10px] font-black uppercase tracking-widest mb-4">
         <Crown className="w-3 h-3 text-amber-300" />
-        Pro e Pro+
+        {badge}
       </div>
       <h2 className="text-2xl md:text-3xl font-black text-slate-900 tracking-tight mb-3">
         {title}
@@ -38,17 +47,17 @@ export function PlanFeatureGate({
           disabled={upgrading}
           className="h-12 px-8 rounded-2xl bg-[#64b34d] hover:bg-[#4d8f3b] text-white font-black shadow-wg-green-cta"
         >
-          {upgrading ? "Abrindo checkout…" : "Fazer upgrade para Pro"}
+          {upgrading ? "Abrindo checkout…" : upgradeLabel}
         </Button>
       ) : (
         <Button
           type="button"
           onClick={() => {
-            window.location.href = "/#precos";
+            window.location.href = "/precos";
           }}
           className="h-12 px-8 rounded-2xl bg-[#64b34d] hover:bg-[#4d8f3b] text-white font-black shadow-wg-green-cta"
         >
-          Ver planos Pro e Pro+
+          {browseLabel}
         </Button>
       )}
     </Card>

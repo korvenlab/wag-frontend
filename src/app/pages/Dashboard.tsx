@@ -22,7 +22,7 @@ import { ClubMembershipPanel } from "../components/ClubMembershipPanel";
 import { BookingServicesPanel } from "../components/BookingServicesPanel";
 import { AnalyticsEarningsPanel } from "../components/AnalyticsEarningsPanel";
 import { apiFetch } from "../lib/apiFetch";
-import { planLabel, tierSupportsCsvExport, tierSupportsReminders } from "../lib/wagooPlans";
+import { planLabel, tierSupportsAnalytics, tierSupportsReminders } from "../lib/wagooPlans";
 import {
   BUSINESS_NICHE_OPTIONS,
   isBusinessNicheId,
@@ -229,7 +229,7 @@ export function Dashboard() {
   useEffect(() => {
     if (!loading) {
       if (!user) navigate("/login");
-      else if (!user.hasPaid) navigate("/#precos");
+      else if (!user.hasPaid) navigate("/precos");
     }
   }, [user?.id, user?.hasPaid, loading, navigate]);
 
@@ -862,7 +862,7 @@ export function Dashboard() {
                 <AnalyticsCard icon={<Zap size={22} className="text-amber-500" />} title="Tempo Ganho" value={`${(appointmentsMade * 5 / 60).toFixed(1)}h`} />
 
                 <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="lg:col-span-3">
-                  {tierSupportsCsvExport(user.subscriptionTier) ? (
+                  {tierSupportsAnalytics(user.subscriptionTier) ? (
                     <AnalyticsEarningsPanel
                       range={csvRange}
                       onRangeChange={setCsvRange}
@@ -872,8 +872,8 @@ export function Dashboard() {
                   ) : (
                     <PlanFeatureGate
                       icon={Download}
-                      title="Export CSV disponível no Pro e Pro+"
-                      description="No plano Basic esta função não está inclusa. Faça upgrade para baixar seus agendamentos em CSV para contabilidade, lançar ganhos manuais e montar o dashboard por profissional."
+                      title="Analytics completo no Pro e Pro+"
+                      description="Caixa da loja, ganhos por profissional, planilha e lançamento rápido ficam disponíveis no Pro e Pro+."
                     />
                   )}
                 </motion.div>

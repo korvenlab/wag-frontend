@@ -206,7 +206,7 @@ export const HeroSection = () => {
               </a>
             </Button>
             <a
-              href="#precos"
+              href="/precos"
               className="text-slate-600 font-bold underline-offset-4 hover:underline hover:text-slate-900"
             >
               Ver planos

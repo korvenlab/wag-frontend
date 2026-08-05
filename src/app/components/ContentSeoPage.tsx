@@ -143,7 +143,7 @@ export function ContentSeoPage({
               variant="outline"
               className="h-12 px-7 rounded-2xl border-slate-300 font-bold"
             >
-              <a href="/#precos">Ver planos</a>
+              <a href="/precos">Ver planos</a>
             </Button>
           </div>
 
