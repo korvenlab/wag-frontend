@@ -477,10 +477,15 @@ export function AgendaWebPaymentsPanel() {
                 variant="outline"
                 className="rounded-2xl font-bold"
                 disabled={busy}
-                onClick={() => void openDashboard()}
+                onClick={() => {
+                  if (status.details_submitted) void openDashboard();
+                  else void startOnboard();
+                }}
               >
                 <ExternalLink className="mr-2" size={16} />
-                Conta bancária e documentos
+                {status.details_submitted
+                  ? "Conta bancária e documentos"
+                  : "Continuar documentos e conta bancária"}
               </Button>
             ) : null}
           </div>
