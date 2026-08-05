@@ -266,7 +266,20 @@ export function TeamManagementPage() {
   const commissionShareUrl = (token: string) =>
     `${window.location.origin}/comissao/${token}`;
 
-  const handleCopyCommissionLink = async (b: Barbeiro, rotate = false) => {
+  const handleCopyText = async (b: Barbeiro, text: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopiedShareId(b.id);
+      window.setTimeout(() => {
+        setCopiedShareId((cur) => (cur === b.id ? null : cur));
+      }, 2000);
+    } catch {
+      setError("Não foi possível copiar. Selecione o link e copie manualmente.");
+    }
+  };
+
+  /** Gera (ou renova) o token e deixa o link visível no card. */
+  const handleEnsureCommissionLink = async (b: Barbeiro, rotate = false) => {
     if (!user?.subscriptionTier) return;
     setShareBusyId(b.id);
     setError(null);
@@ -290,11 +303,6 @@ export function TeamManagementPage() {
         setError("Resposta inválida ao gerar o link.");
         return;
       }
-      const url =
-        typeof data.share_url === "string" && data.share_url.startsWith("http")
-          ? data.share_url
-          : commissionShareUrl(shareToken);
-      await navigator.clipboard.writeText(url);
       setBarbeiros((prev) => {
         const next = prev.map((x) =>
           x.id === b.id ? { ...x, commission_share_token: shareToken } : x,
@@ -302,12 +310,13 @@ export function TeamManagementPage() {
         if (user?.id) setCachedTeam(user.id, next);
         return next;
       });
-      setCopiedShareId(b.id);
-      window.setTimeout(() => {
-        setCopiedShareId((cur) => (cur === b.id ? null : cur));
-      }, 2000);
+      const url =
+        typeof data.share_url === "string" && data.share_url.startsWith("http")
+          ? data.share_url
+          : commissionShareUrl(shareToken);
+      await handleCopyText(b, url);
     } catch {
-      setError("Erro ao copiar o link de comissão.");
+      setError("Erro ao gerar o link de comissão.");
     } finally {
       setShareBusyId(null);
     }
@@ -624,52 +633,86 @@ export function TeamManagementPage() {
                             Salva ao sair do campo
                           </p>
                         )}
-                        <div className="flex flex-wrap items-center gap-2 sm:ml-auto">
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            className="rounded-xl border-[#64b34d]/30 text-[#64b34d] hover:bg-green-50 font-bold gap-2"
-                            disabled={shareBusyId === b.id}
-                            onClick={() => void handleCopyCommissionLink(b, false)}
-                          >
-                            {shareBusyId === b.id ? (
-                              <Loader2 className="w-4 h-4 animate-spin" />
-                            ) : copiedShareId === b.id ? (
-                              <Check className="w-4 h-4" />
-                            ) : b.commission_share_token ? (
-                              <Copy className="w-4 h-4" />
-                            ) : (
-                              <Link2 className="w-4 h-4" />
-                            )}
-                            {copiedShareId === b.id
-                              ? "Copiado"
-                              : b.commission_share_token
-                                ? "Copiar link de comissão"
-                                : "Gerar link de comissão"}
-                          </Button>
-                          {b.commission_share_token ? (
+                      </div>
+                      <div className="space-y-2 border-t border-slate-100 pt-4">
+                        <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                          Link de comissão (envie para {b.nome})
+                        </Label>
+                        {b.commission_share_token ? (
+                          <>
+                            <div className="flex flex-col sm:flex-row gap-2">
+                              <Input
+                                readOnly
+                                value={commissionShareUrl(b.commission_share_token)}
+                                className="h-10 rounded-xl bg-slate-50 border-none font-medium text-xs sm:text-sm text-slate-700"
+                                onFocus={(e) => e.currentTarget.select()}
+                              />
+                              <div className="flex gap-2 shrink-0">
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  size="sm"
+                                  className="rounded-xl border-[#64b34d]/30 text-[#64b34d] hover:bg-green-50 font-bold gap-2 h-10"
+                                  onClick={() =>
+                                    void handleCopyText(
+                                      b,
+                                      commissionShareUrl(b.commission_share_token!),
+                                    )
+                                  }
+                                >
+                                  {copiedShareId === b.id ? (
+                                    <Check className="w-4 h-4" />
+                                  ) : (
+                                    <Copy className="w-4 h-4" />
+                                  )}
+                                  {copiedShareId === b.id ? "Copiado" : "Copiar"}
+                                </Button>
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="sm"
+                                  className="rounded-xl text-slate-500 hover:text-slate-800 font-bold gap-1.5 h-10"
+                                  disabled={shareBusyId === b.id}
+                                  title="Gera um link novo e invalida o anterior"
+                                  onClick={() => void handleEnsureCommissionLink(b, true)}
+                                >
+                                  {shareBusyId === b.id ? (
+                                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                  ) : (
+                                    <RefreshCw className="w-3.5 h-3.5" />
+                                  )}
+                                  Novo
+                                </Button>
+                              </div>
+                            </div>
+                            <p className="text-[11px] text-slate-400 font-medium">
+                              Só {b.nome} vê os ganhos dele neste link. Envie por WhatsApp ou
+                              mensagem.
+                            </p>
+                          </>
+                        ) : (
+                          <div className="flex flex-wrap items-center gap-3">
                             <Button
                               type="button"
-                              variant="ghost"
+                              variant="outline"
                               size="sm"
-                              className="rounded-xl text-slate-500 hover:text-slate-800 font-bold gap-1.5"
+                              className="rounded-xl border-[#64b34d]/30 text-[#64b34d] hover:bg-green-50 font-bold gap-2"
                               disabled={shareBusyId === b.id}
-                              title="Gera um link novo e invalida o anterior"
-                              onClick={() => void handleCopyCommissionLink(b, true)}
+                              onClick={() => void handleEnsureCommissionLink(b, false)}
                             >
-                              <RefreshCw className="w-3.5 h-3.5" />
-                              Novo link
+                              {shareBusyId === b.id ? (
+                                <Loader2 className="w-4 h-4 animate-spin" />
+                              ) : (
+                                <Link2 className="w-4 h-4" />
+                              )}
+                              Gerar link de comissão
                             </Button>
-                          ) : null}
-                        </div>
+                            <p className="text-[11px] text-slate-400 font-medium">
+                              Depois o link aparece aqui para você enviar.
+                            </p>
+                          </div>
+                        )}
                       </div>
-                      {b.commission_share_token ? (
-                        <p className="text-[11px] text-slate-400 font-medium -mt-1">
-                          Link exclusivo de {b.nome}: ele vê só os ganhos dele no mês
-                          (app + planilha).
-                        </p>
-                      ) : null}
                     </div>
                   ))
                 )}
