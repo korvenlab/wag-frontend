@@ -31,8 +31,7 @@ export function Pricing() {
             <span className="text-[#64b34d]">O retorno começa no primeiro horário.</span>
           </h2>
           <p data-gsap="heading" className="text-lg text-slate-500 font-medium leading-relaxed">
-            Resumo do que muda entre os planos. Ao assinar, você vê a descrição completa e
-            finaliza na página de preços.
+            Compare os planos e escolha o que cabe no seu dia a dia.
           </p>
         </div>
 
@@ -42,7 +41,7 @@ export function Pricing() {
         >
           <div className="flex-1 p-8 md:p-10 space-y-5">
             <div className="inline-flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-[#4d8f3b] bg-green-50 border border-green-100 px-3 py-1 rounded-full">
-              <Link2 size={12} /> Sem IA · só agendamento web
+              <Link2 size={12} /> Só agendamento pelo link
             </div>
             <div>
               <h3 className="text-2xl md:text-3xl font-extrabold text-slate-900">
@@ -149,7 +148,7 @@ export function Pricing() {
             to="/precos"
             className="inline-flex items-center gap-2 text-sm font-black text-slate-900 hover:text-[#4d8f3b] transition-colors"
           >
-            Ver todos os detalhes e assinar
+            Ver todos os planos
             <ArrowRight size={16} />
           </Link>
         </div>
@@ -185,7 +184,7 @@ export function Pricing() {
 
         <p data-gsap="fade" className="mt-12 flex flex-col items-center gap-2 text-center">
           <span className="flex items-center gap-2 text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em]">
-            <Shield size={12} /> Pagamento seguro via Stripe
+            <Shield size={12} /> Pagamento seguro online
           </span>
           <span className="text-xs text-slate-400 font-medium">
             Cancele quando quiser · Sem fidelidade

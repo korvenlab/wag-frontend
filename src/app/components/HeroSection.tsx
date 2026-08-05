@@ -288,7 +288,7 @@ export const HeroSection = () => {
                       </p>
                       <span className="inline-flex items-center gap-1 text-[#4d8f3b] text-[10px] font-black uppercase">
                         <Check size={11} strokeWidth={4} />
-                        Sync
+                        Confirmado
                       </span>
                     </div>
                     <p className="text-sm font-black text-slate-900">Maria Silva</p>

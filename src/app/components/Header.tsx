@@ -1,7 +1,7 @@
 import { motion, AnimatePresence } from "motion/react";
 import { Menu, X, ChevronDown, Lock, LogOut, LayoutDashboard } from "lucide-react";
 import React, { useState, useEffect, useRef } from "react";
-import { useNavigate, useLocation } from "react-router";
+import { Link, useNavigate, useLocation } from "react-router";
 import { useAuth } from "../context/AuthContext";
 
 export function Header() {
@@ -53,12 +53,9 @@ export function Header() {
     setIsMobileMenuOpen(false);
   };
 
-  // Função para rolar até o topo ou navegar para a home
   const handleLogoClick = () => {
     if (location.pathname === "/") {
       window.scrollTo({ top: 0, behavior: "smooth" });
-    } else {
-      navigate("/");
     }
     setIsMobileMenuOpen(false);
   };
@@ -92,13 +89,18 @@ export function Header() {
         }`}
       >
         <div className="px-6 h-full flex items-center justify-between">
-          <motion.div
-            className="flex items-center cursor-pointer flex-shrink-0"
-            whileHover={{ scale: 1.025 }}
-            whileTap={{ scale: 0.95 }}
+          <Link
+            to="/"
+            title="Wagoo — página inicial"
+            aria-label="Ir para a página inicial do Wagoo"
             onClick={handleLogoClick}
+            className="flex items-center flex-shrink-0"
           >
-            <div className="w-40 h-12 flex items-center justify-center flex-shrink-0">
+            <motion.span
+              className="block w-40 h-12 flex items-center justify-center flex-shrink-0"
+              whileHover={{ scale: 1.025 }}
+              whileTap={{ scale: 0.95 }}
+            >
               <img
                 src="/logo.png"
                 alt="Wagoo"
@@ -106,8 +108,8 @@ export function Header() {
                 height={48}
                 className="w-full h-full object-contain"
               />
-            </div>
-          </motion.div>
+            </motion.span>
+          </Link>
 
           <nav className="hidden md:flex items-center gap-6 absolute left-1/2 -translate-x-1/2">
             <NavLink onClick={() => goHomeSection("como-funciona")}>

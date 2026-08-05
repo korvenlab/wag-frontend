@@ -679,7 +679,7 @@ export function Dashboard() {
                       </div>
                       <Switch checked={isAIEnabled} onCheckedChange={handleToggleAI} disabled={isSavingAI} className="data-[state=checked]:bg-[#64b34d]" />
                     </div>
-                    <h3 className="font-black text-lg text-slate-900 tracking-tight">Cérebro da IA</h3>
+                    <h3 className="font-black text-lg text-slate-900 tracking-tight">Atendimento com IA</h3>
                     <p className="text-slate-500 text-sm font-medium mt-1">
                       {isAIEnabled ? "Ativa e respondendo." : "A IA está pausada."}
                     </p>
@@ -710,7 +710,7 @@ export function Dashboard() {
                       <p className="text-slate-500 text-sm font-medium mt-2 leading-relaxed">
                         Configure quando avisar o cliente. Depois do lembrete, ele pode confirmar
                         presença ou avisar se não puder vir — com linguagem natural. O envio só
-                        acontece com o WhatsApp conectado na Visão Geral.
+                        acontece com o WhatsApp da loja conectado.
                       </p>
                     </div>
                     <div className="space-y-2">
@@ -760,7 +760,7 @@ export function Dashboard() {
                   <PlanFeatureGate
                     icon={Bell}
                     title="Lembretes disponíveis no Pro e Pro+"
-                    description="No plano Basic esta função não está inclusa. Faça upgrade para o Pro ou Pro+ e avise seus clientes automaticamente minutos antes do horário."
+                    description="Lembretes não estão incluídos no Basic. No Pro ou Pro+ o Wagoo avisa o cliente minutos antes do horário."
                   />
                 )}
               </motion.div>
@@ -873,7 +873,7 @@ export function Dashboard() {
                     <PlanFeatureGate
                       icon={Download}
                       title="Analytics completo no Pro e Pro+"
-                      description="Caixa da loja, ganhos por profissional, planilha e lançamento rápido ficam disponíveis no Pro e Pro+."
+                      description="Caixa da loja, ganhos por profissional e relatórios ficam disponíveis no Pro e Pro+."
                     />
                   )}
                 </motion.div>

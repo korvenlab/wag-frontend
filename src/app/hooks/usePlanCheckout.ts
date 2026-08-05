@@ -51,7 +51,7 @@ export function usePlanCheckout() {
         if (data.url) window.location.href = data.url;
         else setCheckoutError(data.error || "Checkout indisponível.");
       } catch {
-        setCheckoutError("Erro de conexão. Verifique se o servidor está online.");
+        setCheckoutError("Erro de conexão. Tente de novo em alguns segundos.");
       } finally {
         setLoadingTier(null);
       }

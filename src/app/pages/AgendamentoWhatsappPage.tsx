@@ -33,7 +33,7 @@ export function AgendamentoWhatsappPage() {
         },
       ]}
       relatedLinks={[
-        { to: "/agendamento", label: "Hub de agendamento" },
+        { to: "/agendamento", label: "Guia de agendamento" },
         { to: "/agenda-whatsapp-google-calendar", label: "WhatsApp + Google Calendar" },
         { to: "/wagoo-vs-planilha", label: "Wagoo vs planilha" },
       ]}

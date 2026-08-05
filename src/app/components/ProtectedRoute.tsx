@@ -104,8 +104,8 @@ export function ProtectedRoute({ children, requirePayment = false }: ProtectedRo
               Confirmando seu pagamento
             </h1>
             <p className="text-slate-500 font-medium leading-relaxed text-sm">
-              O Stripe avisou o servidor e estamos liberando seu acesso. Isso costuma levar poucos
-              segundos — você não precisa pagar de novo.
+              Recebemos a confirmação do pagamento e estamos liberando seu acesso. Isso costuma
+              levar poucos segundos — você não precisa pagar de novo.
             </p>
           </div>
           <div className="flex flex-col gap-3">
@@ -114,7 +114,7 @@ export function ProtectedRoute({ children, requirePayment = false }: ProtectedRo
               onClick={() => void refreshProfile({ force: true })}
               className="w-full py-4 rounded-2xl bg-[#64b34d] text-white font-black text-sm shadow-wg-green-cta hover:bg-[#4d8f3b] transition-[box-shadow,background-color]"
             >
-              Já concluí no Stripe — atualizar agora
+              Já concluí o pagamento — atualizar agora
             </button>
             <button
               type="button"
@@ -126,8 +126,8 @@ export function ProtectedRoute({ children, requirePayment = false }: ProtectedRo
           </div>
           {pollTick >= 20 ? (
             <p className="text-xs text-amber-700 bg-amber-50 border border-amber-100 rounded-xl p-4 font-medium">
-              Ainda não liberou? Abra o e-mail do Stripe ou aguarde o webhook. Se já pagou, use
-              &quot;atualizar agora&quot; ou entre em contato com o suporte — não inicie um segundo
+              Ainda não liberou? Confira o e-mail de confirmação do pagamento e toque em
+              &quot;atualizar agora&quot;. Se já pagou, fale com o suporte — não inicie um segundo
               pagamento.
             </p>
           ) : null}

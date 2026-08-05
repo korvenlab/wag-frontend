@@ -13,14 +13,14 @@ export function AgendaWhatsappGoogleCalendarPage() {
         {
           heading: "Por que juntar os dois",
           body: [
-            "O cliente fala no WhatsApp. Você trabalha no Google Calendar. Quando esses mundos não conversam, nascem furos, double booking e follow-up infinito.",
+            "O cliente fala no WhatsApp. Você trabalha no Google Calendar. Quando esses mundos não conversam, nascem furos, dois clientes no mesmo horário e follow-up infinito.",
             "Uma agenda WhatsApp + Google Calendar bem feita consulta o que está livre, responde o cliente e cria o compromisso na mesma operação.",
           ],
         },
         {
           heading: "Como a sincronização funciona no Wagoo",
           body: [
-            "Você autoriza o Google via OAuth. O Wagoo lê disponibilidade e cria eventos só para agendamento — sem reinventar sua agenda.",
+            "Você conecta sua conta Google. O Wagoo vê horários livres e marca o compromisso na sua agenda — sem reinventar o que você já usa.",
             "No WhatsApp, o fluxo continua natural: pedido de horário, confirmação e registro. Pro e Pro+ somam lembretes antes do compromisso.",
           ],
         },
@@ -28,12 +28,12 @@ export function AgendaWhatsappGoogleCalendarPage() {
           heading: "Resultado no negócio",
           body: [
             "Menos tempo no celular no meio do atendimento. Menos “me confirma de novo?”. Mais horários que realmente entram na agenda.",
-            "Se você busca integração WhatsApp Google Calendar sem planilha no meio, o caminho é automatizar a ponte — não contratar alguém só para digitar horário.",
+            "Se você busca WhatsApp e Google Calendar juntos, sem planilha no meio, o caminho é automatizar — não contratar alguém só para digitar horário.",
           ],
         },
       ]}
       relatedLinks={[
-        { to: "/agendamento", label: "Hub de agendamento" },
+        { to: "/agendamento", label: "Guia de agendamento" },
         { to: "/agendamento/whatsapp", label: "Agendamento no WhatsApp" },
       ]}
       faqs={[
@@ -47,7 +47,7 @@ export function AgendaWhatsappGoogleCalendarPage() {
         },
         {
           q: "E a privacidade dos dados?",
-          a: "Conexão criptografada (TLS), OAuth2 no Google e práticas alinhadas à LGPD. Não revendemos dados dos seus clientes.",
+          a: "Login seguro com Google, dados protegidos e alinhados à LGPD. Não revendemos dados dos seus clientes.",
         },
       ]}
     />

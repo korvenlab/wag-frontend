@@ -107,7 +107,7 @@ export function TeamManagementPage() {
       setBarbeiros(list);
       setCachedTeam(user.id, list);
     } catch {
-      setError("Erro de conexão com o servidor.");
+      setError("Não foi possível conectar. Tente de novo em instantes.");
     } finally {
       setLoadingTeam(false);
     }
@@ -343,7 +343,7 @@ export function TeamManagementPage() {
             <PlanFeatureGate
               icon={Users}
               title="Equipe disponível no Pro e Pro+"
-              description="No plano Basic esta aba não está inclusa. Faça upgrade para o Pro (até 3 usuários) ou Pro+ (até 5) e gerencie profissionais com agendas próprias."
+              description="Equipe não está incluída no Basic. No Pro (até 3) ou Pro+ (até 5) você cadastra profissionais com agendas próprias."
               onUpgrade={() => void handleUpgradeCheckout("pro")}
               upgrading={upgrading === "pro"}
             />
@@ -365,8 +365,8 @@ export function TeamManagementPage() {
             </div>
             <p className="text-slate-500 font-medium">
               Cadastre profissionais, defina a comissão de cada um e a IA direciona agendamentos
-              com convite no Google Agenda. O percentual entra no Analytics (Pro / Pro+) nos
-              agendamentos pagos.
+              com convite no Google Agenda. A comissão entra no relatório de ganhos (Pro e Pro+)
+              quando o horário é pago.
             </p>
             {subscriptionTier ? (
               <p className="text-sm font-bold text-slate-700">

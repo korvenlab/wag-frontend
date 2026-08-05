@@ -234,7 +234,7 @@ export function AgendaWebOnboarding({ onComplete }: AgendaWebOnboardingProps) {
     },
     2: {
       title: "Primeiro serviço",
-      subtitle: "Preço e duração que o cliente escolhe no wizard.",
+      subtitle: "Preço e duração que o cliente vê ao marcar horário.",
     },
     3: {
       title: "Horário de funcionamento",

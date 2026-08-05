@@ -47,7 +47,7 @@ export function PlanFeatureGate({
           disabled={upgrading}
           className="h-12 px-8 rounded-2xl bg-[#64b34d] hover:bg-[#4d8f3b] text-white font-black shadow-wg-green-cta"
         >
-          {upgrading ? "Abrindo checkout…" : upgradeLabel}
+          {upgrading ? "Abrindo pagamento…" : upgradeLabel}
         </Button>
       ) : (
         <Button

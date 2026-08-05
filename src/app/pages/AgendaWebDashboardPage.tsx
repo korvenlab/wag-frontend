@@ -101,7 +101,7 @@ const SECTION_COPY: Record<
   overview: {
     title: "Início e links",
     subtitle:
-      "Publique a agenda e veja a diferença entre o link de agendar e o link só de consulta.",
+      "Publique a agenda e compartilhe o link certo: um para marcar horário, outro só para consultar.",
   },
   negocio: {
     title: "Seu negócio",
@@ -113,7 +113,7 @@ const SECTION_COPY: Record<
   },
   servicos: {
     title: "Serviços",
-    subtitle: "Lista que aparece no wizard de agendamento.",
+    subtitle: "Serviços que o cliente escolhe ao marcar horário.",
   },
   profissionais: {
     title: "Profissionais",

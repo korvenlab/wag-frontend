@@ -22,19 +22,19 @@ export const WAGOO_AI_BASE_FEATURES = [
   "Atendimento automático no WhatsApp com IA",
   "Integração com Google Agenda",
   "Agendamentos ilimitados com IA",
-  "Agenda Web inclusa (link público + vitrine)",
-  "Clube de assinatura mensal para clientes (portal + Stripe)",
-  "Tabela de preços por nicho (IA responde valores no WhatsApp)",
+  "Agenda Web inclusa (link público para o cliente marcar)",
+  "Clube mensal para seus clientes assinarem pelo celular",
+  "Tabela de preços por nicho (a IA responde valores no WhatsApp)",
   "Estilo de conversa personalizado (tom humanizado)",
-  "Sincronização em tempo real",
-  "Painel com métricas de atendimento",
+  "Agenda atualizada na hora",
+  "Acompanhe métricas de atendimento",
   "Suporte prioritário",
 ] as const;
 
 const PRO_ADDS = [
   "Até 3 usuários na equipe (mesmo WhatsApp)",
   "Lembretes automáticos no WhatsApp antes do horário",
-  "Analytics completo: caixa da loja, ganhos por profissional, planilha e lançamento rápido",
+  "Analytics: caixa da loja, ganhos por profissional e lançamentos manuais",
   "Gerenciar equipe de profissionais com agendas próprias",
 ] as const;
 
@@ -49,20 +49,20 @@ export const AGENDA_WEB_PLAN: WagooPlanCard = {
   description: "Link público para o cliente agendar, com confirmação e lembretes no WhatsApp",
   kind: "booking",
   landingDiff: [
-    "Página pública com link exclusivo",
+    "Página pública com o seu link",
     "Confirmação e lembretes no WhatsApp da loja",
     "Profissionais ilimitados na vitrine",
-    "Clube de assinatura mensal",
-    "Sem IA no chat",
+    "Clube mensal para clientes",
+    "Sem atendimento automático no WhatsApp",
   ],
   fullFeatures: [
-    "Página pública com link exclusivo",
-    "Wizard: serviços → profissional → data → horário",
+    "Página pública com o seu link",
+    "Cliente escolhe serviço, profissional, data e horário",
     "Profissionais ilimitados (barbeiros / atendentes)",
-    "WhatsApp da loja (QR) — confirmação automática",
+    "Confirmação automática no WhatsApp da loja",
     "Lembretes no WhatsApp antes do horário",
-    "Clube de assinatura mensal para clientes (portal + Stripe)",
-    "Membros do clube agendam sem sinal (quando o sinal estiver ligado)",
+    "Clube mensal para seus clientes assinarem pelo celular",
+    "Membros do clube agendam sem precisar pagar sinal",
     "Sincroniza com Google Agenda (opcional)",
     "Logo, capa, serviços, preços e fotos",
     "Sem atendimento com IA no WhatsApp",
@@ -79,13 +79,13 @@ export const WAGOO_PLAN_CARDS: WagooPlanCard[] = [
     kind: "ai",
     landingDiff: [
       "WhatsApp + IA + Google Agenda",
-      "Agenda Web inclusa no painel",
-      "Clube de assinatura mensal",
+      "Agenda Web inclusa",
+      "Clube mensal para clientes",
       "1 usuário",
     ],
     fullFeatures: [
       ...WAGOO_AI_BASE_FEATURES,
-      "Membros do clube agendam sem sinal (quando o sinal estiver ligado)",
+      "Membros do clube agendam sem precisar pagar sinal",
       "1 usuário (profissional autônomo)",
     ],
   },
@@ -101,12 +101,12 @@ export const WAGOO_PLAN_CARDS: WagooPlanCard[] = [
       "Tudo do Basic",
       "Até 3 usuários na equipe",
       "Lembretes automáticos no WhatsApp",
-      "Analytics completo (caixa, ganhos e planilha)",
+      "Analytics: caixa, ganhos e relatórios",
       "Gerenciar equipe",
     ],
     fullFeatures: [
       ...WAGOO_AI_BASE_FEATURES,
-      "Membros do clube agendam sem sinal (quando o sinal estiver ligado)",
+      "Membros do clube agendam sem precisar pagar sinal",
       ...PRO_ADDS,
     ],
   },
@@ -120,7 +120,7 @@ export const WAGOO_PLAN_CARDS: WagooPlanCard[] = [
     landingDiff: ["Tudo do Pro", "Até 5 usuários na equipe"],
     fullFeatures: [
       ...WAGOO_AI_BASE_FEATURES,
-      "Membros do clube agendam sem sinal (quando o sinal estiver ligado)",
+      "Membros do clube agendam sem precisar pagar sinal",
       ...PRO_ADDS.filter((x) => !x.startsWith("Até 3")),
       ...PRO_PLUS_ADDS,
     ],
@@ -133,7 +133,7 @@ export const WAGOO_SHARED_FEATURES = WAGOO_AI_BASE_FEATURES;
 /** O que o Basic não tem — texto de vendas. */
 export const WAGOO_BASIC_EXCLUSIONS = [
   "Lembretes automáticos no WhatsApp",
-  "Analytics completo (caixa, ganhos e planilha)",
+  "Analytics: caixa, ganhos e relatórios",
   "Gerenciar equipe (Pro / Pro+)",
 ] as const;
 

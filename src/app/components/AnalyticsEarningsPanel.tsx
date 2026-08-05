@@ -414,7 +414,7 @@ export function AnalyticsEarningsPanel({
         setExportError(body.error || "Não foi possível limpar o caixa da planilha.");
         return;
       }
-      setMergeInfo("Caixa da loja voltou aos valores do Stripe.");
+      setMergeInfo("Caixa da loja voltou aos valores dos pagamentos online.");
       await Promise.all([loadSummary(), loadEntries()]);
     } catch {
       setExportError("Erro de rede.");
@@ -495,7 +495,7 @@ export function AnalyticsEarningsPanel({
                       : "bg-emerald-100 text-emerald-800"
                   }`}
                 >
-                  {store.caixa_fonte === "planilha" ? "Planilha" : "Stripe"}
+                  {store.caixa_fonte === "planilha" ? "Planilha" : "Online"}
                 </Badge>
               </div>
               <p className="text-3xl font-black text-slate-900">
@@ -503,7 +503,7 @@ export function AnalyticsEarningsPanel({
               </p>
               <p className="text-[11px] text-slate-500 font-medium">
                 Bruto {moneyLabel(store.bruto_stripe_brl)} − Wagoo{" "}
-                {moneyLabel(store.taxa_wagoo_brl)} − Stripe{" "}
+                {moneyLabel(store.taxa_wagoo_brl)} − cartão/Pix{" "}
                 {moneyLabel(store.taxa_stripe_brl)}
                 {store.clube_bruto_brl > 0
                   ? ` · clube líq. ${moneyLabel(store.clube_liquido_brl)}`
@@ -611,7 +611,7 @@ export function AnalyticsEarningsPanel({
             </h3>
             <p className="text-slate-500 text-sm font-medium mt-1 leading-relaxed">
               Escolha as colunas, baixe, preencha no Excel o que cada um ganhou (e a linha
-              Loja) e envie de volta — o dashboard atualiza.
+              Loja) e envie de volta — os números da loja atualizam na hora.
             </p>
           </div>
         </div>
@@ -691,7 +691,7 @@ export function AnalyticsEarningsPanel({
             className="rounded-xl h-9 text-xs font-black"
             onClick={() => void handleClearStoreOverride()}
           >
-            Voltar ao caixa Stripe
+            Usar de novo os valores dos pagamentos online
           </Button>
         )}
         {exportError && (

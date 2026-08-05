@@ -16,13 +16,20 @@ export function Footer() {
             transition={{ delay: 0.1 }}
             className="mb-8"
           >
-            <img
-              src="/logo.png"
-              alt="Wagoo"
-              width={180}
-              height={48}
-              className="h-12 mx-auto object-contain mb-4"
-            />
+            <Link
+              to="/"
+              title="Wagoo — página inicial"
+              aria-label="Ir para a página inicial do Wagoo"
+              className="inline-block"
+            >
+              <img
+                src="/logo.png"
+                alt="Wagoo"
+                width={180}
+                height={48}
+                className="h-12 mx-auto object-contain mb-4"
+              />
+            </Link>
             <p className="text-gray-600 text-sm leading-relaxed max-w-md mx-auto">
               Automatize seus agendamentos e recupere seu tempo. Simples,
               rápido e profissional. O Wagoo transforma conversas de WhatsApp em clientes agendados.

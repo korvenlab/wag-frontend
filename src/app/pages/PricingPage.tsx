@@ -18,13 +18,13 @@ const PRECOS_SEO: SeoPageMeta = {
   title: "Preços e planos Wagoo | Agenda Web, Basic, Pro e Pro+",
   description:
     "Compare Agenda Web, Basic, Pro e Pro+: preços, usuários e tudo o que cada plano inclui — WhatsApp com IA, Analytics, equipe e Clube.",
-  ogTitle: "Preços Wagoo — planos completos",
+  ogTitle: "Preços Wagoo",
   ogDescription:
-    "Agenda Web, Basic, Pro e Pro+: veja o que cada plano oferece de ponta a ponta.",
+    "Agenda Web, Basic, Pro e Pro+: escolha o plano certo para o seu negócio.",
   breadcrumbs: [{ name: "Preços", path: "/precos" }],
 };
 
-/** Página dedicada: descrição completa + botões reais de assinatura. */
+/** Página pública de preços e assinatura. */
 export function PricingPage() {
   const { loadingTier, checkoutError, handleCheckout } = usePlanCheckout();
   const url = `${SITE_ORIGIN}/precos`;
@@ -92,11 +92,11 @@ export function PricingPage() {
 
           <div className="max-w-3xl mb-14 space-y-4">
             <h1 className="text-4xl md:text-5xl font-extrabold text-slate-900 tracking-tight leading-[1.05]">
-              Preços e planos{" "}
-              <span className="text-[#64b34d]">completos</span>
+              Planos Wagoo
             </h1>
             <p className="text-lg text-slate-500 font-medium leading-relaxed">
-              Aqui está tudo o que cada plano oferece — e o botão certo para assinar.
+              Escolha o que faz sentido pro seu negócio — do link de agendamento ao WhatsApp
+              com IA. Sem fidelidade; cancele quando quiser.
             </p>
             {checkoutError ? (
               <p className="text-sm font-semibold text-red-600 bg-red-50 border border-red-100 rounded-2xl px-4 py-3 max-w-lg">
@@ -112,7 +112,7 @@ export function PricingPage() {
             <div className="flex flex-col lg:flex-row">
               <div className="flex-1 p-8 md:p-10 space-y-6">
                 <div className="inline-flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-[#4d8f3b] bg-green-50 border border-green-100 px-3 py-1 rounded-full">
-                  <Link2 size={12} /> Sem IA · só agendamento web
+                  <Link2 size={12} /> Só agendamento pelo link
                 </div>
                 <div>
                   <h2 className="text-3xl font-extrabold text-slate-900">{AGENDA_WEB_PLAN.name}</h2>
@@ -204,7 +204,7 @@ export function PricingPage() {
                   </div>
                 </div>
                 <p className="text-[10px] font-black uppercase tracking-[0.16em] text-slate-400 mb-3">
-                  Tudo que este plano oferece
+                  Incluso
                 </p>
                 <ul className="space-y-2.5 mb-8 flex-1">
                   {plan.fullFeatures.map((text) => (
@@ -269,7 +269,7 @@ export function PricingPage() {
 
           <p className="mt-12 flex flex-col items-center gap-2 text-center">
             <span className="flex items-center gap-2 text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em]">
-              <Shield size={12} /> Pagamento seguro via Stripe
+              <Shield size={12} /> Pagamento seguro online
             </span>
             <span className="text-xs text-slate-400 font-medium">
               Cancele quando quiser · Sem fidelidade

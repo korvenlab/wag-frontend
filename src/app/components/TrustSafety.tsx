@@ -7,12 +7,12 @@ const POINTS = [
   {
     title: "Google Calendar de verdade",
     description:
-      "OAuth seguro. Só o necessário pra ler disponibilidade e criar eventos na sua agenda.",
+      "Conexão segura com a sua conta Google. Só o necessário para ver horários livres e marcar na sua agenda.",
   },
   {
     title: "Dados sob controle",
     description:
-      "Conexão criptografada (TLS). Sem revenda de dados de clientes. Você decide o que a IA fala.",
+      "Dados protegidos na internet. Sem revenda de dados de clientes. Você decide o que a IA fala.",
   },
 ] as const;
 

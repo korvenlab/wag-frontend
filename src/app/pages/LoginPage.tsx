@@ -1,5 +1,5 @@
 import { motion } from "motion/react";
-import { useNavigate, useSearchParams } from "react-router";
+import { Link, useNavigate, useSearchParams } from "react-router";
 import { useEffect, useState, useRef } from "react";
 import { supabase } from "../lib/supabase";
 import { ArrowLeft, Loader2 } from "lucide-react";
@@ -183,13 +183,15 @@ export function LoginPage() {
         className="text-center space-y-12 max-w-sm w-full"
       >
         <div className="flex justify-center">
-          <img src="/logo.png" className="w-56 h-auto object-contain" alt="Wagoo" />
+          <Link to="/" title="Wagoo — página inicial" aria-label="Ir para a página inicial do Wagoo">
+            <img src="/logo.png" className="w-56 h-auto object-contain" alt="Wagoo" />
+          </Link>
         </div>
 
         {promoActive ? (
           <div className="p-3 rounded-2xl border border-emerald-200 bg-emerald-50 text-emerald-900 text-xs font-semibold text-center leading-relaxed">
-            Link promocional ativo: após o Google liberar o acesso, você ganha o período de cortesia
-            no Wagoo (resgate automático).
+            Link promocional ativo: depois de entrar com Google, o período de cortesia é aplicado
+            na sua conta.
           </div>
         ) : null}
 

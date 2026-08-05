@@ -20,7 +20,7 @@ export function WagooVsPlanilhaPage() {
         {
           heading: "Onde a planilha perde para o Wagoo",
           body: [
-            "Planilha não consulta Google Calendar sozinha, não confirma às 22h e não evita double booking sem disciplina humana.",
+            "Planilha não consulta Google Calendar sozinha, não confirma às 22h e não evita dois clientes no mesmo horário sem você conferir na mão.",
             "Cada atraso na resposta é um horário que pode ir para o concorrente. O Wagoo ataca essa dor: conversa no WhatsApp vira evento na agenda.",
           ],
         },
@@ -28,18 +28,18 @@ export function WagooVsPlanilhaPage() {
           heading: "Conta rápida de investimento",
           body: [
             "Basic a partir de R$ 59/mês. Se o sistema recuperar um único horário que a demora na planilha/chat faria você perder, o mês já se justifica.",
-            "Não é “mais uma ferramenta”: é tirar da sua mão o trabalho repetitivo de remarcar e confirmar, mantendo o calendário como fonte da verdade.",
+            "Não é “mais uma ferramenta”: é tirar da sua mão o trabalho repetitivo de remarcar e confirmar, com a agenda Google sempre atualizada.",
           ],
         },
       ]}
       relatedLinks={[
-        { to: "/agendamento", label: "Hub de agendamento" },
+        { to: "/agendamento", label: "Guia de agendamento" },
         { to: "/agendamento/whatsapp", label: "Agendamento no WhatsApp" },
       ]}
       faqs={[
         {
           q: "Preciso abandonar a planilha no mesmo dia?",
-          a: "Não. Muita gente usa o Wagoo na operação diária e mantém exportações (Pro/Pro+) para contabilidade ou relatório.",
+          a: "Não. Muita gente usa o Wagoo no dia a dia e, no Pro ou Pro+, baixa relatórios para o contador ou fechamento do mês.",
         },
         {
           q: "Planilha + WhatsApp manual não basta?",
@@ -47,7 +47,7 @@ export function WagooVsPlanilhaPage() {
         },
         {
           q: "Tem fidelidade?",
-          a: "Não. Cancele quando quiser. Pagamento via Stripe.",
+          a: "Não. Cancele quando quiser. Pagamento seguro online.",
         },
       ]}
     />

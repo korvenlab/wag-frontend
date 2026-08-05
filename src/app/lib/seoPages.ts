@@ -77,9 +77,9 @@ export const CONTENT_SEO_PAGES: SeoPageMeta[] = [
     title: "Preços e planos Wagoo | Agenda Web, Basic, Pro e Pro+",
     description:
       "Compare Agenda Web, Basic, Pro e Pro+: preços, usuários e tudo o que cada plano inclui — WhatsApp com IA, Analytics, equipe e Clube.",
-    ogTitle: "Preços Wagoo — planos completos",
+    ogTitle: "Preços Wagoo",
     ogDescription:
-      "Agenda Web, Basic, Pro e Pro+: veja o que cada plano oferece de ponta a ponta.",
+      "Agenda Web, Basic, Pro e Pro+: escolha o plano certo para o seu negócio.",
     breadcrumbs: [{ name: "Preços", path: "/precos" }],
   },
 ];

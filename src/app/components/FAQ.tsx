@@ -25,7 +25,7 @@ export function FAQ() {
     {
       question: "Qual plano preciso contratar?",
       answer:
-        "Basic (R$ 59, 1 usuário), Pro (R$ 149, até 3) e Pro+ (R$ 259, até 5), além da Agenda Web (R$ 20) sem IA. Todos incluem Clube. Pro e Pro+ adicionam lembretes, Analytics e equipe. Detalhes em wagoobot.com/precos.",
+        "Basic (R$ 59, 1 usuário), Pro (R$ 149, até 3) e Pro+ (R$ 259, até 5), além da Agenda Web (R$ 20) só com link de agendamento. Todos incluem Clube. Pro e Pro+ adicionam lembretes, Analytics e equipe. Veja tudo em wagoobot.com/precos.",
     },
     {
       question: "O Wagoo é exclusivo para a minha agenda?",
@@ -35,7 +35,7 @@ export function FAQ() {
     {
       question: "Meus dados e os dos meus clientes estão seguros?",
       answer:
-        "Usamos OAuth2, criptografia em trânsito (TLS) e práticas alinhadas à LGPD. Não revendemos dados dos seus clientes.",
+        "Login seguro com Google, dados protegidos e alinhados à LGPD. Não revendemos dados dos seus clientes.",
     },
     {
       question: "Posso usar com WhatsApp pessoal ou precisa ser Business?",
