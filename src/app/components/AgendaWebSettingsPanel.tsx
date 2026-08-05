@@ -15,6 +15,7 @@ import {
   CalendarDays,
   CalendarCheck,
   Eye,
+  CreditCard,
 } from "lucide-react";
 import { apiFetch } from "../lib/apiFetch";
 import { Button } from "./ui/button";
@@ -131,6 +132,7 @@ export function AgendaWebSettingsPanel({
   const [slug, setSlug] = useState<string | null>(null);
   const [publicUrl, setPublicUrl] = useState<string | null>(null);
   const [agendaUrl, setAgendaUrl] = useState<string | null>(null);
+  const [clientUrl, setClientUrl] = useState<string | null>(null);
 
   const [workingHours, setWorkingHours] = useState<WorkingHoursMap>(createDefaultWorkingHours);
   const [selectedDay, setSelectedDay] = useState("Segunda-feira");
@@ -222,6 +224,7 @@ export function AgendaWebSettingsPanel({
       setSlug(data.profile?.booking_slug ?? null);
       setPublicUrl(data.publicUrl ?? null);
       setAgendaUrl(data.agendaUrl ?? null);
+      setClientUrl(data.clientUrl ?? null);
       setWorkingHours(normalizeWorkingHours(data.profile?.working_hours));
       setServices(data.services ?? []);
       setProviders(data.providers ?? []);
@@ -300,6 +303,7 @@ export function AgendaWebSettingsPanel({
       setSlug(data.profile?.booking_slug ?? null);
       setPublicUrl(data.publicUrl ?? null);
       setAgendaUrl(data.agendaUrl ?? null);
+      setClientUrl(data.clientUrl ?? null);
       setMissing(data.missing ?? []);
       setMissingMessages(data.missingMessages ?? []);
       if (data.profile?.working_hours) {
@@ -616,12 +620,53 @@ export function AgendaWebSettingsPanel({
             </div>
           </div>
 
+          <div className="rounded-2xl border border-slate-200 bg-white p-5 space-y-3">
+            <div className="flex items-center gap-2">
+              <div className="w-10 h-10 rounded-xl bg-slate-100 text-slate-600 flex items-center justify-center">
+                <CreditCard size={20} />
+              </div>
+              <div>
+                <p className="text-sm font-black text-slate-900">Link do clube (cliente)</p>
+                <p className="text-[10px] font-black uppercase tracking-wider text-slate-400">
+                  Mensalidade · área do membro
+                </p>
+              </div>
+            </div>
+            <p className="text-sm text-slate-600 font-medium leading-relaxed">
+              O cliente assina o clube mensal no cartão, vê dias restantes e os horários da
+              loja. Configure o valor em Pagamentos.
+            </p>
+            <code className="block text-xs font-bold text-slate-700 bg-slate-50 border border-slate-100 px-3 py-2 rounded-xl break-all">
+              {clientUrl || (slug ? `/a/${slug}/cliente` : "Disponível após salvar o negócio")}
+            </code>
+            {clientUrl ? (
+              <div className="flex flex-wrap gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    void navigator.clipboard.writeText(clientUrl);
+                    setMsg("Link do clube (cliente) copiado.");
+                  }}
+                >
+                  <Copy size={14} className="mr-1" /> Copiar
+                </Button>
+                <Button type="button" variant="outline" size="sm" asChild>
+                  <a href={clientUrl} target="_blank" rel="noreferrer">
+                    <ExternalLink size={14} className="mr-1" /> Abrir
+                  </a>
+                </Button>
+              </div>
+            ) : null}
+          </div>
+
           <div className="rounded-2xl border border-dashed border-slate-200 px-4 py-3 flex items-start gap-3 text-sm text-slate-500 font-medium">
             <Link2 className="shrink-0 mt-0.5 text-slate-400" size={16} />
             <p>
               Dica: no bio do Instagram e no status do WhatsApp, use o{" "}
               <strong className="text-slate-800 font-bold">link verde (agendar)</strong>. O link de
-              consulta é opcional.
+              consulta e o do clube são opcionais.
             </p>
           </div>
         </CardContent>

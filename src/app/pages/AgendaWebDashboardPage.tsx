@@ -23,6 +23,7 @@ import {
 import { AgendaWebWhatsAppPanel } from "../components/AgendaWebWhatsAppPanel";
 import { AgendaWebGooglePanel } from "../components/AgendaWebGooglePanel";
 import { AgendaWebPaymentsPanel } from "../components/AgendaWebPaymentsPanel";
+import { ClubMembershipPanel } from "../components/ClubMembershipPanel";
 
 const NAV: {
   id: AgendaWebSection;
@@ -300,6 +301,9 @@ export function AgendaWebDashboardPage() {
               <AgendaWebGooglePanel />
             ) : section === "pagamentos" ? (
               <AgendaWebPaymentsPanel />
+              <div className="pt-4">
+                <ClubMembershipPanel />
+              </div>
             ) : (
               <AgendaWebSettingsPanel
                 section={section}

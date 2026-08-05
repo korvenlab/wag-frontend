@@ -18,7 +18,9 @@ import { DashboardSidebar, type DashboardNavId } from "../components/DashboardSi
 import { PlanFeatureGate } from "../components/PlanFeatureGate";
 import { AgendaWebSettingsPanel } from "../components/AgendaWebSettingsPanel";
 import { AgendaWebPaymentsPanel } from "../components/AgendaWebPaymentsPanel";
+import { ClubMembershipPanel } from "../components/ClubMembershipPanel";
 import { BookingServicesPanel } from "../components/BookingServicesPanel";
+import { AnalyticsEarningsPanel } from "../components/AnalyticsEarningsPanel";
 import { apiFetch } from "../lib/apiFetch";
 import { planLabel, tierSupportsCsvExport, tierSupportsReminders } from "../lib/wagooPlans";
 import {
@@ -45,25 +47,6 @@ function defaultCsvRange(): { from: string; to: string } {
   const from = new Date(now.getFullYear(), now.getMonth(), 1);
   const to = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
   return { from: from.toISOString(), to: to.toISOString() };
-}
-
-function toDateInputValue(iso: string): string {
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return "";
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, "0");
-  const day = String(d.getDate()).padStart(2, "0");
-  return `${y}-${m}-${day}`;
-}
-
-function fromDateInputStart(ymd: string): string {
-  const [y, m, d] = ymd.split("-").map(Number);
-  return new Date(y, m - 1, d, 0, 0, 0, 0).toISOString();
-}
-
-function fromDateInputEnd(ymd: string): string {
-  const [y, m, d] = ymd.split("-").map(Number);
-  return new Date(y, m - 1, d, 23, 59, 59, 999).toISOString();
 }
 
 const DAYS_OF_WEEK = ["Segunda-feira", "Terça-feira", "Quarta-feira", "Quinta-feira", "Sexta-feira", "Sábado", "Domingo"];
@@ -123,8 +106,6 @@ export function Dashboard() {
   const [showTemplatesSuccess, setShowTemplatesSuccess] = useState(false);
   const [templatesError, setTemplatesError] = useState<string | null>(null);
   const [csvRange, setCsvRange] = useState(defaultCsvRange);
-  const [isExportingCsv, setIsExportingCsv] = useState(false);
-  const [csvExportError, setCsvExportError] = useState<string | null>(null);
 
   const { user, loading, logout, refreshProfile } = useAuth();
   const navigate = useNavigate();
@@ -460,36 +441,6 @@ export function Dashboard() {
       setTemplatesError("Erro de rede ao salvar templates.");
     } finally {
       setIsSavingTemplates(false);
-    }
-  };
-
-  const handleExportCsv = async () => {
-    setIsExportingCsv(true);
-    setCsvExportError(null);
-    try {
-      const qs = new URLSearchParams({
-        from: csvRange.from,
-        to: csvRange.to,
-      });
-      const response = await apiFetch(`/api/calendar/events/export?${qs.toString()}`);
-      if (!response.ok) {
-        const body = (await response.json().catch(() => null)) as { error?: string } | null;
-        setCsvExportError(body?.error || "Não foi possível exportar o CSV.");
-        return;
-      }
-      const blob = await response.blob();
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `wagoo-agendamentos-${toDateInputValue(csvRange.from)}_${toDateInputValue(csvRange.to)}.csv`;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      URL.revokeObjectURL(url);
-    } catch {
-      setCsvExportError("Erro de rede ao exportar CSV.");
-    } finally {
-      setIsExportingCsv(false);
     }
   };
 
@@ -910,109 +861,17 @@ export function Dashboard() {
 
                 <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="lg:col-span-3">
                   {tierSupportsCsvExport(user.subscriptionTier) ? (
-                    <Card className="rounded-[32px] border-none shadow-wg-elevated bg-white p-8 md:p-10 space-y-6">
-                      <div className="flex items-start gap-4">
-                        <div className="w-12 h-12 rounded-2xl bg-slate-50 flex items-center justify-center text-[#64b34d] shrink-0">
-                          <Download size={22} />
-                        </div>
-                        <div>
-                          <h3 className="font-black text-xl text-slate-900 tracking-tight">
-                            Exportar agendamentos (CSV)
-                          </h3>
-                          <p className="text-slate-500 text-sm font-medium mt-1 leading-relaxed">
-                            Baixe o período para contabilidade: data, cliente, telefone e profissional.
-                            Requer Google Agenda conectado.
-                          </p>
-                        </div>
-                      </div>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-lg">
-                        <div className="space-y-2">
-                          <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">
-                            De
-                          </Label>
-                          <Input
-                            type="date"
-                            value={toDateInputValue(csvRange.from)}
-                            onChange={(e) =>
-                              setCsvRange((prev) => ({
-                                ...prev,
-                                from: fromDateInputStart(e.target.value),
-                              }))
-                            }
-                            className="h-11 rounded-xl bg-slate-50 border-none font-bold"
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">
-                            Até
-                          </Label>
-                          <Input
-                            type="date"
-                            value={toDateInputValue(csvRange.to)}
-                            onChange={(e) =>
-                              setCsvRange((prev) => ({
-                                ...prev,
-                                to: fromDateInputEnd(e.target.value),
-                              }))
-                            }
-                            className="h-11 rounded-xl bg-slate-50 border-none font-bold"
-                          />
-                        </div>
-                      </div>
-                      <div className="flex flex-wrap gap-2">
-                        <Button
-                          type="button"
-                          variant="outline"
-                          onClick={() => setCsvRange(defaultCsvRange())}
-                          className="rounded-xl h-10 text-xs font-black"
-                        >
-                          Este mês
-                        </Button>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          onClick={() => {
-                            const to = new Date();
-                            const from = new Date();
-                            from.setDate(from.getDate() - 30);
-                            setCsvRange({
-                              from: from.toISOString(),
-                              to: to.toISOString(),
-                            });
-                          }}
-                          className="rounded-xl h-10 text-xs font-black"
-                        >
-                          Últimos 30 dias
-                        </Button>
-                      </div>
-                      <Button
-                        type="button"
-                        onClick={() => void handleExportCsv()}
-                        disabled={isExportingCsv || !isGoogleConnected}
-                        className="h-12 px-6 rounded-2xl bg-slate-900 hover:bg-[#64b34d] text-white font-black gap-2"
-                      >
-                        {isExportingCsv ? (
-                          <Loader2 className="animate-spin" />
-                        ) : (
-                          <>
-                            <Download size={16} /> Baixar CSV
-                          </>
-                        )}
-                      </Button>
-                      {!isGoogleConnected && (
-                        <p className="text-amber-600 text-xs font-bold">
-                          Conecte o Google Agenda na Visão Geral para exportar.
-                        </p>
-                      )}
-                      {csvExportError && (
-                        <p className="text-red-600 text-xs font-medium">{csvExportError}</p>
-                      )}
-                    </Card>
+                    <AnalyticsEarningsPanel
+                      range={csvRange}
+                      onRangeChange={setCsvRange}
+                      googleConnected={isGoogleConnected}
+                      userId={user.id}
+                    />
                   ) : (
                     <PlanFeatureGate
                       icon={Download}
                       title="Export CSV disponível no Pro e Pro+"
-                      description="No plano Basic esta função não está inclusa. Faça upgrade para baixar seus agendamentos em CSV para contabilidade."
+                      description="No plano Basic esta função não está inclusa. Faça upgrade para baixar seus agendamentos em CSV para contabilidade, lançar ganhos manuais e montar o dashboard por profissional."
                     />
                   )}
                 </motion.div>
@@ -1036,11 +895,15 @@ export function Dashboard() {
                 <div className="mb-2">
                   <h3 className="text-2xl font-black text-slate-900 tracking-tighter">Pagamentos</h3>
                   <p className="text-slate-500 font-medium mt-1 text-base leading-relaxed">
-                    Conta para receber e sinal opcional. Com o sinal ligado, o cliente paga para
-                    confirmar o horário — no WhatsApp e na Agenda Web.
+                    Conta para receber, sinal e clube mensal. Com o sinal ligado, o cliente
+                    precisa pagar para confirmar. Com o sinal desligado, você decide se libera o
+                    pagamento adiantado opcional (100% do serviço).
                   </p>
                 </div>
                 <AgendaWebPaymentsPanel />
+                <div className="pt-4">
+                  <ClubMembershipPanel />
+                </div>
               </motion.div>
             )}
 

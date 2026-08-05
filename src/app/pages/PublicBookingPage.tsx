@@ -73,7 +73,9 @@ type Site = {
   providers: Provider[];
   deposit?: {
     required: boolean;
+    optional?: boolean;
     percent: number;
+    advance_percent?: number;
     wagoo_fee_percent: number;
     hold_minutes: number;
   };
@@ -179,6 +181,14 @@ export function PublicBookingPage() {
 
   const [clientName, setClientName] = useState("");
   const [clientPhone, setClientPhone] = useState("");
+  const [clubMemberActive, setClubMemberActive] = useState(false);
+  const [clubDaysLeft, setClubDaysLeft] = useState<number | null>(null);
+  const [clubToken, setClubToken] = useState<string | null>(null);
+  const [clubOtpCode, setClubOtpCode] = useState("");
+  const [clubOtpSent, setClubOtpSent] = useState(false);
+  const [clubOtpBusy, setClubOtpBusy] = useState(false);
+  const [clubOtpMsg, setClubOtpMsg] = useState<string | null>(null);
+  const [payInAdvance, setPayInAdvance] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [confirmedAppointment, setConfirmedAppointment] = useState<{
@@ -302,11 +312,208 @@ export function PublicBookingPage() {
     [selectedServices],
   );
   const depositPreview = useMemo(() => {
+    if (clubMemberActive) return null;
     if (!site?.deposit?.required || totalPrice <= 0) return null;
     const pct = site.deposit.percent || 30;
     const deposit = Math.round(((totalPrice * pct) / 100) * 100) / 100;
     return { percent: pct, deposit: deposit < 1 && totalPrice > 0 ? 1 : deposit };
-  }, [site, totalPrice]);
+  }, [site, totalPrice, clubMemberActive]);
+
+  const optionalAdvancePreview = useMemo(() => {
+    if (clubMemberActive) return null;
+    if (site?.deposit?.required) return null;
+    if (!site?.deposit?.optional || totalPrice <= 0) return null;
+    const pct = site.deposit.advance_percent ?? 100;
+    const amount = Math.round(((totalPrice * pct) / 100) * 100) / 100;
+    return {
+      percent: pct,
+      amount: amount < 1 && totalPrice > 0 ? 1 : amount,
+    };
+  }, [site, totalPrice, clubMemberActive]);
+
+  useEffect(() => {
+    if (!slug) return;
+    const digits = clientPhone.replace(/\D/g, "");
+    if (digits.length < 10) {
+      setClubMemberActive(false);
+      setClubDaysLeft(null);
+      setClubToken(null);
+      setClubOtpSent(false);
+      setClubOtpCode("");
+      setClubOtpMsg(null);
+      return;
+    }
+
+    const key = `wagoo_club_token:${slug}:${digits}:club_benefit`;
+    let stored: string | null = null;
+    try {
+      const raw = localStorage.getItem(key);
+      if (raw) {
+        const parsed = JSON.parse(raw) as { token?: string; expires_at?: string };
+        if (
+          parsed.token &&
+          parsed.expires_at &&
+          new Date(parsed.expires_at).getTime() > Date.now()
+        ) {
+          stored = parsed.token;
+        } else {
+          localStorage.removeItem(key);
+        }
+      }
+    } catch {
+      /* ignore */
+    }
+
+    // Também aceita token de member_access / subscribe do portal
+    if (!stored) {
+      for (const purpose of ["member_access", "subscribe"] as const) {
+        try {
+          const raw = localStorage.getItem(
+            `wagoo_club_token:${slug}:${digits}:${purpose}`,
+          );
+          if (!raw) continue;
+          const parsed = JSON.parse(raw) as { token?: string; expires_at?: string };
+          if (
+            parsed.token &&
+            parsed.expires_at &&
+            new Date(parsed.expires_at).getTime() > Date.now()
+          ) {
+            stored = parsed.token;
+            break;
+          }
+        } catch {
+          /* ignore */
+        }
+      }
+    }
+
+    setClubToken(stored);
+    if (!stored) {
+      setClubMemberActive(false);
+      setClubDaysLeft(null);
+      return;
+    }
+
+    let cancelled = false;
+    const t = window.setTimeout(() => {
+      void (async () => {
+        try {
+          const res = await fetch(
+            `${API}/api/booking/public/${encodeURIComponent(slug)}/club-status?phone=${encodeURIComponent(digits)}`,
+            { headers: { "X-Club-Token": stored! } },
+          );
+          if (!res.ok || cancelled) return;
+          const data = await res.json();
+          if (cancelled) return;
+          setClubMemberActive(Boolean(data.is_club_member));
+          setClubDaysLeft(
+            data.member?.days_left != null ? Number(data.member.days_left) : null,
+          );
+        } catch {
+          if (!cancelled) {
+            setClubMemberActive(false);
+            setClubDaysLeft(null);
+          }
+        }
+      })();
+    }, 300);
+    return () => {
+      cancelled = true;
+      window.clearTimeout(t);
+    };
+  }, [slug, clientPhone]);
+
+  async function sendClubOtp() {
+    if (!slug) return;
+    const digits = clientPhone.replace(/\D/g, "");
+    if (digits.length < 10) return;
+    setClubOtpBusy(true);
+    setClubOtpMsg(null);
+    try {
+      const res = await fetch(
+        `${API}/api/club/public/${encodeURIComponent(slug)}/otp/send`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ phone: digits, purpose: "club_benefit" }),
+        },
+      );
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setClubOtpMsg(data.error || "Não foi possível enviar o código.");
+        return;
+      }
+      setClubOtpSent(true);
+      setClubOtpMsg(
+        data.message ||
+          "Se você for membro, enviamos um código no WhatsApp do salão.",
+      );
+    } catch {
+      setClubOtpMsg("Erro de rede ao enviar o código.");
+    } finally {
+      setClubOtpBusy(false);
+    }
+  }
+
+  async function verifyClubOtp() {
+    if (!slug) return;
+    const digits = clientPhone.replace(/\D/g, "");
+    setClubOtpBusy(true);
+    setClubOtpMsg(null);
+    try {
+      const res = await fetch(
+        `${API}/api/club/public/${encodeURIComponent(slug)}/otp/verify`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            phone: digits,
+            code: clubOtpCode,
+            purpose: "club_benefit",
+          }),
+        },
+      );
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setClubOtpMsg(data.error || "Código inválido.");
+        return;
+      }
+      const token = String(data.club_token || "");
+      const expiresAt = String(data.expires_at || "");
+      if (!token) {
+        setClubOtpMsg("Sessão inválida.");
+        return;
+      }
+      localStorage.setItem(
+        `wagoo_club_token:${slug}:${digits}:club_benefit`,
+        JSON.stringify({ token, expires_at: expiresAt }),
+      );
+      setClubToken(token);
+      const statusRes = await fetch(
+        `${API}/api/booking/public/${encodeURIComponent(slug)}/club-status?phone=${encodeURIComponent(digits)}`,
+        { headers: { "X-Club-Token": token } },
+      );
+      const statusData = await statusRes.json().catch(() => ({}));
+      setClubMemberActive(Boolean(statusData.is_club_member));
+      setClubDaysLeft(
+        statusData.member?.days_left != null
+          ? Number(statusData.member.days_left)
+          : null,
+      );
+      setClubOtpMsg(
+        statusData.is_club_member
+          ? site?.deposit?.required
+            ? "Clube confirmado — sem sinal."
+            : "Clube confirmado."
+          : "WhatsApp confirmado, mas não há assinatura ativa.",
+      );
+    } catch {
+      setClubOtpMsg("Erro de rede ao validar o código.");
+    } finally {
+      setClubOtpBusy(false);
+    }
+  }
+
   const selectedProvider = useMemo(
     () => (providerId ? site?.providers.find((p) => p.id === providerId) ?? null : null),
     [site, providerId],
@@ -360,6 +567,13 @@ export function PublicBookingPage() {
     setSelectedSlot(null);
     setClientName("");
     setClientPhone("");
+    setClubMemberActive(false);
+    setClubDaysLeft(null);
+    setClubToken(null);
+    setClubOtpCode("");
+    setClubOtpSent(false);
+    setClubOtpMsg(null);
+    setPayInAdvance(false);
     setError(null);
     setSubmitting(false);
     setConfirmedAppointment(null);
@@ -397,6 +611,10 @@ export function PublicBookingPage() {
             startsAt: selectedSlot,
             clientName,
             clientPhone,
+            ...(clubToken ? { club_token: clubToken } : {}),
+            ...(optionalAdvancePreview && payInAdvance
+              ? { pay_in_advance: true }
+              : {}),
           }),
         },
       );
@@ -1072,10 +1290,66 @@ export function PublicBookingPage() {
                         className="w-full rounded-xl bg-black/40 border border-white/10 px-4 py-3 text-base focus:outline-none focus:border-[#64b34d]/50"
                         placeholder="WHATSAPP"
                         value={clientPhone}
-                        onChange={(e) => setClientPhone(e.target.value)}
+                        onChange={(e) => {
+                          setClientPhone(e.target.value);
+                          setClubOtpSent(false);
+                          setClubOtpCode("");
+                          setClubOtpMsg(null);
+                        }}
                         inputMode="tel"
                         type="tel"
                       />
+                      {clientPhone.replace(/\D/g, "").length >= 10 &&
+                      !clubMemberActive ? (
+                        <div className="rounded-xl border border-white/10 bg-black/30 p-3 space-y-2">
+                          <p className="text-xs font-semibold text-white/70">
+                            {site?.deposit?.required
+                              ? "Membro do clube? Confirme o WhatsApp para agendar sem sinal."
+                              : "Membro do clube? Confirme o WhatsApp para identificar sua assinatura."}
+                          </p>
+                          {!clubOtpSent ? (
+                            <button
+                              type="button"
+                              disabled={clubOtpBusy}
+                              onClick={() => void sendClubOtp()}
+                              className="w-full min-h-10 rounded-lg bg-white/10 hover:bg-white/15 font-bold text-sm disabled:opacity-50"
+                            >
+                              {clubOtpBusy ? (
+                                <Loader2 className="animate-spin mx-auto" size={16} />
+                              ) : (
+                                "Enviar código no WhatsApp"
+                              )}
+                            </button>
+                          ) : (
+                            <div className="flex gap-2">
+                              <input
+                                className="flex-1 rounded-lg bg-black/40 border border-white/10 px-3 py-2 text-sm font-bold tracking-widest focus:outline-none focus:border-[#64b34d]/50"
+                                placeholder="Código"
+                                value={clubOtpCode}
+                                onChange={(e) =>
+                                  setClubOtpCode(
+                                    e.target.value.replace(/\D/g, "").slice(0, 6),
+                                  )
+                                }
+                                inputMode="numeric"
+                              />
+                              <button
+                                type="button"
+                                disabled={clubOtpBusy || clubOtpCode.length !== 6}
+                                onClick={() => void verifyClubOtp()}
+                                className="px-3 rounded-lg bg-[#64b34d] font-black text-sm disabled:opacity-40"
+                              >
+                                OK
+                              </button>
+                            </div>
+                          )}
+                          {clubOtpMsg ? (
+                            <p className="text-[11px] text-white/50 font-medium">
+                              {clubOtpMsg}
+                            </p>
+                          ) : null}
+                        </div>
+                      ) : null}
                       <div className="rounded-2xl border border-white/10 p-4 text-sm space-y-2">
                         <div className="space-y-1">
                           {selectedServices.map((s) => (
@@ -1091,6 +1365,17 @@ export function PublicBookingPage() {
                           <span>Total</span>
                           <span className="text-[#64b34d]">R$ {totalPrice.toFixed(2)}</span>
                         </div>
+                        {clubMemberActive ? (
+                          <div className="rounded-xl bg-[#64b34d]/15 border border-[#64b34d]/30 px-3 py-2 text-xs font-semibold text-[#9ae07f] space-y-1">
+                            <p>Clube ativo — agende sem pagar sinal.</p>
+                            {clubDaysLeft != null ? (
+                              <p className="text-white/45 font-medium">
+                                {clubDaysLeft} dia{clubDaysLeft === 1 ? "" : "s"} até a
+                                renovação.
+                              </p>
+                            ) : null}
+                          </div>
+                        ) : null}
                         {depositPreview ? (
                           <div className="rounded-xl bg-[#64b34d]/15 border border-[#64b34d]/30 px-3 py-2 text-xs font-semibold text-[#9ae07f] space-y-1">
                             <p>
@@ -1101,6 +1386,25 @@ export function PublicBookingPage() {
                               O horário só fica confirmado depois do pagamento.
                             </p>
                           </div>
+                        ) : null}
+                        {optionalAdvancePreview ? (
+                          <label className="flex items-start gap-3 rounded-xl border border-white/10 bg-black/30 px-3 py-3 cursor-pointer">
+                            <input
+                              type="checkbox"
+                              className="mt-0.5 w-4 h-4 accent-[#64b34d] shrink-0"
+                              checked={payInAdvance}
+                              onChange={(e) => setPayInAdvance(e.target.checked)}
+                            />
+                            <span className="text-xs font-semibold text-white/80 space-y-1">
+                              <span className="block">
+                                Pagar o serviço agora (R${" "}
+                                {optionalAdvancePreview.amount.toFixed(2)})
+                              </span>
+                              <span className="block text-white/45 font-medium">
+                                Opcional — você também pode agendar e pagar no salão.
+                              </span>
+                            </span>
+                          </label>
                         ) : null}
                         {hasProviders ? (
                           <p className="text-white/50 pt-1">
@@ -1146,7 +1450,13 @@ export function PublicBookingPage() {
                   {submitting ? (
                     <Loader2 className="animate-spin mx-auto" size={18} />
                   ) : isConfirmStep ? (
-                    depositPreview ? "Pagar sinal e confirmar" : "Confirmar Agendamento"
+                    depositPreview
+                      ? "Pagar sinal e confirmar"
+                      : optionalAdvancePreview && payInAdvance
+                        ? "Pagar e confirmar"
+                        : clubMemberActive
+                          ? "Confirmar (clube)"
+                          : "Confirmar Agendamento"
                   ) : (
                     "Próximo"
                   )}

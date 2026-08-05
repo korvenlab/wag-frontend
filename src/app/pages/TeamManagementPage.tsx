@@ -48,6 +48,7 @@ type Barbeiro = {
   nome: string;
   google_calendar_email: string;
   ativo: boolean;
+  commission_percent: number;
 };
 
 export function TeamManagementPage() {
@@ -62,7 +63,9 @@ export function TeamManagementPage() {
   const [loadingTeam, setLoadingTeam] = useState(true);
   const [nome, setNome] = useState("");
   const [email, setEmail] = useState("");
+  const [commissionPercent, setCommissionPercent] = useState("50");
   const [saving, setSaving] = useState(false);
+  const [savingCommissionId, setSavingCommissionId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [barbeiroToDelete, setBarbeiroToDelete] = useState<Barbeiro | null>(null);
   const [upgrading, setUpgrading] = useState<WagooPlanTier | null>(null);
@@ -97,7 +100,10 @@ export function TeamManagementPage() {
         return;
       }
       const data = await res.json();
-      const list = (data.barbeiros ?? []) as Barbeiro[];
+      const list = ((data.barbeiros ?? []) as Barbeiro[]).map((b) => ({
+        ...b,
+        commission_percent: Number(b.commission_percent) || 0,
+      }));
       setBarbeiros(list);
       setCachedTeam(user.id, list);
     } catch {
@@ -164,6 +170,11 @@ export function TeamManagementPage() {
 
   const handleAdd = async () => {
     if (!canAddTeamMember) return;
+    const pct = Number(String(commissionPercent).replace(",", "."));
+    if (!Number.isFinite(pct) || pct < 0 || pct > 100) {
+      setError("Comissão deve ser um percentual entre 0 e 100.");
+      return;
+    }
     setSaving(true);
     setError(null);
     try {
@@ -174,7 +185,11 @@ export function TeamManagementPage() {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ nome: nome.trim(), google_calendar_email: email.trim() }),
+        body: JSON.stringify({
+          nome: nome.trim(),
+          google_calendar_email: email.trim(),
+          commission_percent: Math.round(pct * 100) / 100,
+        }),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -187,6 +202,7 @@ export function TeamManagementPage() {
       }
       setNome("");
       setEmail("");
+      setCommissionPercent("50");
       invalidateTeamCache(user?.id);
       await loadTeam({ background: true });
       void refreshProfile({ force: true });
@@ -194,6 +210,46 @@ export function TeamManagementPage() {
       setError("Erro ao cadastrar profissional.");
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleSaveCommission = async (b: Barbeiro, rawValue: string) => {
+    if (!user?.subscriptionTier) return;
+    const pct = Number(String(rawValue).replace(",", "."));
+    if (!Number.isFinite(pct) || pct < 0 || pct > 100) {
+      setError("Comissão deve ser um percentual entre 0 e 100.");
+      return;
+    }
+    const next = Math.round(pct * 100) / 100;
+    if (next === (Number(b.commission_percent) || 0)) return;
+    setSavingCommissionId(b.id);
+    setError(null);
+    try {
+      const token = await getToken();
+      const res = await fetch(`${backendUrl}/api/barbeiros/${b.id}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ commission_percent: next }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        setError(data.error || "Não foi possível salvar a comissão.");
+        return;
+      }
+      setBarbeiros((prev) => {
+        const updated = prev.map((x) =>
+          x.id === b.id ? { ...x, commission_percent: next } : x,
+        );
+        if (user?.id) setCachedTeam(user.id, updated);
+        return updated;
+      });
+    } catch {
+      setError("Erro ao salvar comissão.");
+    } finally {
+      setSavingCommissionId(null);
     }
   };
 
@@ -308,7 +364,9 @@ export function TeamManagementPage() {
               ) : null}
             </div>
             <p className="text-slate-500 font-medium">
-              Cadastre profissionais e a IA direciona agendamentos com convite no Google Agenda.
+              Cadastre profissionais, defina a comissão de cada um e a IA direciona agendamentos
+              com convite no Google Agenda. O percentual entra no CSV de Analytics nos
+              agendamentos pagos.
             </p>
             {subscriptionTier ? (
               <p className="text-sm font-bold text-slate-700">
@@ -332,7 +390,7 @@ export function TeamManagementPage() {
                 </CardTitle>
                 <CardDescription className="font-medium">
                   {canAddTeamMember
-                    ? "Nome e e-mail do Google Agenda que receberá o convite do compromisso."
+                    ? "Nome, e-mail do Google Agenda e comissão (%) sobre o valor do serviço pago."
                     : atLimit
                       ? `Limite do plano ${planLabel(subscriptionTier)} atingido (${maxTeamUsers} usuário(s)).`
                       : "Assine um plano para cadastrar profissionais."}
@@ -370,6 +428,25 @@ export function TeamManagementPage() {
                         disabled={!canAddTeamMember}
                       />
                     </div>
+                  </div>
+                  <div className="space-y-2 sm:col-span-2 sm:max-w-xs">
+                    <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                      Comissão (%)
+                    </Label>
+                    <Input
+                      type="number"
+                      min={0}
+                      max={100}
+                      step={0.5}
+                      value={commissionPercent}
+                      onChange={(e) => setCommissionPercent(e.target.value)}
+                      placeholder="50"
+                      className="h-12 rounded-xl bg-slate-50 border-none font-semibold"
+                      disabled={!canAddTeamMember}
+                    />
+                    <p className="text-[11px] text-slate-400 font-medium">
+                      Ex.: 50 = metade do valor do serviço nos agendamentos pagos.
+                    </p>
                   </div>
                 </div>
                 <Button
@@ -413,48 +490,80 @@ export function TeamManagementPage() {
                     Nenhum profissional cadastrado ainda.
                   </p>
                 ) : (
-                  barbeiros.map((b, i) => (
+                  barbeiros.map((b) => (
                     <div
                       key={b.id}
-                      className={`flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-6 rounded-2xl border-2 transition-all ${
+                      className={`flex flex-col gap-4 p-6 rounded-2xl border-2 transition-all ${
                         b.ativo
                           ? "bg-white border-[#64b34d]/15 shadow-wg-subtle"
                           : "bg-slate-50/80 border-transparent opacity-75"
                       }`}
                     >
-                      <div>
-                        <p className="font-black text-slate-900 text-lg">{b.nome}</p>
-                        <p className="text-sm text-slate-500 font-medium mt-0.5">
-                          {b.google_calendar_email}
-                        </p>
-                        <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mt-2">
-                          {b.ativo ? "Ativo na IA" : "Pausado na IA"}
-                        </p>
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                        <div>
+                          <p className="font-black text-slate-900 text-lg">{b.nome}</p>
+                          <p className="text-sm text-slate-500 font-medium mt-0.5">
+                            {b.google_calendar_email}
+                          </p>
+                          <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mt-2">
+                            {b.ativo ? "Ativo na IA" : "Pausado na IA"}
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-4 flex-wrap sm:flex-nowrap">
+                          <div className="flex items-center gap-3">
+                            <span className="text-xs font-bold text-slate-500">Ativo</span>
+                            <Switch
+                              checked={b.ativo}
+                              onCheckedChange={(v) => handleToggle(b, v)}
+                              className="data-[state=checked]:bg-[#64b34d]"
+                            />
+                          </div>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            className="rounded-xl border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700 font-bold gap-2"
+                            disabled={deletingId === b.id}
+                            onClick={() => setBarbeiroToDelete(b)}
+                          >
+                            {deletingId === b.id ? (
+                              <Loader2 className="w-4 h-4 animate-spin" />
+                            ) : (
+                              <Trash2 className="w-4 h-4" />
+                            )}
+                            Excluir
+                          </Button>
+                        </div>
                       </div>
-                      <div className="flex items-center gap-4 flex-wrap sm:flex-nowrap">
-                        <div className="flex items-center gap-3">
-                          <span className="text-xs font-bold text-slate-500">Ativo</span>
-                          <Switch
-                            checked={b.ativo}
-                            onCheckedChange={(v) => handleToggle(b, v)}
-                            className="data-[state=checked]:bg-[#64b34d]"
+                      <div className="flex flex-wrap items-end gap-3 border-t border-slate-100 pt-4">
+                        <div className="space-y-1.5 w-28">
+                          <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                            Comissão %
+                          </Label>
+                          <Input
+                            type="number"
+                            min={0}
+                            max={100}
+                            step={0.5}
+                            defaultValue={Number(b.commission_percent) || 0}
+                            key={`${b.id}-${b.commission_percent}`}
+                            className="h-10 rounded-xl bg-slate-50 border-none font-bold"
+                            disabled={savingCommissionId === b.id}
+                            onBlur={(e) => void handleSaveCommission(b, e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") {
+                                e.currentTarget.blur();
+                              }
+                            }}
                           />
                         </div>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          className="rounded-xl border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700 font-bold gap-2"
-                          disabled={deletingId === b.id}
-                          onClick={() => setBarbeiroToDelete(b)}
-                        >
-                          {deletingId === b.id ? (
-                            <Loader2 className="w-4 h-4 animate-spin" />
-                          ) : (
-                            <Trash2 className="w-4 h-4" />
-                          )}
-                          Excluir
-                        </Button>
+                        {savingCommissionId === b.id ? (
+                          <Loader2 className="w-4 h-4 animate-spin text-[#64b34d] mb-2.5" />
+                        ) : (
+                          <p className="text-[11px] text-slate-400 font-medium mb-2.5">
+                            Salva ao sair do campo
+                          </p>
+                        )}
                       </div>
                     </div>
                   ))

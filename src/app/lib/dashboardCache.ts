@@ -22,6 +22,7 @@ export type TeamMemberCache = {
   nome: string;
   google_calendar_email: string;
   ativo: boolean;
+  commission_percent?: number;
 };
 
 const PROFILE_TTL_MS = 2 * 60 * 1000;

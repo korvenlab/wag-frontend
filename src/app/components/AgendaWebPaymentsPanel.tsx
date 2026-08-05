@@ -45,6 +45,7 @@ type ConnectStatus = {
   ready_to_charge: boolean;
   deposit_enabled: boolean;
   deposit_percent: number;
+  advance_pay_enabled: boolean;
   wagoo_fee_percent: number;
   hold_minutes: number;
   tip: string;
@@ -68,6 +69,7 @@ export function AgendaWebPaymentsPanel() {
   const [msg, setMsg] = useState<string | null>(null);
   const [depositEnabled, setDepositEnabled] = useState(false);
   const [depositPercent, setDepositPercent] = useState(30);
+  const [advancePayEnabled, setAdvancePayEnabled] = useState(false);
   const [exampleTotal, setExampleTotal] = useState("100");
 
   const load = useCallback(async () => {
@@ -81,6 +83,7 @@ export function AgendaWebPaymentsPanel() {
       setStatus(data as ConnectStatus);
       setDepositEnabled(Boolean(data.deposit_enabled));
       setDepositPercent(Number(data.deposit_percent) || 30);
+      setAdvancePayEnabled(Boolean(data.advance_pay_enabled));
       setError(null);
     } catch {
       setError("Erro de rede ao carregar pagamentos.");
@@ -179,6 +182,7 @@ export function AgendaWebPaymentsPanel() {
         body: JSON.stringify({
           deposit_enabled: depositEnabled,
           deposit_percent: depositPercent,
+          advance_pay_enabled: advancePayEnabled,
         }),
       });
       const data = await res.json().catch(() => ({}));
@@ -314,11 +318,12 @@ export function AgendaWebPaymentsPanel() {
           </p>
           <ul className="text-xs text-slate-500 font-medium space-y-1 mt-2">
             <li>
-              <strong className="text-slate-700">Desligado:</strong> o cliente agenda sem pagar.
+              <strong className="text-slate-700">Desligado:</strong> o cliente agenda sem pagar
+              (salvo se você liberar o pagamento adiantado opcional abaixo).
             </li>
             <li>
-              <strong className="text-slate-700">Ligado:</strong> ele paga o sinal para confirmar; a
-              IA confirma no WhatsApp depois do pagamento.
+              <strong className="text-slate-700">Ligado:</strong> ele precisa pagar o sinal para
+              confirmar; a IA confirma no WhatsApp depois do pagamento.
             </li>
           </ul>
         </CardHeader>
@@ -338,10 +343,37 @@ export function AgendaWebPaymentsPanel() {
               className="w-5 h-5 rounded accent-[#64b34d]"
               checked={depositEnabled}
               disabled={!status?.ready_to_charge}
-              onChange={(e) => setDepositEnabled(e.target.checked)}
+              onChange={(e) => {
+                const on = e.target.checked;
+                setDepositEnabled(on);
+                if (on) setAdvancePayEnabled(false);
+              }}
             />
             <span className="text-sm font-bold text-slate-800">
               Pedir sinal para confirmar o horário
+            </span>
+          </label>
+
+          <label
+            className={`flex items-start gap-3 ${
+              !status?.ready_to_charge || depositEnabled
+                ? "opacity-50 cursor-not-allowed"
+                : "cursor-pointer"
+            }`}
+          >
+            <input
+              type="checkbox"
+              className="mt-0.5 w-5 h-5 rounded accent-[#64b34d] shrink-0"
+              checked={advancePayEnabled && !depositEnabled}
+              disabled={!status?.ready_to_charge || depositEnabled}
+              onChange={(e) => setAdvancePayEnabled(e.target.checked)}
+            />
+            <span className="text-sm font-bold text-slate-800 space-y-1">
+              <span className="block">Permitir pagamento adiantado (100% do serviço)</span>
+              <span className="block text-xs text-slate-500 font-medium leading-relaxed">
+                Com o sinal desligado: o cliente pode marcar e pagar o valor inteiro se quiser, ou
+                agendar sem pagar. Com o sinal ligado, esta opção não se aplica.
+              </span>
             </span>
           </label>
 
