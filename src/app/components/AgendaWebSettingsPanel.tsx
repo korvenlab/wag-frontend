@@ -1,7 +1,6 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState, forwardRef, useImperativeHandle } from "react";
 import {
   AlertCircle,
-  Check,
   CheckCircle2,
   Clock,
   Copy,
@@ -9,6 +8,7 @@ import {
   Link2,
   Loader2,
   Plus,
+  Save,
   Trash2,
   Upload,
   Users,
@@ -88,18 +88,6 @@ const MISSING_SECTION: Record<PublishMissing, string> = {
   working_hours: "horarios",
 };
 
-type AgendaWebSettingsPanelProps = {
-  /** Compacto quando embutido no dashboard IA */
-  embedded?: boolean;
-  /**
-   * Seção do menu. Sem valor (ou `"all"`) mostra tudo — usado no painel IA embutido.
-   */
-  section?: AgendaWebSection | "all";
-  onProfileSaved?: () => void;
-  /** Checklist / atalhos para outra seção do menu */
-  onNavigateSection?: (section: AgendaWebSection) => void;
-};
-
 export type AgendaWebSection =
   | "overview"
   | "negocio"
@@ -112,16 +100,50 @@ export type AgendaWebSection =
   | "whatsapp"
   | "google";
 
-export function AgendaWebSettingsPanel({
-  embedded = false,
-  section = "all",
-  onProfileSaved,
-  onNavigateSection,
-}: AgendaWebSettingsPanelProps) {
+export type AgendaWebSettingsHandle = {
+  saveAll: () => Promise<boolean>;
+  saving: boolean;
+};
+
+type AgendaWebSettingsPanelProps = {
+  /** Compacto quando embutido no dashboard IA */
+  embedded?: boolean;
+  /**
+   * Seção do menu. Sem valor (ou `"all"`) mostra tudo — usado no painel IA embutido.
+   */
+  section?: AgendaWebSection | "all";
+  onProfileSaved?: () => void;
+  /** Checklist / atalhos para outra seção do menu */
+  onNavigateSection?: (section: AgendaWebSection) => void;
+  /** Notifica o pai (barra do topo) sobre salvamento / o que falta */
+  onSaveStateChange?: (state: {
+    saving: boolean;
+    dirty: boolean;
+    missing: string[];
+  }) => void;
+  /** Esconde a barra sticky interna (quando o pai já tem o botão no topo) */
+  hideStickySaveBar?: boolean;
+};
+
+export const AgendaWebSettingsPanel = forwardRef<
+  AgendaWebSettingsHandle,
+  AgendaWebSettingsPanelProps
+>(function AgendaWebSettingsPanel(
+  {
+    embedded = false,
+    section = "all",
+    onProfileSaved,
+    onNavigateSection,
+    onSaveStateChange,
+    hideStickySaveBar = false,
+  },
+  ref,
+) {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
   const [errorBanner, setErrorBanner] = useState<string | null>(null);
+  const [dirty, setDirty] = useState(false);
 
   const [storeName, setStoreName] = useState("");
   const [tagline, setTagline] = useState("");
@@ -172,15 +194,17 @@ export function AgendaWebSettingsPanel({
     return m;
   }, [storeName, services, workingHours]);
 
-  const checklist = missingMessages.length
-    ? missingMessages
-    : localMissing.map((k) =>
+  const checklist = useMemo(
+    () =>
+      localMissing.map((k) =>
         k === "store_name"
           ? "Falta o nome do negócio"
           : k === "services"
             ? "Falta adicionar pelo menos 1 serviço"
             : "Falta definir horário de funcionamento (ative manhã/tarde/noite em algum dia)",
-      );
+      ),
+    [localMissing],
+  );
 
   const canPublish = checklist.length === 0;
 
@@ -233,6 +257,7 @@ export function AgendaWebSettingsPanel({
       setAppointments(data.appointments ?? []);
       setMissing((data.missing as PublishMissing[]) ?? []);
       setMissingMessages(data.missingMessages ?? []);
+      setDirty(false);
     } catch {
       setErrorBanner("Não foi possível carregar a Agenda Web.");
     } finally {
@@ -243,6 +268,12 @@ export function AgendaWebSettingsPanel({
   useEffect(() => {
     void load();
   }, [load]);
+
+  useEffect(() => {
+    onSaveStateChange?.({ saving, dirty, missing: checklist });
+  }, [saving, dirty, checklist, onSaveStateChange]);
+
+  const markDirty = useCallback(() => setDirty(true), []);
 
   async function uploadImage(file: File, kind: "logo" | "cover" | "service" | "provider") {
     const dataUrl = await fileToDataUrl(file);
@@ -255,7 +286,7 @@ export function AgendaWebSettingsPanel({
     return data.url as string;
   }
 
-  async function saveSite(opts?: { forcePublish?: boolean }) {
+  async function saveSite(opts?: { forcePublish?: boolean }): Promise<boolean> {
     setSaving(true);
     setMsg(null);
     setErrorBanner(null);
@@ -269,7 +300,7 @@ export function AgendaWebSettingsPanel({
       setSaving(false);
       const first = localMissing[0] || missing[0];
       if (first) scrollToSection(MISSING_SECTION[first]);
-      return;
+      return false;
     }
 
     try {
@@ -299,7 +330,7 @@ export function AgendaWebSettingsPanel({
         );
         if (data.missing?.[0]) scrollToSection(MISSING_SECTION[data.missing[0] as PublishMissing]);
         setPublished(false);
-        return;
+        return false;
       }
       setPublished(!!data.profile?.booking_published);
       setSlug(data.profile?.booking_slug ?? null);
@@ -311,14 +342,27 @@ export function AgendaWebSettingsPanel({
       if (data.profile?.working_hours) {
         setWorkingHours(normalizeWorkingHours(data.profile.working_hours));
       }
-      setMsg("Configurações salvas.");
+      setDirty(false);
+      setMsg("Tudo salvo: negócio, horários e imagens.");
       onProfileSaved?.();
+      return true;
     } catch (e) {
       setErrorBanner(e instanceof Error ? e.message : "Erro ao salvar");
+      return false;
     } finally {
       setSaving(false);
     }
   }
+
+  useImperativeHandle(
+    ref,
+    () => ({
+      saveAll: () => saveSite(),
+      saving,
+    }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- saveSite fecha sobre estado atual
+    [saving, storeName, tagline, phone, address, logoUrl, coverUrl, published, workingHours, canPublish, checklist],
+  );
 
   async function addService() {
     if (newName.trim().length < 2) {
@@ -452,6 +496,58 @@ export function AgendaWebSettingsPanel({
 
   return (
     <div className={`space-y-8 ${embedded ? "" : ""}`}>
+      {!hideStickySaveBar ? (
+        <div
+          className={
+            "rounded-2xl border bg-white px-4 py-3 shadow-wg-subtle " +
+            (embedded
+              ? "sticky top-2 z-20"
+              : "sticky top-[4.25rem] z-20") +
+            (checklist.length > 0
+              ? " border-red-200"
+              : dirty
+                ? " border-amber-200"
+                : " border-slate-200")
+          }
+        >
+          <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+            <div className="min-w-0 flex-1 space-y-1">
+              <p className="text-sm font-bold text-slate-900">
+                {dirty
+                  ? "Há alterações não salvas"
+                  : "Nome, horários e imagens"}
+              </p>
+              {checklist.length > 0 ? (
+                <ul className="space-y-0.5">
+                  {checklist.map((m) => (
+                    <li key={m} className="text-sm font-semibold text-red-600">
+                      • {m}
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="text-xs font-medium text-slate-500">
+                  Tudo certo para publicar. Serviços e profissionais salvam ao adicionar.
+                </p>
+              )}
+            </div>
+            <Button
+              type="button"
+              onClick={() => void saveSite()}
+              disabled={saving}
+              className="shrink-0 bg-[#64b34d] hover:bg-[#4d8f3b] text-white font-bold"
+            >
+              {saving ? (
+                <Loader2 className="animate-spin mr-2" size={16} />
+              ) : (
+                <Save className="mr-2" size={16} />
+              )}
+              Salvar tudo
+            </Button>
+          </div>
+        </div>
+      ) : null}
+
       {errorBanner ? (
         <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700 flex gap-3 items-start">
           <AlertCircle className="shrink-0 mt-0.5" size={18} />
@@ -460,7 +556,7 @@ export function AgendaWebSettingsPanel({
             {checklist.length > 0 ? (
               <ul className="mt-2 space-y-1">
                 {checklist.map((m) => (
-                  <li key={m}>• {m}</li>
+                  <li key={m} className="text-red-600">• {m}</li>
                 ))}
               </ul>
             ) : null}
@@ -716,7 +812,8 @@ export function AgendaWebSettingsPanel({
                   void uploadImage(f, "cover")
                     .then((url) => {
                       setCoverUrl(url);
-                      setMsg("Capa enviada. Clique em Salvar para aplicar.");
+                      markDirty();
+                      setMsg("Capa enviada. Clique em Salvar tudo no topo para aplicar.");
                     })
                     .catch((err) =>
                       setErrorBanner(err instanceof Error ? err.message : "Upload falhou"),
@@ -727,7 +824,10 @@ export function AgendaWebSettingsPanel({
                 <button
                   type="button"
                   className="text-xs text-red-600 font-semibold mt-1"
-                  onClick={() => setCoverUrl(null)}
+                  onClick={() => {
+                    setCoverUrl(null);
+                    markDirty();
+                  }}
                 >
                   Remover capa
                 </button>
@@ -755,7 +855,8 @@ export function AgendaWebSettingsPanel({
                     void uploadImage(f, "logo")
                       .then((url) => {
                         setLogoUrl(url);
-                        setMsg("Logo enviada.");
+                        markDirty();
+                        setMsg("Logo enviada. Clique em Salvar tudo no topo para aplicar.");
                       })
                       .catch((err) =>
                         setErrorBanner(err instanceof Error ? err.message : "Upload falhou"),
@@ -770,33 +871,51 @@ export function AgendaWebSettingsPanel({
               <Label>Nome do negócio</Label>
               <Input
                 value={storeName}
-                onChange={(e) => setStoreName(e.target.value)}
+                onChange={(e) => {
+                  setStoreName(e.target.value);
+                  markDirty();
+                }}
                 placeholder="Ex.: Barbearia Norte"
                 className="mt-1"
               />
             </div>
             <div>
               <Label>Slogan (opcional)</Label>
-              <Input value={tagline} onChange={(e) => setTagline(e.target.value)} className="mt-1" />
+              <Input
+                value={tagline}
+                onChange={(e) => {
+                  setTagline(e.target.value);
+                  markDirty();
+                }}
+                className="mt-1"
+              />
             </div>
             <div>
               <Label>WhatsApp / telefone (opcional)</Label>
-              <Input value={phone} onChange={(e) => setPhone(e.target.value)} className="mt-1" />
+              <Input
+                value={phone}
+                onChange={(e) => {
+                  setPhone(e.target.value);
+                  markDirty();
+                }}
+                className="mt-1"
+              />
             </div>
             <div>
               <Label>Endereço (opcional)</Label>
-              <Input value={address} onChange={(e) => setAddress(e.target.value)} className="mt-1" />
+              <Input
+                value={address}
+                onChange={(e) => {
+                  setAddress(e.target.value);
+                  markDirty();
+                }}
+                className="mt-1"
+              />
             </div>
           </div>
-          <Button
-            type="button"
-            onClick={() => void saveSite()}
-            disabled={saving}
-            className="bg-[#64b34d] hover:bg-[#4d8f3b] text-white font-bold"
-          >
-            {saving ? <Loader2 className="animate-spin mr-2" size={16} /> : <Check className="mr-2" size={16} />}
-            Salvar dados do negócio
-          </Button>
+          <p className="text-xs font-medium text-slate-500">
+            Use <span className="font-bold text-slate-700">Salvar tudo</span> no topo para gravar nome, contatos e imagens.
+          </p>
         </CardContent>
       </Card>
       ) : null}
@@ -815,20 +934,17 @@ export function AgendaWebSettingsPanel({
         <CardContent className="space-y-5">
           <WorkingHoursEditor
             value={workingHours}
-            onChange={setWorkingHours}
+            onChange={(next) => {
+              setWorkingHours(next);
+              markDirty();
+            }}
             selectedDay={selectedDay}
             onSelectDay={setSelectedDay}
             compact={embedded}
           />
-          <Button
-            type="button"
-            onClick={() => void saveSite()}
-            disabled={saving}
-            className="bg-[#64b34d] hover:bg-[#4d8f3b] text-white font-bold"
-          >
-            {saving ? <Loader2 className="animate-spin mr-2" size={16} /> : <Check className="mr-2" size={16} />}
-            Salvar horários
-          </Button>
+          <p className="text-xs font-medium text-slate-500">
+            Use <span className="font-bold text-slate-700">Salvar tudo</span> no topo para gravar os horários.
+          </p>
         </CardContent>
       </Card>
       ) : null}
@@ -1188,4 +1304,4 @@ export function AgendaWebSettingsPanel({
       </AlertDialog>
     </div>
   );
-}
+});

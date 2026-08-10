@@ -1,12 +1,15 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
+  ArrowLeft,
   CalendarDays,
   Clock,
   CreditCard,
   Link2,
+  Loader2,
   LogOut,
   Menu,
   MessageCircle,
+  Save,
   Settings2,
   Sparkles,
   Store,
@@ -20,11 +23,22 @@ import { FeedbackFab } from "../components/FeedbackFab";
 import {
   AgendaWebSettingsPanel,
   type AgendaWebSection,
+  type AgendaWebSettingsHandle,
 } from "../components/AgendaWebSettingsPanel";
 import { AgendaWebWhatsAppPanel } from "../components/AgendaWebWhatsAppPanel";
 import { AgendaWebGooglePanel } from "../components/AgendaWebGooglePanel";
 import { AgendaWebPaymentsPanel } from "../components/AgendaWebPaymentsPanel";
 import { ClubMembershipPanel } from "../components/ClubMembershipPanel";
+import { tierSupportsAi } from "../lib/wagooPlans";
+
+const SETTINGS_SECTIONS: AgendaWebSection[] = [
+  "overview",
+  "negocio",
+  "horarios",
+  "servicos",
+  "profissionais",
+  "agendamentos",
+];
 
 const NAV: {
   id: AgendaWebSection;
@@ -147,6 +161,21 @@ export function AgendaWebDashboardPage() {
   const [searchParams] = useSearchParams();
   const [section, setSection] = useState<AgendaWebSection>("overview");
   const [menuOpen, setMenuOpen] = useState(false);
+  const settingsRef = useRef<AgendaWebSettingsHandle>(null);
+  const [saveState, setSaveState] = useState({
+    saving: false,
+    dirty: false,
+    missing: [] as string[],
+  });
+
+  const onSaveStateChange = useCallback(
+    (state: { saving: boolean; dirty: boolean; missing: string[] }) => {
+      setSaveState(state);
+    },
+    [],
+  );
+
+  const showSettings = SETTINGS_SECTIONS.includes(section);
 
   useEffect(() => {
     if (searchParams.get("connect")) {
@@ -159,6 +188,7 @@ export function AgendaWebDashboardPage() {
   }, [section]);
 
   const copy = SECTION_COPY[section];
+  const isAiPlan = tierSupportsAi(user?.subscriptionTier);
 
   function selectSection(id: AgendaWebSection) {
     setSection(id);
@@ -232,16 +262,51 @@ export function AgendaWebDashboardPage() {
               <p className="text-sm font-bold text-slate-900 truncate">{user?.email}</p>
             </div>
           </div>
-          <Button
-            variant="ghost"
-            onClick={async () => {
-              await logout();
-              navigate("/");
-            }}
-          >
-            <LogOut size={16} className="mr-2" /> Sair
-          </Button>
+          <div className="flex items-center gap-2 shrink-0">
+            <Button
+              type="button"
+              onClick={() => void settingsRef.current?.saveAll()}
+              disabled={saveState.saving}
+              className="bg-[#64b34d] hover:bg-[#4d8f3b] text-white font-bold"
+            >
+              {saveState.saving ? (
+                <Loader2 className="animate-spin mr-2" size={16} />
+              ) : (
+                <Save className="mr-2" size={16} />
+              )}
+              <span className="hidden sm:inline">Salvar tudo</span>
+              <span className="sm:hidden">Salvar</span>
+            </Button>
+            {isAiPlan ? (
+              <Button variant="ghost" onClick={() => navigate("/dashboard")}>
+                <ArrowLeft size={16} className="mr-2" />
+                <span className="hidden sm:inline">Painel IA</span>
+                <span className="sm:hidden">IA</span>
+              </Button>
+            ) : (
+              <Button
+                variant="ghost"
+                onClick={async () => {
+                  await logout();
+                  navigate("/");
+                }}
+              >
+                <LogOut size={16} className="mr-2" /> Sair
+              </Button>
+            )}
+          </div>
         </div>
+        {saveState.missing.length > 0 ? (
+          <div className="max-w-6xl mx-auto px-4 pb-3">
+            <ul className="space-y-0.5">
+              {saveState.missing.map((m) => (
+                <li key={m} className="text-sm font-semibold text-red-600">
+                  • {m}
+                </li>
+              ))}
+            </ul>
+          </div>
+        ) : null}
       </header>
 
       {menuOpen ? (
@@ -321,13 +386,19 @@ export function AgendaWebDashboardPage() {
               <AgendaWebPaymentsPanel />
             ) : section === "clube" ? (
               <ClubMembershipPanel />
-            ) : (
+            ) : null}
+
+            {/* Mantém montado para não perder alterações ao trocar de aba */}
+            <div className={showSettings ? "block" : "hidden"}>
               <AgendaWebSettingsPanel
-                section={section}
+                ref={settingsRef}
+                section={showSettings ? section : "overview"}
+                hideStickySaveBar
                 onNavigateSection={selectSection}
                 onProfileSaved={() => void refreshProfile({ force: true })}
+                onSaveStateChange={onSaveStateChange}
               />
-            )}
+            </div>
           </main>
         </div>
       </div>

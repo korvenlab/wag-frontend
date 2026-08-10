@@ -198,7 +198,10 @@ export function DashboardSidebar({
                 icon={<Link2 size={20} />}
                 label="Agenda Web"
                 active={active === "agenda-web"}
-                onClick={() => goDashboard("agenda-web")}
+                onClick={() => {
+                  navigate("/dashboard/agenda-web");
+                  setIsSidebarOpen(false);
+                }}
               />
               <NavItem
                 icon={<Settings size={20} />}

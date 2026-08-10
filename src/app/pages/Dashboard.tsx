@@ -16,7 +16,6 @@ import { useNavigate, useLocation } from "react-router";
 import { FeedbackFab } from "../components/FeedbackFab";
 import { DashboardSidebar, type DashboardNavId } from "../components/DashboardSidebar";
 import { PlanFeatureGate } from "../components/PlanFeatureGate";
-import { AgendaWebSettingsPanel } from "../components/AgendaWebSettingsPanel";
 import { AgendaWebPaymentsPanel } from "../components/AgendaWebPaymentsPanel";
 import { ClubMembershipPanel } from "../components/ClubMembershipPanel";
 import { BookingServicesPanel } from "../components/BookingServicesPanel";
@@ -235,6 +234,10 @@ export function Dashboard() {
 
   useEffect(() => {
     const section = (location.state as { section?: string } | null)?.section;
+    if (section === "agenda-web") {
+      navigate("/dashboard/agenda-web", { replace: true });
+      return;
+    }
     if (
       section &&
       [
@@ -246,12 +249,11 @@ export function Dashboard() {
         "services",
         "payments",
         "club",
-        "agenda-web",
       ].includes(section)
     ) {
       setActiveSection(section);
     }
-  }, [location.state]);
+  }, [location.state, navigate]);
 
   const handleLogout = () => { logout(); navigate("/login"); };
 
@@ -550,8 +552,7 @@ export function Dashboard() {
     activeSection === "settings" ||
     activeSection === "services" ||
     activeSection === "payments" ||
-    activeSection === "club" ||
-    activeSection === "agenda-web"
+    activeSection === "club"
       ? (activeSection as DashboardNavId)
       : "overview";
 
@@ -913,19 +914,6 @@ export function Dashboard() {
                   </p>
                 </div>
                 <ClubMembershipPanel />
-              </motion.div>
-            )}
-
-            {activeSection === "agenda-web" && (
-              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="lg:col-span-3 space-y-4">
-                <div className="mb-2">
-                  <h3 className="text-2xl font-black text-slate-900 tracking-tighter">Agenda Web</h3>
-                  <p className="text-slate-500 font-medium mt-1 text-base leading-relaxed">
-                    Link público para o cliente agendar sozinho — incluso no seu plano. Separado do
-                    WhatsApp com IA.
-                  </p>
-                </div>
-                <AgendaWebSettingsPanel embedded onProfileSaved={() => void refreshProfile({ force: true })} />
               </motion.div>
             )}
 
