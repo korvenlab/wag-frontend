@@ -71,13 +71,13 @@ const NAV: {
   {
     id: "pagamentos",
     label: "Pagamentos",
-    hint: "Receber e sinal",
+    hint: "PIX, saldo e sinal",
     icon: CreditCard,
   },
   {
     id: "clube",
     label: "Clube",
-    hint: "Assinatura mensal",
+    hint: "Plano mensal",
     icon: Sparkles,
   },
   {
@@ -126,12 +126,11 @@ const SECTION_COPY: Record<
   pagamentos: {
     title: "Pagamentos",
     subtitle:
-      "Libere recebimentos uma vez (~10 min) e cobre sinal, clube e saque para o seu banco.",
+      "Saldo PIX, chave para saque e sinal antecipado — tudo na conta Wagoo via Asaas.",
   },
   clube: {
     title: "Clube",
-    subtitle:
-      "Mensalidade: o cliente paga pelo link, o saldo cai aqui e você saca no PIX.",
+    subtitle: "Configure o plano mensal e compartilhe o link com o cliente.",
   },
   google: {
     title: "Google Agenda",
