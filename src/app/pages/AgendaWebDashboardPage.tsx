@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
-  ArrowLeft,
   CalendarDays,
   Clock,
   CreditCard,
@@ -20,6 +19,7 @@ import { Link, useNavigate, useSearchParams } from "react-router";
 import { useAuth } from "../context/AuthContext";
 import { Button } from "../components/ui/button";
 import { FeedbackFab } from "../components/FeedbackFab";
+import { DashboardSidebar } from "../components/DashboardSidebar";
 import {
   AgendaWebSettingsPanel,
   type AgendaWebSection,
@@ -135,19 +135,20 @@ const SECTION_COPY: Record<
   },
   agendamentos: {
     title: "Agendamentos",
-    subtitle: "Quem já marcou horário pelo seu link.",
+    subtitle: "Horários já marcados pelo link público.",
   },
   pagamentos: {
     title: "Pagamentos",
-    subtitle: "Receba dos clientes e, se quiser, peça um sinal na hora de agendar.",
+    subtitle: "Receba pelo Stripe e peça sinal no agendamento.",
   },
   clube: {
     title: "Clube",
-    subtitle: "Ative ou desative o clube e copie o link para o cliente.",
+    subtitle: "Assinatura mensal para clientes recorrentes.",
   },
   google: {
     title: "Google Agenda",
-    subtitle: "Salve os horários do link na sua agenda Google e evite conflito com o que já está lá.",
+    subtitle:
+      "Salve os horários do link na sua agenda Google e evite conflito com o que já está lá.",
   },
   whatsapp: {
     title: "WhatsApp",
@@ -176,6 +177,7 @@ export function AgendaWebDashboardPage() {
   );
 
   const showSettings = SETTINGS_SECTIONS.includes(section);
+  const isAiPlan = tierSupportsAi(user?.subscriptionTier);
 
   useEffect(() => {
     if (searchParams.get("connect")) {
@@ -188,7 +190,6 @@ export function AgendaWebDashboardPage() {
   }, [section]);
 
   const copy = SECTION_COPY[section];
-  const isAiPlan = tierSupportsAi(user?.subscriptionTier);
 
   function selectSection(id: AgendaWebSection) {
     setSection(id);
@@ -231,6 +232,147 @@ export function AgendaWebDashboardPage() {
       })}
     </nav>
   );
+
+  const saveBar = (
+    <div
+      className={
+        "rounded-2xl border bg-white px-4 py-3 shadow-wg-subtle " +
+        (saveState.missing.length > 0
+          ? "border-red-200"
+          : saveState.dirty
+            ? "border-amber-200"
+            : "border-slate-200")
+      }
+    >
+      <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+        <div className="min-w-0 flex-1 space-y-1">
+          <p className="text-sm font-bold text-slate-900">
+            {saveState.dirty ? "Há alterações não salvas" : "Nome, horários e imagens"}
+          </p>
+          {saveState.missing.length > 0 ? (
+            <ul className="space-y-0.5">
+              {saveState.missing.map((m) => (
+                <li key={m} className="text-sm font-semibold text-red-600">
+                  • {m}
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="text-xs font-medium text-slate-500">
+              Tudo certo para publicar. Serviços e profissionais salvam ao adicionar.
+            </p>
+          )}
+        </div>
+        <Button
+          type="button"
+          onClick={() => void settingsRef.current?.saveAll()}
+          disabled={saveState.saving}
+          className="shrink-0 bg-[#64b34d] hover:bg-[#4d8f3b] text-white font-bold"
+        >
+          {saveState.saving ? (
+            <Loader2 className="animate-spin mr-2" size={16} />
+          ) : (
+            <Save className="mr-2" size={16} />
+          )}
+          Salvar tudo
+        </Button>
+      </div>
+    </div>
+  );
+
+  const sectionContent = (
+    <>
+      <div>
+        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#64b34d] mb-1 lg:hidden">
+          {NAV.find((n) => n.id === section)?.label}
+        </p>
+        <h1 className="text-2xl md:text-3xl font-black text-slate-900 tracking-tight">
+          {copy.title}
+        </h1>
+        <p className="mt-2 text-slate-500 font-medium max-w-2xl">{copy.subtitle}</p>
+      </div>
+
+      <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1 lg:hidden scrollbar-none">
+        {NAV.map((item) => {
+          const active = section === item.id;
+          return (
+            <button
+              key={item.id}
+              type="button"
+              onClick={() => selectSection(item.id)}
+              className={
+                "shrink-0 px-3 py-2 rounded-full text-xs font-bold border transition-colors " +
+                (active
+                  ? "bg-[#64b34d] text-white border-[#64b34d]"
+                  : "bg-white text-slate-600 border-slate-200")
+              }
+            >
+              {item.label}
+            </button>
+          );
+        })}
+      </div>
+
+      {section === "whatsapp" ? (
+        <AgendaWebWhatsAppPanel />
+      ) : section === "google" ? (
+        <AgendaWebGooglePanel />
+      ) : section === "pagamentos" ? (
+        <AgendaWebPaymentsPanel />
+      ) : section === "clube" ? (
+        <ClubMembershipPanel />
+      ) : null}
+
+      <div className={showSettings ? "block" : "hidden"}>
+        <AgendaWebSettingsPanel
+          ref={settingsRef}
+          section={showSettings ? section : "overview"}
+          hideStickySaveBar
+          onNavigateSection={selectSection}
+          onProfileSaved={() => void refreshProfile({ force: true })}
+          onSaveStateChange={onSaveStateChange}
+        />
+      </div>
+    </>
+  );
+
+  if (isAiPlan) {
+    return (
+      <div className="min-h-screen bg-[#F8FAFC]">
+        <DashboardSidebar
+          active="agenda-web"
+          storeName={user?.storeName || ""}
+          userEmail={user?.email}
+          onLogout={() => {
+            void logout();
+            navigate("/login");
+          }}
+        />
+
+        <main className="lg:ml-72 p-6 lg:p-10 pb-24">
+          <div className="max-w-6xl mx-auto mt-20 lg:mt-10 space-y-6">
+            <div className="sticky top-20 lg:top-6 z-20 -mx-1 px-1 py-1 bg-[#F8FAFC]/95 backdrop-blur-sm">
+              {saveBar}
+            </div>
+
+            <div className="flex flex-col lg:flex-row gap-6 lg:gap-8">
+              <aside className="hidden lg:block w-64 shrink-0">
+                <div className="sticky top-28 rounded-3xl border border-slate-200 bg-white p-3 shadow-wg-subtle">
+                  <p className="px-3 pt-2 pb-3 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">
+                    Configurar
+                  </p>
+                  {navList}
+                </div>
+              </aside>
+
+              <div className="flex-1 min-w-0 space-y-6">{sectionContent}</div>
+            </div>
+          </div>
+        </main>
+        <FeedbackFab />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#F8FAFC]">
@@ -277,23 +419,15 @@ export function AgendaWebDashboardPage() {
               <span className="hidden sm:inline">Salvar tudo</span>
               <span className="sm:hidden">Salvar</span>
             </Button>
-            {isAiPlan ? (
-              <Button variant="ghost" onClick={() => navigate("/dashboard")}>
-                <ArrowLeft size={16} className="mr-2" />
-                <span className="hidden sm:inline">Painel IA</span>
-                <span className="sm:hidden">IA</span>
-              </Button>
-            ) : (
-              <Button
-                variant="ghost"
-                onClick={async () => {
-                  await logout();
-                  navigate("/");
-                }}
-              >
-                <LogOut size={16} className="mr-2" /> Sair
-              </Button>
-            )}
+            <Button
+              variant="ghost"
+              onClick={async () => {
+                await logout();
+                navigate("/");
+              }}
+            >
+              <LogOut size={16} className="mr-2" /> Sair
+            </Button>
           </div>
         </div>
         {saveState.missing.length > 0 ? (
@@ -345,61 +479,7 @@ export function AgendaWebDashboardPage() {
             </div>
           </aside>
 
-          <main className="flex-1 min-w-0 space-y-6">
-            <div>
-              <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#64b34d] mb-1 lg:hidden">
-                {NAV.find((n) => n.id === section)?.label}
-              </p>
-              <h1 className="text-2xl md:text-3xl font-black text-slate-900 tracking-tight">
-                {copy.title}
-              </h1>
-              <p className="mt-2 text-slate-500 font-medium max-w-2xl">{copy.subtitle}</p>
-            </div>
-
-            {/* Atalhos horizontais no mobile */}
-            <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1 lg:hidden scrollbar-none">
-              {NAV.map((item) => {
-                const active = section === item.id;
-                return (
-                  <button
-                    key={item.id}
-                    type="button"
-                    onClick={() => selectSection(item.id)}
-                    className={
-                      "shrink-0 px-3 py-2 rounded-full text-xs font-bold border transition-colors " +
-                      (active
-                        ? "bg-[#64b34d] text-white border-[#64b34d]"
-                        : "bg-white text-slate-600 border-slate-200")
-                    }
-                  >
-                    {item.label}
-                  </button>
-                );
-              })}
-            </div>
-
-            {section === "whatsapp" ? (
-              <AgendaWebWhatsAppPanel />
-            ) : section === "google" ? (
-              <AgendaWebGooglePanel />
-            ) : section === "pagamentos" ? (
-              <AgendaWebPaymentsPanel />
-            ) : section === "clube" ? (
-              <ClubMembershipPanel />
-            ) : null}
-
-            {/* Mantém montado para não perder alterações ao trocar de aba */}
-            <div className={showSettings ? "block" : "hidden"}>
-              <AgendaWebSettingsPanel
-                ref={settingsRef}
-                section={showSettings ? section : "overview"}
-                hideStickySaveBar
-                onNavigateSection={selectSection}
-                onProfileSaved={() => void refreshProfile({ force: true })}
-                onSaveStateChange={onSaveStateChange}
-              />
-            </div>
-          </main>
+          <main className="flex-1 min-w-0 space-y-6">{sectionContent}</main>
         </div>
       </div>
       <FeedbackFab />
