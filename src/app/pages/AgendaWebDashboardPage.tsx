@@ -125,13 +125,11 @@ const SECTION_COPY: Record<
   },
   pagamentos: {
     title: "Pagamentos",
-    subtitle:
-      "Libere recebimentos uma vez (~10 min) e cobre sinal, clube e saque para o seu banco.",
+    subtitle: "Receba dos clientes e, se quiser, peça um sinal na hora de agendar.",
   },
   clube: {
     title: "Clube",
-    subtitle:
-      "Mensalidade: o cliente paga pelo link, o saldo cai aqui e você saca no PIX.",
+    subtitle: "Ative ou desative o clube e copie o link para o cliente.",
   },
   google: {
     title: "Google Agenda",

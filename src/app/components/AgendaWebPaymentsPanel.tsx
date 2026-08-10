@@ -156,8 +156,8 @@ export function AgendaWebPaymentsPanel() {
     if (connectFlag === "return" || connectFlag === "refresh") {
       setMsg(
         connectFlag === "return"
-          ? "Cadastro atualizado. Se ainda faltar algum passo, use Continuar cadastro."
-          : "Cadastro incompleto — abra Continuar cadastro para terminar documentos e conta.",
+          ? "Cadastro atualizado."
+          : "Abra de novo o cadastro se ainda faltar alguma informação.",
       );
       void load().then(() => {
         const next = new URLSearchParams(searchParams);
@@ -288,23 +288,19 @@ export function AgendaWebPaymentsPanel() {
             Receber pagamentos
           </CardTitle>
           <p className="text-sm text-slate-500 font-medium leading-relaxed">
-            Em cerca de 10 minutos você libera cobrança de sinal, clube e saque para o seu banco.
-            É um cadastro único: documentos + conta bancária (ou chave PIX).
+            Para ver saldo e transferir para o banco aqui no Wagoo, você precisa primeiro criar
+            sua conta de recebimentos (cadastro seguro com documentos e conta bancária).
           </p>
-          <ol className="text-xs text-slate-500 font-medium space-y-1.5 mt-3 list-decimal list-inside">
+          <ul className="text-xs text-slate-500 font-medium space-y-1 mt-2">
             <li>
-              <strong className="text-slate-700">Criar conta</strong> — um clique, abre a página
-              segura do parceiro de pagamentos.
+              <strong className="text-slate-700">Sem cadastro:</strong> sem saldo no app e sem
+              cobrança de sinal/pagamento pelo link.
             </li>
             <li>
-              <strong className="text-slate-700">Enviar dados</strong> — CNPJ ou CPF, documento e
-              conta onde você quer receber.
+              <strong className="text-slate-700">Com cadastro completo:</strong> o saldo aparece
+              aqui e você transfere para o banco sem sair do Wagoo.
             </li>
-            <li>
-              <strong className="text-slate-700">Pronto</strong> — o saldo aparece aqui e você
-              transfere quando quiser, sem sair do Wagoo.
-            </li>
-          </ol>
+          </ul>
         </CardHeader>
         <CardContent className="space-y-4">
           {error ? (
@@ -327,7 +323,7 @@ export function AgendaWebPaymentsPanel() {
                 ) : (
                   <span className="w-3.5 h-3.5 rounded-full border border-slate-300" />
                 )}
-                1 · Conta criada
+                Conta criada
               </li>
               <li className="flex items-center gap-2">
                 {status?.details_submitted ? (
@@ -335,7 +331,7 @@ export function AgendaWebPaymentsPanel() {
                 ) : (
                   <span className="w-3.5 h-3.5 rounded-full border border-slate-300" />
                 )}
-                2 · Documentos e banco enviados
+                Dados enviados
               </li>
               <li className="flex items-center gap-2">
                 {status?.charges_enabled ? (
@@ -343,7 +339,7 @@ export function AgendaWebPaymentsPanel() {
                 ) : (
                   <span className="w-3.5 h-3.5 rounded-full border border-slate-300" />
                 )}
-                3 · Já pode cobrar clientes
+                Pronto para receber
               </li>
               <li className="flex items-center gap-2">
                 {status?.payouts_enabled ? (
@@ -351,17 +347,17 @@ export function AgendaWebPaymentsPanel() {
                 ) : (
                   <span className="w-3.5 h-3.5 rounded-full border border-slate-300" />
                 )}
-                4 · Saque para o banco liberado
+                Transferência para o banco liberada
               </li>
             </ul>
           </div>
 
           {!status?.connected ? (
             <div className="rounded-2xl border border-amber-200 bg-amber-50 p-5 space-y-2">
-              <p className="text-sm font-black text-amber-900">Falta liberar os recebimentos</p>
+              <p className="text-sm font-black text-amber-900">Saldo bloqueado</p>
               <p className="text-sm text-amber-800 font-medium leading-relaxed">
-                Sem isso, sinal, clube e saque ficam desligados. O cadastro é feito uma vez — depois
-                o dinheiro dos clientes cai no seu saldo aqui no Wagoo.
+                Cadastre a conta de recebimentos para liberar saldo, cobranças e transferência
+                para o banco aqui no Wagoo.
               </p>
             </div>
           ) : (
@@ -428,8 +424,8 @@ export function AgendaWebPaymentsPanel() {
 
               {!status.payouts_enabled ? (
                 <p className="text-xs font-semibold text-amber-800 bg-amber-50 border border-amber-100 rounded-xl px-3 py-2">
-                  Quase lá: falta concluir documentos e conta bancária para liberar o saque. Use
-                  “Continuar cadastro” abaixo — leva poucos minutos.
+                  Transferência ainda bloqueada: termine o cadastro (documentos e conta bancária)
+                  pelo botão abaixo.
                 </p>
               ) : null}
 
@@ -471,9 +467,9 @@ export function AgendaWebPaymentsPanel() {
               )}
               {status?.connected
                 ? status.payouts_enabled && status.charges_enabled
-                  ? "Atualizar dados de recebimento"
-                  : "Continuar cadastro"
-                : "Liberar recebimentos (~10 min)"}
+                  ? "Atualizar cadastro de recebimentos"
+                  : "Continuar cadastro de recebimentos"
+                : "Criar conta de recebimentos"}
             </Button>
             {status?.connected ? (
               <Button
@@ -488,14 +484,14 @@ export function AgendaWebPaymentsPanel() {
               >
                 <ExternalLink className="mr-2" size={16} />
                 {status.details_submitted
-                  ? "Gerenciar banco e documentos"
-                  : "Enviar documentos e conta"}
+                  ? "Conta bancária e documentos"
+                  : "Continuar documentos e conta bancária"}
               </Button>
             ) : null}
           </div>
           <p className="text-[11px] text-slate-400 font-medium leading-relaxed">
-            Os dados sensíveis ficam numa página segura do parceiro de pagamentos (não pedimos senha
-            do banco aqui). Depois disso, você acompanha saldo e saque neste painel.
+            O cadastro e a troca de conta bancária são feitos em uma página segura parceira. Depois
+            disso, saldo e transferência ficam aqui no Wagoo.
           </p>
         </CardContent>
       </Card>
