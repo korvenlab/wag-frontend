@@ -290,7 +290,12 @@ export const AgendaWebSettingsPanel = forwardRef<
     setSaving(true);
     setMsg(null);
     setErrorBanner(null);
-    const wantPublish = opts?.forcePublish ?? published;
+    // Salvar tudo: se já estiver pronta, publica (não exige o interruptor separado).
+    // Se opts.forcePublish for passado (interruptor), respeita o valor.
+    const wantPublish =
+      typeof opts?.forcePublish === "boolean"
+        ? opts.forcePublish
+        : published || canPublish;
 
     if (wantPublish && !canPublish) {
       setErrorBanner(
@@ -343,7 +348,11 @@ export const AgendaWebSettingsPanel = forwardRef<
         setWorkingHours(normalizeWorkingHours(data.profile.working_hours));
       }
       setDirty(false);
-      setMsg("Tudo salvo: negócio, horários e imagens.");
+      setMsg(
+        data.profile?.booking_published
+          ? "Tudo salvo e agenda publicada — o link já está no ar."
+          : "Dados salvos. Complete o que falta em vermelho e salve de novo para publicar.",
+      );
       onProfileSaved?.();
       return true;
     } catch (e) {
@@ -527,7 +536,9 @@ export const AgendaWebSettingsPanel = forwardRef<
                 </ul>
               ) : (
                 <p className="text-xs font-medium text-slate-500">
-                  Tudo certo para publicar. Serviços e profissionais salvam ao adicionar.
+                  {published
+                    ? "Agenda no ar. Salvar tudo atualiza nome, horários e imagens."
+                    : "Tudo certo — Salvar tudo publica o link automaticamente."}
                 </p>
               )}
             </div>
@@ -620,8 +631,10 @@ export const AgendaWebSettingsPanel = forwardRef<
               <p className="text-sm font-bold text-slate-900">Publicar agenda</p>
               <p className="text-xs text-slate-500">
                 {canPublish
-                  ? "Tudo certo — os links abaixo ficam ativos para o cliente."
-                  : "Complete a checklist acima para liberar a publicação."}
+                  ? published
+                    ? "Link no ar. Desligue para tirar a página do ar."
+                    : "Pronto — Salvar tudo também publica o link automaticamente."
+                  : "Complete o que falta em vermelho; ao salvar com tudo certo, o link publica sozinho."}
               </p>
             </div>
             <Switch

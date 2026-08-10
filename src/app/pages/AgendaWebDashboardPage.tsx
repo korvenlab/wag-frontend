@@ -259,7 +259,7 @@ export function AgendaWebDashboardPage() {
             </ul>
           ) : (
             <p className="text-xs font-medium text-slate-500">
-              Tudo certo para publicar. Serviços e profissionais salvam ao adicionar.
+              Tudo certo — Salvar tudo publica o link automaticamente.
             </p>
           )}
         </div>

@@ -10,6 +10,7 @@ import {
   CalendarDays,
   ChevronLeft,
   ChevronRight,
+  Sparkles,
 } from "lucide-react";
 import {
   addMonths,
@@ -71,6 +72,14 @@ type Site = {
   working_hours: WorkingHours | null;
   services: Service[];
   providers: Provider[];
+  club_portal_url?: string | null;
+  club?: {
+    name: string;
+    description: string;
+    price_brl: number;
+    available: boolean;
+    subscribe_url: string | null;
+  } | null;
   deposit?: {
     required: boolean;
     optional?: boolean;
@@ -836,6 +845,64 @@ export function PublicBookingPage() {
           </div>
         ) : null}
       </section>
+
+      {/* Clube — só se o salão tiver plano ativo */}
+      {site.club ? (
+        <section
+          id="clube"
+          className="max-w-3xl mx-auto px-4 sm:px-6 pt-12 md:pt-16 pb-4"
+        >
+          <div className="relative overflow-hidden rounded-3xl border border-[#64b34d]/35 bg-gradient-to-br from-[#142016] via-[#0d120e] to-black px-6 py-8 sm:px-8 sm:py-10">
+            <div className="absolute -right-8 -top-8 h-40 w-40 rounded-full bg-[#64b34d]/10 blur-3xl" />
+            <div className="relative space-y-5">
+              <div className="flex items-center gap-2 text-[#9ae07f]">
+                <Sparkles size={18} />
+                <span className="text-[11px] font-black uppercase tracking-[0.2em]">
+                  Clube mensal
+                </span>
+              </div>
+              <div className="space-y-2">
+                <h2 className="text-2xl sm:text-3xl font-black tracking-tight">
+                  {site.club.name}
+                </h2>
+                {site.club.description ? (
+                  <p className="text-white/65 font-medium leading-relaxed max-w-xl">
+                    {site.club.description}
+                  </p>
+                ) : (
+                  <p className="text-white/65 font-medium leading-relaxed max-w-xl">
+                    Assinatura mensal com benefícios exclusivos neste salão.
+                  </p>
+                )}
+              </div>
+              <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-5 pt-1">
+                <div>
+                  <p className="text-[10px] font-black uppercase tracking-widest text-white/40">
+                    Valor mensal
+                  </p>
+                  <p className="text-3xl font-black text-[#64b34d] tabular-nums">
+                    R$ {Number(site.club.price_brl).toFixed(2).replace(".", ",")}
+                    <span className="text-base font-bold text-white/45">/mês</span>
+                  </p>
+                </div>
+                {(site.club.subscribe_url || site.club_portal_url || slug) && (
+                  <Link
+                    to={`/a/${site.slug || slug}/cliente`}
+                    className="inline-flex items-center justify-center min-h-12 px-7 py-3.5 rounded-2xl bg-[#64b34d] text-white font-black text-sm uppercase tracking-wide hover:bg-[#579c42] transition shrink-0"
+                  >
+                    Assinar clube
+                  </Link>
+                )}
+              </div>
+              {!site.club.available ? (
+                <p className="text-xs font-semibold text-amber-200/80">
+                  Em breve disponível para novas assinaturas — você já pode conhecer o clube.
+                </p>
+              ) : null}
+            </div>
+          </div>
+        </section>
+      ) : null}
 
       {/* Serviços */}
       {site.services.length > 0 ? (
