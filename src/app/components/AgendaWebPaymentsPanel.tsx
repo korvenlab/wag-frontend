@@ -1,15 +1,19 @@
 import { useCallback, useEffect, useState } from "react";
 import {
+  ArrowDownToLine,
+  Banknote,
   CheckCircle2,
   CreditCard,
   ExternalLink,
   Loader2,
+  RefreshCw,
   Wallet,
 } from "lucide-react";
 import { useSearchParams } from "react-router";
 import { apiFetch } from "../lib/apiFetch";
 import { Button } from "./ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
+import { Input } from "./ui/input";
 
 type FeePreview = {
   total_brl: number;
@@ -71,7 +75,26 @@ function moneyBrl(n: number) {
   return n.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 }
 
-/** Pagamentos e sinal antecipado — copy focado no que o dono precisa decidir. */
+function parseBrlInput(raw: string): number | null {
+  const n = Number(String(raw).replace(/\s/g, "").replace(",", "."));
+  if (!Number.isFinite(n) || n <= 0) return null;
+  return Math.round(n * 100) / 100;
+}
+
+function ChecklistItem({ ok, label }: { ok: boolean; label: string }) {
+  return (
+    <li className="flex items-center gap-2 text-xs font-medium text-slate-600">
+      {ok ? (
+        <CheckCircle2 size={14} className="text-[#64b34d] shrink-0" />
+      ) : (
+        <span className="w-3.5 h-3.5 rounded-full border border-slate-300 shrink-0" />
+      )}
+      {label}
+    </li>
+  );
+}
+
+/** Pagamentos Stripe Connect: saldo + saque no Wagoo + sinal. */
 export function AgendaWebPaymentsPanel() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [status, setStatus] = useState<ConnectStatus | null>(null);
@@ -79,6 +102,7 @@ export function AgendaWebPaymentsPanel() {
   const [balanceError, setBalanceError] = useState<string | null>(null);
   const [balanceLoading, setBalanceLoading] = useState(false);
   const [payoutBusy, setPayoutBusy] = useState(false);
+  const [payoutAmount, setPayoutAmount] = useState("");
   const [preview, setPreview] = useState<FeePreview | null>(null);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
@@ -99,8 +123,15 @@ export function AgendaWebPaymentsPanel() {
         setBalanceError(data?.error || "Não foi possível carregar o saldo.");
         return;
       }
-      setBalance(data as ConnectBalance);
+      const body = data as ConnectBalance;
+      setBalance(body);
       setBalanceError(null);
+      setPayoutAmount((prev) => {
+        if (prev.trim()) return prev;
+        return body.available_brl > 0
+          ? body.available_brl.toFixed(2).replace(".", ",")
+          : "";
+      });
     } catch {
       setBalance(null);
       setBalanceError("Erro de rede ao carregar o saldo.");
@@ -156,7 +187,7 @@ export function AgendaWebPaymentsPanel() {
     if (connectFlag === "return" || connectFlag === "refresh") {
       setMsg(
         connectFlag === "return"
-          ? "Cadastro atualizado."
+          ? "Cadastro atualizado. Se a Stripe já liberou, o saldo aparece abaixo."
           : "Abra de novo o cadastro se ainda faltar alguma informação.",
       );
       void load().then(() => {
@@ -214,8 +245,21 @@ export function AgendaWebPaymentsPanel() {
     }
   }
 
-  async function transferAvailable() {
+  async function transferToBank(full = false) {
     if (!balance || balance.available_brl < 1) return;
+    const amount = full
+      ? balance.available_brl
+      : parseBrlInput(payoutAmount) ?? balance.available_brl;
+
+    if (amount < 1) {
+      setError("Valor mínimo para transferir: R$ 1,00.");
+      return;
+    }
+    if (amount > balance.available_brl + 0.001) {
+      setError("O valor pedido é maior que o saldo disponível.");
+      return;
+    }
+
     setPayoutBusy(true);
     setError(null);
     setMsg(null);
@@ -223,18 +267,25 @@ export function AgendaWebPaymentsPanel() {
       const res = await apiFetch("/api/stripe/connect/payout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ amount_brl: balance.available_brl }),
+        body: JSON.stringify({ amount_brl: amount }),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
         setError(data.error || "Não foi possível transferir agora.");
         return;
       }
-      if (data.balance) setBalance(data.balance as ConnectBalance);
-      else void loadBalance();
+      if (data.balance) {
+        setBalance(data.balance as ConnectBalance);
+        const nextAvail = Number(data.balance.available_brl) || 0;
+        setPayoutAmount(
+          nextAvail > 0 ? nextAvail.toFixed(2).replace(".", ",") : "",
+        );
+      } else {
+        void loadBalance();
+      }
       setMsg(
         data.message ||
-          `Transferência de ${moneyBrl(Number(data.amount_brl) || 0)} solicitada para sua conta bancária.`,
+          `Transferência de ${moneyBrl(Number(data.amount_brl) || amount)} solicitada. O valor vai para a conta bancária cadastrada.`,
       );
     } catch {
       setError("Erro de rede ao transferir.");
@@ -262,7 +313,7 @@ export function AgendaWebPaymentsPanel() {
         setError(data.error || "Não foi possível salvar.");
         return;
       }
-      setMsg("Salvo.");
+      setMsg("Configurações de sinal salvas.");
       void load();
     } catch {
       setError("Erro de rede ao salvar.");
@@ -279,179 +330,180 @@ export function AgendaWebPaymentsPanel() {
     );
   }
 
-  return (
-    <div className="space-y-5">
-      <Card className="rounded-3xl border-slate-200 shadow-wg-subtle">
-        <CardHeader className="pb-2">
-          <CardTitle className="text-xl font-extrabold flex items-center gap-2">
-            <Wallet className="text-[#64b34d]" size={22} />
-            Receber pagamentos
-          </CardTitle>
-          <p className="text-sm text-slate-500 font-medium leading-relaxed">
-            Para ver saldo e transferir para o banco aqui no Wagoo, você precisa primeiro criar
-            sua conta de recebimentos (cadastro seguro com documentos e conta bancária).
-          </p>
-          <ul className="text-xs text-slate-500 font-medium space-y-1 mt-2">
-            <li>
-              <strong className="text-slate-700">Sem cadastro:</strong> sem saldo no app e sem
-              cobrança de sinal/pagamento pelo link.
-            </li>
-            <li>
-              <strong className="text-slate-700">Com cadastro completo:</strong> o saldo aparece
-              aqui e você transfere para o banco sem sair do Wagoo.
-            </li>
-          </ul>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {error ? (
-            <p className="text-sm font-semibold text-red-600 bg-red-50 rounded-2xl px-4 py-3">
-              {error}
-            </p>
-          ) : null}
-          {msg ? (
-            <p className="text-sm font-semibold text-[#64b34d] bg-[#64b34d]/10 rounded-2xl px-4 py-3">
-              {msg}
-            </p>
-          ) : null}
+  const canPayout =
+    Boolean(status?.payouts_enabled) &&
+    Boolean(balance) &&
+    (balance?.available_brl ?? 0) >= 1;
 
-          <div className="rounded-2xl bg-slate-50 border border-slate-100 p-4 space-y-2">
-            <p className="text-sm font-bold text-slate-800">{status?.tip}</p>
-            <ul className="text-xs text-slate-500 font-medium space-y-1">
-              <li className="flex items-center gap-2">
-                {status?.connected ? (
-                  <CheckCircle2 size={14} className="text-[#64b34d]" />
-                ) : (
-                  <span className="w-3.5 h-3.5 rounded-full border border-slate-300" />
-                )}
-                Conta criada
-              </li>
-              <li className="flex items-center gap-2">
-                {status?.details_submitted ? (
-                  <CheckCircle2 size={14} className="text-[#64b34d]" />
-                ) : (
-                  <span className="w-3.5 h-3.5 rounded-full border border-slate-300" />
-                )}
-                Dados enviados
-              </li>
-              <li className="flex items-center gap-2">
-                {status?.charges_enabled ? (
-                  <CheckCircle2 size={14} className="text-[#64b34d]" />
-                ) : (
-                  <span className="w-3.5 h-3.5 rounded-full border border-slate-300" />
-                )}
-                Pronto para receber
-              </li>
-              <li className="flex items-center gap-2">
-                {status?.payouts_enabled ? (
-                  <CheckCircle2 size={14} className="text-[#64b34d]" />
-                ) : (
-                  <span className="w-3.5 h-3.5 rounded-full border border-slate-300" />
-                )}
-                Transferência para o banco liberada
-              </li>
-            </ul>
+  return (
+    <div className="space-y-6 max-w-3xl">
+      {error ? (
+        <p className="text-sm font-semibold text-red-600 bg-red-50 rounded-2xl px-4 py-3">
+          {error}
+        </p>
+      ) : null}
+      {msg ? (
+        <p className="text-sm font-semibold text-[#4d8f3b] bg-[#64b34d]/10 rounded-2xl px-4 py-3">
+          {msg}
+        </p>
+      ) : null}
+
+      {/* Hero saldo */}
+      <section className="relative overflow-hidden rounded-[28px] border border-slate-200 bg-gradient-to-br from-slate-900 via-slate-900 to-[#1a3d1a] text-white shadow-wg-elevated">
+        <div className="absolute -right-16 -top-16 h-48 w-48 rounded-full bg-[#64b34d]/20 blur-3xl" />
+        <div className="absolute -left-10 bottom-0 h-40 w-40 rounded-full bg-[#64b34d]/10 blur-3xl" />
+        <div className="relative p-6 sm:p-8 space-y-6">
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <p className="text-[11px] font-black uppercase tracking-[0.2em] text-white/50">
+                Seu saldo
+              </p>
+              <h2 className="mt-2 text-3xl sm:text-4xl font-black tracking-tight">
+                {!status?.connected
+                  ? "—"
+                  : balanceLoading && !balance
+                    ? "…"
+                    : moneyBrl(balance?.available_brl ?? 0)}
+              </h2>
+              <p className="mt-1 text-sm text-white/60 font-medium">
+                Disponível para transferir ao banco
+              </p>
+            </div>
+            <button
+              type="button"
+              aria-label="Atualizar saldo"
+              disabled={!status?.connected || balanceLoading || busy || payoutBusy}
+              onClick={() => void loadBalance()}
+              className="h-10 w-10 rounded-xl bg-white/10 hover:bg-white/15 flex items-center justify-center transition-colors disabled:opacity-40"
+            >
+              <RefreshCw
+                size={16}
+                className={balanceLoading ? "animate-spin text-white/80" : "text-white/80"}
+              />
+            </button>
           </div>
 
-          {!status?.connected ? (
-            <div className="rounded-2xl border border-amber-200 bg-amber-50 p-5 space-y-2">
-              <p className="text-sm font-black text-amber-900">Saldo bloqueado</p>
-              <p className="text-sm text-amber-800 font-medium leading-relaxed">
-                Cadastre a conta de recebimentos para liberar saldo, cobranças e transferência
-                para o banco aqui no Wagoo.
-              </p>
-            </div>
-          ) : (
-            <div className="rounded-2xl border border-[#64b34d]/25 bg-[#64b34d]/5 p-5 space-y-4">
-              <div className="flex items-center justify-between gap-3">
-                <div className="flex items-center gap-2">
-                  <Wallet className="text-[#64b34d]" size={18} />
-                  <p className="text-sm font-black text-slate-900">Saldo na conta</p>
-                </div>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  className="h-8 text-xs font-bold text-slate-500"
-                  disabled={busy || balanceLoading || payoutBusy}
-                  onClick={() => void loadBalance()}
-                >
-                  {balanceLoading ? (
-                    <Loader2 className="animate-spin" size={14} />
-                  ) : (
-                    "Atualizar"
-                  )}
-                </Button>
+          {status?.connected && balance ? (
+            <div className="grid grid-cols-2 gap-3">
+              <div className="rounded-2xl bg-white/5 border border-white/10 px-4 py-3">
+                <p className="text-[10px] font-black uppercase tracking-wider text-white/40">
+                  A caminho
+                </p>
+                <p className="text-lg font-black mt-1">{moneyBrl(balance.pending_brl)}</p>
               </div>
-
-              {balanceError ? (
-                <p className="text-xs font-semibold text-amber-700">{balanceError}</p>
-              ) : balance ? (
-                <div className="grid sm:grid-cols-3 gap-3">
-                  <div className="rounded-xl bg-white border border-slate-100 px-4 py-3">
-                    <p className="text-[10px] font-black uppercase tracking-wider text-slate-400">
-                      Disponível
-                    </p>
-                    <p className="text-xl font-black text-slate-900 mt-1">
-                      {moneyBrl(balance.available_brl)}
-                    </p>
-                  </div>
-                  <div className="rounded-xl bg-white border border-slate-100 px-4 py-3">
-                    <p className="text-[10px] font-black uppercase tracking-wider text-slate-400">
-                      A caminho
-                    </p>
-                    <p className="text-xl font-black text-slate-900 mt-1">
-                      {moneyBrl(balance.pending_brl)}
-                    </p>
-                  </div>
-                  <div className="rounded-xl bg-white border border-slate-100 px-4 py-3">
-                    <p className="text-[10px] font-black uppercase tracking-wider text-slate-400">
-                      Total
-                    </p>
-                    <p className="text-xl font-black text-[#4d8f3b] mt-1">
-                      {moneyBrl(balance.total_brl)}
-                    </p>
-                  </div>
-                </div>
-              ) : (
-                <p className="text-xs font-medium text-slate-500 flex items-center gap-2">
-                  <Loader2 className="animate-spin" size={14} /> Carregando saldo…
+              <div className="rounded-2xl bg-white/5 border border-white/10 px-4 py-3">
+                <p className="text-[10px] font-black uppercase tracking-wider text-white/40">
+                  Total
                 </p>
-              )}
-
-              <p className="text-xs text-slate-500 font-medium leading-relaxed">
-                Disponível já pode ir para sua conta bancária. A caminho ainda está processando.
-              </p>
-
-              {!status.payouts_enabled ? (
-                <p className="text-xs font-semibold text-amber-800 bg-amber-50 border border-amber-100 rounded-xl px-3 py-2">
-                  Transferência ainda bloqueada: termine o cadastro (documentos e conta bancária)
-                  pelo botão abaixo.
+                <p className="text-lg font-black mt-1 text-[#9fd48a]">
+                  {moneyBrl(balance.total_brl)}
                 </p>
-              ) : null}
-
-              <Button
-                type="button"
-                className="w-full sm:w-auto bg-[#64b34d] hover:bg-[#58a344] text-white font-bold rounded-2xl"
-                disabled={
-                  busy ||
-                  payoutBusy ||
-                  !status.payouts_enabled ||
-                  !balance ||
-                  balance.available_brl < 1
-                }
-                onClick={() => void transferAvailable()}
-              >
-                {payoutBusy ? (
-                  <Loader2 className="animate-spin mr-2" size={16} />
-                ) : (
-                  <Wallet className="mr-2" size={16} />
-                )}
-                {balance && balance.available_brl >= 1
-                  ? `Transferir ${moneyBrl(balance.available_brl)} para o banco`
-                  : "Transferir para o banco"}
-              </Button>
+              </div>
             </div>
-          )}
+          ) : null}
+
+          {!status?.connected ? (
+            <div className="rounded-2xl bg-amber-400/15 border border-amber-300/20 px-4 py-3">
+              <p className="text-sm font-bold text-amber-100">
+                Cadastre a conta de recebimentos para ver saldo e sacar pelo Wagoo.
+              </p>
+            </div>
+          ) : balanceError ? (
+            <p className="text-sm font-semibold text-amber-200">{balanceError}</p>
+          ) : null}
+
+          {status?.connected ? (
+            <div className="space-y-3 pt-1">
+              {!status.payouts_enabled ? (
+                <p className="text-xs font-semibold text-amber-100/90 bg-amber-400/10 border border-amber-300/20 rounded-xl px-3 py-2">
+                  Saque bloqueado até terminar documentos e conta bancária no cadastro.
+                </p>
+              ) : (
+                <>
+                  <div className="flex flex-col sm:flex-row gap-2">
+                    <div className="relative flex-1">
+                      <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm font-bold text-white/40">
+                        R$
+                      </span>
+                      <Input
+                        value={payoutAmount}
+                        onChange={(e) => setPayoutAmount(e.target.value)}
+                        inputMode="decimal"
+                        placeholder="0,00"
+                        className="h-12 pl-10 rounded-2xl bg-white/10 border-white/15 text-white font-bold placeholder:text-white/30 focus-visible:ring-[#64b34d]"
+                        disabled={payoutBusy || !canPayout}
+                      />
+                    </div>
+                    <Button
+                      type="button"
+                      className="h-12 rounded-2xl bg-[#64b34d] hover:bg-[#58a344] text-white font-black px-5 shrink-0"
+                      disabled={payoutBusy || !canPayout}
+                      onClick={() => void transferToBank(false)}
+                    >
+                      {payoutBusy ? (
+                        <Loader2 className="animate-spin mr-2" size={16} />
+                      ) : (
+                        <ArrowDownToLine className="mr-2" size={16} />
+                      )}
+                      Sacar
+                    </Button>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      disabled={!canPayout || payoutBusy}
+                      onClick={() =>
+                        setPayoutAmount(
+                          balance!.available_brl.toFixed(2).replace(".", ","),
+                        )
+                      }
+                      className="text-[11px] font-bold px-3 py-1.5 rounded-full bg-white/10 hover:bg-white/15 text-white/80 disabled:opacity-40"
+                    >
+                      Todo o disponível
+                    </button>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      className="h-8 text-xs font-bold text-white/70 hover:text-white hover:bg-white/10"
+                      disabled={payoutBusy || !canPayout}
+                      onClick={() => void transferToBank(true)}
+                    >
+                      <Banknote className="mr-1.5" size={14} />
+                      Sacar tudo agora
+                    </Button>
+                  </div>
+                  <p className="text-[11px] text-white/45 font-medium leading-relaxed">
+                    O saque vai direto para a conta bancária cadastrada — sem abrir a Stripe.
+                    Pode levar 1–2 dias úteis para cair no banco.
+                  </p>
+                </>
+              )}
+            </div>
+          ) : null}
+        </div>
+      </section>
+
+      {/* Conta / onboarding */}
+      <Card className="rounded-[28px] border-slate-200 shadow-wg-subtle overflow-hidden">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-lg font-extrabold flex items-center gap-2">
+            <Wallet className="text-[#64b34d]" size={20} />
+            Conta de recebimentos
+          </CardTitle>
+          <p className="text-sm text-slate-500 font-medium leading-relaxed">
+            {status?.tip}
+          </p>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <ul className="grid sm:grid-cols-2 gap-2 rounded-2xl bg-slate-50 border border-slate-100 p-4">
+            <ChecklistItem ok={!!status?.connected} label="Conta criada" />
+            <ChecklistItem ok={!!status?.details_submitted} label="Dados enviados" />
+            <ChecklistItem ok={!!status?.charges_enabled} label="Pronto para receber" />
+            <ChecklistItem
+              ok={!!status?.payouts_enabled}
+              label="Saque para o banco liberado"
+            />
+          </ul>
 
           <div className="flex flex-col sm:flex-row gap-2">
             <Button
@@ -467,8 +519,8 @@ export function AgendaWebPaymentsPanel() {
               )}
               {status?.connected
                 ? status.payouts_enabled && status.charges_enabled
-                  ? "Atualizar cadastro de recebimentos"
-                  : "Continuar cadastro de recebimentos"
+                  ? "Atualizar cadastro"
+                  : "Continuar cadastro"
                 : "Criar conta de recebimentos"}
             </Button>
             {status?.connected ? (
@@ -485,45 +537,27 @@ export function AgendaWebPaymentsPanel() {
                 <ExternalLink className="mr-2" size={16} />
                 {status.details_submitted
                   ? "Conta bancária e documentos"
-                  : "Continuar documentos e conta bancária"}
+                  : "Continuar documentos"}
               </Button>
             ) : null}
           </div>
           <p className="text-[11px] text-slate-400 font-medium leading-relaxed">
-            O cadastro e a troca de conta bancária são feitos em uma página segura parceira. Depois
-            disso, saldo e transferência ficam aqui no Wagoo.
+            O cadastro (KYC e conta bancária) é feito em página segura da Stripe. Depois disso,
+            saldo e saque ficam neste painel do Wagoo.
           </p>
         </CardContent>
       </Card>
 
-      <Card className="rounded-3xl border-slate-200 shadow-wg-subtle">
+      {/* Sinal */}
+      <Card className="rounded-[28px] border-slate-200 shadow-wg-subtle">
         <CardHeader className="pb-2">
           <CardTitle className="text-lg font-extrabold">Sinal antecipado (opcional)</CardTitle>
-          <p className="text-sm text-slate-500 font-medium">
+          <p className="text-sm text-slate-500 font-medium leading-relaxed">
             Pedir uma parte do serviço na hora de marcar. O horário só confirma depois do
             pagamento — no WhatsApp e no link da Agenda Web.
           </p>
-          <ul className="text-xs text-slate-500 font-medium space-y-1 mt-2">
-            <li>
-              <strong className="text-slate-700">Desligado:</strong> o cliente agenda sem pagar
-              (salvo se você liberar o pagamento adiantado opcional abaixo).
-            </li>
-            <li>
-              <strong className="text-slate-700">Ligado:</strong> ele precisa pagar o sinal para
-              confirmar; a IA confirma no WhatsApp depois do pagamento.
-            </li>
-          </ul>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="rounded-2xl border border-slate-100 bg-slate-50 p-4 space-y-2 text-sm text-slate-600 font-medium">
-            <p className="text-[11px] font-black uppercase tracking-wider text-slate-400">
-              Quanto você recebe (simulação)
-            </p>
-            <p className="text-xs text-slate-500">
-              O cliente paga só o sinal. As taxas saem do que você recebe — veja o exemplo abaixo.
-            </p>
-          </div>
-
           <label className="flex items-center gap-3 cursor-pointer">
             <input
               type="checkbox"
@@ -559,7 +593,7 @@ export function AgendaWebPaymentsPanel() {
               <span className="block">Permitir pagamento adiantado (100% do serviço)</span>
               <span className="block text-xs text-slate-500 font-medium leading-relaxed">
                 Com o sinal desligado: o cliente pode marcar e pagar o valor inteiro se quiser, ou
-                agendar sem pagar. Com o sinal ligado, esta opção não se aplica.
+                agendar sem pagar.
               </span>
             </span>
           </label>
@@ -588,7 +622,7 @@ export function AgendaWebPaymentsPanel() {
               inputMode="decimal"
               value={exampleTotal}
               onChange={(e) => setExampleTotal(e.target.value)}
-              className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm font-bold"
+              className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm font-bold bg-white"
             />
             {preview ? (
               <div className="text-sm text-slate-600 font-medium space-y-3 pt-1">
@@ -598,41 +632,12 @@ export function AgendaWebPaymentsPanel() {
                     R$ {preview.deposit_brl.toFixed(2)}
                   </strong>
                 </p>
-
-                <div className="rounded-xl bg-white border border-slate-100 p-3 space-y-1.5">
-                  <p className="text-[11px] font-black uppercase tracking-wider text-slate-400">
-                    Taxas (sobre o sinal)
-                  </p>
-                  <p>
-                    Wagoo:{" "}
-                    <strong className="text-slate-900">
-                      {preview.wagoo?.percent ?? status?.wagoo_fee_percent ?? 2}% = R${" "}
-                      {(preview.wagoo?.fee_brl ?? preview.wagoo_fee_brl).toFixed(2)}
-                    </strong>
-                  </p>
-                  <p>
-                    No Pix:{" "}
-                    <strong className="text-slate-900">
-                      {preview.stripe?.pix.percent ?? 1.19}% = R${" "}
-                      {(preview.stripe?.pix.fee_brl ?? 0).toFixed(2)}
-                    </strong>
-                  </p>
-                  <p>
-                    No cartão:{" "}
-                    <strong className="text-slate-900">
-                      {preview.stripe?.card.percent ?? 3.99}% + R${" "}
-                      {(preview.stripe?.card.fixed_brl ?? 0.39).toFixed(2)} = R${" "}
-                      {(preview.stripe?.card.fee_brl ?? 0).toFixed(2)}
-                    </strong>
-                  </p>
-                </div>
-
                 <div className="rounded-xl bg-white border border-slate-100 p-3 space-y-1.5">
                   <p className="text-[11px] font-black uppercase tracking-wider text-slate-400">
                     Você recebe (estimado)
                   </p>
                   <p>
-                    Se pagar no Pix: ~R${" "}
+                    Pix: ~R${" "}
                     <strong className="text-slate-900">
                       {(
                         preview.stripe?.pix.shop_receives_brl ?? preview.shop_receives_brl
@@ -640,13 +645,12 @@ export function AgendaWebPaymentsPanel() {
                     </strong>
                   </p>
                   <p>
-                    Se pagar no cartão: ~R${" "}
+                    Cartão: ~R${" "}
                     <strong className="text-slate-900">
                       {(preview.stripe?.card.shop_receives_brl ?? 0).toFixed(2)}
                     </strong>
                   </p>
                 </div>
-
                 <p className="text-xs text-slate-400">
                   {preview.summary ||
                     preview.note ||
@@ -664,7 +668,7 @@ export function AgendaWebPaymentsPanel() {
             onClick={() => void saveDepositSettings()}
           >
             {busy ? <Loader2 className="animate-spin mr-2" size={16} /> : null}
-            Salvar
+            Salvar sinal
           </Button>
         </CardContent>
       </Card>
