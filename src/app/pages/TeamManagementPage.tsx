@@ -12,6 +12,8 @@ import {
   Copy,
   Check,
   RefreshCw,
+  MessageCircle,
+  Banknote,
 } from "lucide-react";
 import { useNavigate } from "react-router";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/card";
@@ -47,6 +49,18 @@ import {
   type WagooPlanTier,
 } from "../lib/wagooPlans";
 
+type CommissionPayout = {
+  paid: boolean;
+  paid_at: string | null;
+  amount_brl: number | null;
+  note: string | null;
+};
+
+type CommissionSnapshot = {
+  final_amount_brl: number;
+  payout: CommissionPayout;
+};
+
 type Barbeiro = {
   id: string;
   nome: string;
@@ -73,6 +87,17 @@ export function TeamManagementPage() {
   const [savingCommissionId, setSavingCommissionId] = useState<string | null>(null);
   const [shareBusyId, setShareBusyId] = useState<string | null>(null);
   const [copiedShareId, setCopiedShareId] = useState<string | null>(null);
+  const [copiedWhatsAppId, setCopiedWhatsAppId] = useState<string | null>(null);
+  const [whatsappBusyId, setWhatsappBusyId] = useState<string | null>(null);
+  const [payoutBusyId, setPayoutBusyId] = useState<string | null>(null);
+  const [commissionPeriod, setCommissionPeriod] = useState<{
+    year: number;
+    month: number;
+    label: string;
+  } | null>(null);
+  const [commissionByBarber, setCommissionByBarber] = useState<
+    Record<string, CommissionSnapshot>
+  >({});
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [barbeiroToDelete, setBarbeiroToDelete] = useState<Barbeiro | null>(null);
   const [upgrading, setUpgrading] = useState<WagooPlanTier | null>(null);
@@ -101,7 +126,7 @@ export function TeamManagementPage() {
       }
       if (user.storeName) setStoreName(user.storeName);
 
-      const res = await apiFetch("/api/barbeiros");
+      const res = await apiFetch("/api/barbeiros?commission=1");
       if (!res.ok) {
         setError("Não foi possível carregar a equipe.");
         return;
@@ -116,6 +141,16 @@ export function TeamManagementPage() {
       }));
       setBarbeiros(list);
       setCachedTeam(user.id, list);
+      if (data.commission_period && typeof data.commission_period === "object") {
+        setCommissionPeriod(data.commission_period as {
+          year: number;
+          month: number;
+          label: string;
+        });
+      }
+      if (data.commission_by_barber && typeof data.commission_by_barber === "object") {
+        setCommissionByBarber(data.commission_by_barber as Record<string, CommissionSnapshot>);
+      }
     } catch {
       setError("Não foi possível conectar. Tente de novo em instantes.");
     } finally {
@@ -266,15 +301,138 @@ export function TeamManagementPage() {
   const commissionShareUrl = (token: string) =>
     `${window.location.origin}/comissao/${token}`;
 
-  const handleCopyText = async (b: Barbeiro, text: string) => {
+  const moneyLabel = (n: number) =>
+    n.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+
+  const formatPaidAt = (iso: string) => {
+    const d = new Date(iso);
+    if (Number.isNaN(d.getTime())) return "";
+    return d.toLocaleDateString("pt-BR", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+    });
+  };
+
+  const handleCopyText = async (b: Barbeiro, text: string, kind: "link" | "whatsapp" = "link") => {
     try {
       await navigator.clipboard.writeText(text);
-      setCopiedShareId(b.id);
-      window.setTimeout(() => {
-        setCopiedShareId((cur) => (cur === b.id ? null : cur));
-      }, 2000);
+      if (kind === "whatsapp") {
+        setCopiedWhatsAppId(b.id);
+        window.setTimeout(() => {
+          setCopiedWhatsAppId((cur) => (cur === b.id ? null : cur));
+        }, 2000);
+      } else {
+        setCopiedShareId(b.id);
+        window.setTimeout(() => {
+          setCopiedShareId((cur) => (cur === b.id ? null : cur));
+        }, 2000);
+      }
     } catch {
-      setError("Não foi possível copiar. Selecione o link e copie manualmente.");
+      setError("Não foi possível copiar. Selecione o texto e copie manualmente.");
+    }
+  };
+
+  const handleCopyWhatsAppMessage = async (b: Barbeiro) => {
+    if (!user?.subscriptionTier) return;
+    setWhatsappBusyId(b.id);
+    setError(null);
+    try {
+      const authToken = await getToken();
+      const qs = commissionPeriod
+        ? `?year=${commissionPeriod.year}&month=${commissionPeriod.month}`
+        : "";
+      const res = await fetch(`${backendUrl}/api/barbeiros/${b.id}/commission-summary${qs}`, {
+        headers: { Authorization: `Bearer ${authToken}` },
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setError(data.message || data.error || "Não foi possível gerar a mensagem.");
+        return;
+      }
+      const message = String(data.whatsapp_message || "");
+      if (!message) {
+        setError("Resposta inválida ao gerar a mensagem.");
+        return;
+      }
+      await handleCopyText(b, message, "whatsapp");
+    } catch {
+      setError("Erro ao copiar mensagem para WhatsApp.");
+    } finally {
+      setWhatsappBusyId(null);
+    }
+  };
+
+  const handleMarkPayout = async (b: Barbeiro) => {
+    if (!user?.subscriptionTier || !commissionPeriod) return;
+    setPayoutBusyId(b.id);
+    setError(null);
+    try {
+      const authToken = await getToken();
+      const snapshot = commissionByBarber[b.id];
+      const res = await fetch(`${backendUrl}/api/barbeiros/${b.id}/commission-payout`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${authToken}`,
+        },
+        body: JSON.stringify({
+          year: commissionPeriod.year,
+          month: commissionPeriod.month,
+          amount_brl: snapshot?.final_amount_brl ?? 0,
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setError(data.message || data.error || "Não foi possível marcar o repasse.");
+        return;
+      }
+      const payout = data.payout as CommissionPayout | undefined;
+      if (payout) {
+        setCommissionByBarber((prev) => ({
+          ...prev,
+          [b.id]: {
+            final_amount_brl: snapshot?.final_amount_brl ?? payout.amount_brl ?? 0,
+            payout,
+          },
+        }));
+      } else {
+        await loadTeam({ background: true });
+      }
+    } catch {
+      setError("Erro ao marcar repasse como pago.");
+    } finally {
+      setPayoutBusyId(null);
+    }
+  };
+
+  const handleUnmarkPayout = async (b: Barbeiro) => {
+    if (!user?.subscriptionTier || !commissionPeriod) return;
+    setPayoutBusyId(b.id);
+    setError(null);
+    try {
+      const authToken = await getToken();
+      const qs = `?year=${commissionPeriod.year}&month=${commissionPeriod.month}`;
+      const res = await fetch(`${backendUrl}/api/barbeiros/${b.id}/commission-payout${qs}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${authToken}` },
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setError(data.message || data.error || "Não foi possível desfazer o repasse.");
+        return;
+      }
+      setCommissionByBarber((prev) => ({
+        ...prev,
+        [b.id]: {
+          final_amount_brl: prev[b.id]?.final_amount_brl ?? 0,
+          payout: { paid: false, paid_at: null, amount_brl: null, note: null },
+        },
+      }));
+    } catch {
+      setError("Erro ao desfazer repasse.");
+    } finally {
+      setPayoutBusyId(null);
     }
   };
 
@@ -657,6 +815,7 @@ export function TeamManagementPage() {
                                     void handleCopyText(
                                       b,
                                       commissionShareUrl(b.commission_share_token!),
+                                      "link",
                                     )
                                   }
                                 >
@@ -685,9 +844,84 @@ export function TeamManagementPage() {
                                 </Button>
                               </div>
                             </div>
+                            {commissionPeriod ? (
+                              <div className="rounded-xl border border-slate-100 bg-slate-50/80 px-4 py-3 space-y-3">
+                                <div className="flex flex-wrap items-center justify-between gap-2">
+                                  <p className="text-xs font-bold text-slate-600">
+                                    {commissionPeriod.label}
+                                    {commissionByBarber[b.id] != null ? (
+                                      <span className="text-slate-900">
+                                        {" "}
+                                        · {moneyLabel(commissionByBarber[b.id].final_amount_brl)}
+                                      </span>
+                                    ) : null}
+                                  </p>
+                                  {commissionByBarber[b.id]?.payout.paid ? (
+                                    <Badge className="bg-emerald-100 text-emerald-800 border-0 font-bold text-[10px]">
+                                      Repasse feito
+                                      {commissionByBarber[b.id].payout.paid_at
+                                        ? ` em ${formatPaidAt(commissionByBarber[b.id].payout.paid_at!)}`
+                                        : ""}
+                                    </Badge>
+                                  ) : null}
+                                </div>
+                                <div className="flex flex-wrap gap-2">
+                                  <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    className="rounded-xl border-[#25D366]/40 text-[#128C7E] hover:bg-green-50 font-bold gap-2 h-10"
+                                    disabled={whatsappBusyId === b.id}
+                                    onClick={() => void handleCopyWhatsAppMessage(b)}
+                                  >
+                                    {whatsappBusyId === b.id ? (
+                                      <Loader2 className="w-4 h-4 animate-spin" />
+                                    ) : copiedWhatsAppId === b.id ? (
+                                      <Check className="w-4 h-4" />
+                                    ) : (
+                                      <MessageCircle className="w-4 h-4" />
+                                    )}
+                                    {copiedWhatsAppId === b.id
+                                      ? "Mensagem copiada"
+                                      : "Copiar mensagem WhatsApp"}
+                                  </Button>
+                                  {commissionByBarber[b.id]?.payout.paid ? (
+                                    <Button
+                                      type="button"
+                                      variant="ghost"
+                                      size="sm"
+                                      className="rounded-xl text-slate-500 hover:text-slate-800 font-bold gap-2 h-10"
+                                      disabled={payoutBusyId === b.id}
+                                      onClick={() => void handleUnmarkPayout(b)}
+                                    >
+                                      {payoutBusyId === b.id ? (
+                                        <Loader2 className="w-4 h-4 animate-spin" />
+                                      ) : null}
+                                      Desfazer repasse
+                                    </Button>
+                                  ) : (
+                                    <Button
+                                      type="button"
+                                      variant="outline"
+                                      size="sm"
+                                      className="rounded-xl border-slate-200 text-slate-700 hover:bg-white font-bold gap-2 h-10"
+                                      disabled={payoutBusyId === b.id}
+                                      onClick={() => void handleMarkPayout(b)}
+                                    >
+                                      {payoutBusyId === b.id ? (
+                                        <Loader2 className="w-4 h-4 animate-spin" />
+                                      ) : (
+                                        <Banknote className="w-4 h-4" />
+                                      )}
+                                      Marcar repasse como pago
+                                    </Button>
+                                  )}
+                                </div>
+                              </div>
+                            ) : null}
                             <p className="text-[11px] text-slate-400 font-medium">
                               Só {b.nome} vê os ganhos (Analytics) e os horários dele.
-                              Envie por WhatsApp ou mensagem.
+                              Copie a mensagem pronta ou envie o link.
                             </p>
                           </>
                         ) : (

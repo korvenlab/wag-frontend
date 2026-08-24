@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useParams, useSearchParams } from "react-router";
-import { CalendarDays, ChevronLeft, ChevronRight, Loader2, Wallet } from "lucide-react";
+import { CalendarDays, ChevronLeft, ChevronRight, Loader2, Wallet, CheckCircle2 } from "lucide-react";
 
 const API =
   import.meta.env.VITE_API_URL?.replace(/\/+$/, "") ||
@@ -32,6 +32,12 @@ type CommissionPayload = {
   source: "automatic" | "manual" | "none";
   appointments: ScheduleAppointment[];
   busy_days: string[];
+  payout: {
+    paid: boolean;
+    paid_at: string | null;
+    amount_brl: number | null;
+    note: string | null;
+  };
 };
 
 function money(n: number) {
@@ -48,6 +54,16 @@ function paymentLabel(appt: ScheduleAppointment) {
   if (appt.status === "pending_payment") return "Aguardando pagamento";
   if (appt.status === "completed") return "Concluído";
   return "Confirmado";
+}
+
+function formatPaidAt(iso: string) {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "";
+  return d.toLocaleDateString("pt-BR", {
+    day: "2-digit",
+    month: "long",
+    year: "numeric",
+  });
 }
 
 function formatDayHeading(ymd: string) {
@@ -171,6 +187,12 @@ export function PublicCommissionPage() {
         ...json,
         appointments: Array.isArray(json.appointments) ? json.appointments : [],
         busy_days: Array.isArray(json.busy_days) ? json.busy_days : [],
+        payout: json.payout ?? {
+          paid: false,
+          paid_at: null,
+          amount_brl: null,
+          note: null,
+        },
       });
       setSelectedDay(null);
     } catch {
@@ -245,7 +267,7 @@ export function PublicCommissionPage() {
           <div className="mt-20 rounded-3xl border border-white/10 bg-white/5 p-8 text-center backdrop-blur-sm">
             <p className="text-lg font-bold text-white">{error}</p>
             <p className="mt-2 text-sm text-white/50">
-              Peça um novo link ao administrador do salão.
+              Peça um novo link a quem administra a equipe.
             </p>
           </div>
         ) : data ? (
@@ -297,6 +319,24 @@ export function PublicCommissionPage() {
                 {money(data.final_amount_brl)}
               </p>
               <p className="mt-2 text-sm text-white/50 font-medium">{sourceLabel}</p>
+              {data.payout?.paid ? (
+                <div className="mt-4 flex items-start gap-2 rounded-2xl border border-emerald-400/30 bg-emerald-500/10 px-4 py-3">
+                  <CheckCircle2 className="h-5 w-5 text-emerald-400 shrink-0 mt-0.5" />
+                  <div>
+                    <p className="text-sm font-bold text-emerald-200">
+                      Repasse recebido
+                      {data.payout.paid_at
+                        ? ` em ${formatPaidAt(data.payout.paid_at)}`
+                        : ""}
+                    </p>
+                    {data.payout.amount_brl != null ? (
+                      <p className="text-xs text-emerald-200/70 font-medium mt-0.5">
+                        Valor repassado: {money(data.payout.amount_brl)}
+                      </p>
+                    ) : null}
+                  </div>
+                </div>
+              ) : null}
               <p className="mt-3 text-[11px] text-white/35 font-medium leading-relaxed">
                 Mesmo valor do Analytics: soma das comissões dos atendimentos
                 pagos no app
