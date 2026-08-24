@@ -1,6 +1,6 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { motion, useReducedMotion } from "motion/react";
-import { ArrowRight, Calendar, Check, MessageCircle } from "lucide-react";
+import { ArrowRight, Check, MessageCircle, Wallet } from "lucide-react";
 import { Button } from "./ui/button";
 
 const HERO_HIGHLIGHT = "automático";
@@ -137,7 +137,7 @@ export const HeroSection = () => {
               id="hero-heading"
               className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-black text-slate-900 tracking-tighter leading-[0.95] sm:leading-[0.9]"
             >
-              Sua agenda <br />
+              Agenda, sinal e comissão <br />
               <span className="text-[#4d8f3b]">
                 no{" "}
                 <span className="relative inline-block">
@@ -190,8 +190,8 @@ export const HeroSection = () => {
               </span>
             </h1>
             <p className="text-lg sm:text-xl text-slate-600 max-w-lg leading-relaxed font-medium">
-              Transforme conversas de WhatsApp em horários no Google Calendar — 24h, sem você
-              perder tempo no celular. Um investimento que se paga no primeiro horário recuperado.
+              Cliente marca pelo WhatsApp ou pelo link, paga sinal antecipado quando você quiser,
+              e cada profissional acompanha o que ganhou no mês — sem planilha bagunçada.
             </p>
           </div>
 
@@ -253,7 +253,7 @@ export const HeroSection = () => {
                     </FadeSlide>
                     <FadeSlide show={showBubbleBot} className="w-full flex justify-end">
                       <div className="bg-[#64b34d] p-3.5 rounded-2xl rounded-tr-none text-xs text-white font-bold shadow-wg-bubble border border-[#4d8f3b] max-w-[95%]">
-                        &quot;Claro! Horário reservado.&quot;
+                        &quot;Confirmado! Segue o link do sinal.&quot;
                       </div>
                     </FadeSlide>
                   </div>
@@ -263,11 +263,11 @@ export const HeroSection = () => {
 
             <div className="rounded-[28px] bg-white/90 backdrop-blur-sm border border-slate-200/80 p-5 sm:p-6 flex flex-col justify-center shadow-wg-device">
               <div className="flex items-center gap-2 mb-4">
-                <div className="w-8 h-8 rounded-xl bg-[#4285F4] flex items-center justify-center text-white">
-                  <Calendar size={16} />
+                <div className="w-8 h-8 rounded-xl bg-[#64b34d] flex items-center justify-center text-white">
+                  <Wallet size={16} />
                 </div>
                 <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.18em]">
-                  Google Calendar
+                  Pagamento & comissão
                 </p>
               </div>
 
@@ -281,20 +281,23 @@ export const HeroSection = () => {
                   </div>
                 </FadeSlide>
                 <FadeSlide show={showCalendar} className="w-full">
-                  <div className="rounded-2xl border border-slate-200 bg-slate-50/80 p-4 space-y-2">
+                  <div className="rounded-2xl border border-slate-200 bg-slate-50/80 p-4 space-y-2.5">
                     <div className="flex items-center justify-between gap-2">
-                      <p className="text-[11px] font-black text-blue-600 uppercase tracking-widest">
-                        Agendado
+                      <p className="text-[11px] font-black text-[#4d8f3b] uppercase tracking-widest">
+                        Horário + sinal
                       </p>
                       <span className="inline-flex items-center gap-1 text-[#4d8f3b] text-[10px] font-black uppercase">
                         <Check size={11} strokeWidth={4} />
-                        Confirmado
+                        Pago
                       </span>
                     </div>
-                    <p className="text-sm font-black text-slate-900">Maria Silva</p>
-                    <p className="text-xs text-slate-600 font-bold">Terça · 14:00</p>
-                    <div className="mt-2 h-1.5 rounded-full bg-[#4285F4]/20 overflow-hidden">
-                      <div className="h-full w-3/5 rounded-full bg-[#4285F4]" />
+                    <p className="text-sm font-black text-slate-900">Ana · Terça · 14:00</p>
+                    <p className="text-xs text-slate-600 font-bold">Sinal R$ 50,00 · confirmado</p>
+                    <div className="pt-2 border-t border-slate-200/80">
+                      <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                        Comissão do mês
+                      </p>
+                      <p className="text-sm font-black text-[#4d8f3b] mt-0.5">R$ 2.340,00</p>
                     </div>
                   </div>
                 </FadeSlide>

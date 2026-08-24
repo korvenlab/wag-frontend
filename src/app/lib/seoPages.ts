@@ -17,12 +17,12 @@ export const SITE_ORIGIN = "https://wagoobot.com";
 
 export const HOME_SEO: SeoPageMeta = {
   path: "/",
-  title: "Wagoo — Agenda no WhatsApp que se paga sozinha",
+  title: "Wagoo — Agenda, sinal e comissão no automático",
   description:
-    "Wagoo agenda clientes pelo WhatsApp no seu Google Calendar, 24 horas por dia. Automação simples para profissionais e negócios.",
-  ogTitle: "Wagoo — Agenda no automático",
+    "Marque horário pelo WhatsApp ou link, cobre sinal antecipado e feche a comissão da equipe no mês — sem planilha.",
+  ogTitle: "Wagoo — Agenda, sinal e comissão no automático",
   ogDescription:
-    "Transforme conversas de WhatsApp em horários confirmados no Google Calendar.",
+    "Horário marcado, pagamento no app e comissão de cada profissional — tudo no Wagoo.",
 };
 
 export const CONTENT_SEO_PAGES: SeoPageMeta[] = [

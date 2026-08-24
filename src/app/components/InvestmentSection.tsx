@@ -42,13 +42,13 @@ export function InvestmentSection() {
               className="text-4xl md:text-6xl font-extrabold tracking-tight leading-[0.95]"
             >
               Menos tempo no WhatsApp.
-              <span className="block text-[#64b34d]">Mais tempo no que paga a conta.</span>
+              <span className="block text-[#64b34d]">Mais controle do caixa.</span>
             </h2>
 
             <div className="space-y-5 text-base md:text-lg text-slate-300 font-medium leading-relaxed">
               <p data-gsap="heading">
-                Cada mensagem de agenda respondida sozinha é tempo que você não gasta no celular no
-                meio do atendimento — à noite, no domingo, no intervalo.
+                Horário marcado, sinal recebido e comissão fechada — sem planilha no fim do mês e
+                sem você no meio de cada mensagem.
               </p>
               <p data-gsap="heading">
                 A partir de R$&nbsp;59/mês: menos que um dia de agenda perdida por demora na

@@ -1,18 +1,21 @@
 const STEPS = [
   {
     step: "01",
-    title: "Cliente manda mensagem",
-    description: "No WhatsApp, no tom dele. Pediu horário — o Wagoo entende e responde.",
+    title: "Horário + sinal confirmados",
+    description:
+      "Cliente agenda pelo WhatsApp ou pelo link. Sinal antecipado ou pagamento no app — horário garantido.",
   },
   {
     step: "02",
-    title: "Consulta o Google Calendar",
-    description: "Vê o que está livre na sua agenda real, nos horários que você definiu.",
+    title: "Wagoo fecha a comissão",
+    description:
+      "Soma o que cada profissional ganhou no mês: atendimentos pagos no app e valores da sua planilha.",
   },
   {
     step: "03",
-    title: "Confirma e sincroniza",
-    description: "Marca o horário, avisa o cliente e aparece na sua agenda — pronto.",
+    title: "Cada um vê o dele",
+    description:
+      "Você acompanha o caixa no Analytics. Cada profissional recebe o link dele — ganhos e horários, só dele.",
   },
 ] as const;
 
@@ -35,18 +38,25 @@ export function HowItWorks() {
 
       <div className="relative z-10 max-w-6xl mx-auto px-6">
         <div className="max-w-2xl mb-16 md:mb-20">
+          <p
+            data-gsap="heading"
+            className="text-[11px] font-black uppercase tracking-[0.22em] text-[#64b34d] mb-4"
+          >
+            Como funciona
+          </p>
           <h2
             data-gsap="heading"
             className="text-4xl md:text-6xl font-extrabold text-slate-900 leading-[0.95] tracking-tight"
           >
-            Do WhatsApp ao Calendar
-            <span className="block text-[#64b34d]">sem você no meio.</span>
+            Agenda, sinal e comissão.
+            <span className="block text-[#64b34d]">Três passos no automático.</span>
           </h2>
           <p
             data-gsap="heading"
             className="text-lg text-slate-500 mt-6 font-medium leading-relaxed"
           >
-            Três batidas. O cliente fala como sempre fala — o Wagoo cuida da agenda.
+            Cliente marca pelo WhatsApp ou pelo link, paga sinal quando você quiser, e cada
+            profissional acompanha o que ganhou no mês — sem planilha bagunçada.
           </p>
         </div>
 
@@ -86,7 +96,7 @@ export function HowItWorks() {
           </ol>
         </div>
 
-        {/* Âncora visual única: fluxo WhatsApp → Calendar */}
+        {/* Âncora visual: atendimento → comissão do mês */}
         <div
           data-gsap="fade"
           className="mt-16 md:mt-20 flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-3 sm:gap-0"
@@ -94,23 +104,26 @@ export function HowItWorks() {
         >
           <div className="flex-1 max-w-xs mx-auto sm:mx-0 rounded-2xl border border-slate-200 bg-white px-5 py-4 text-left">
             <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#4d8f3b] mb-1">
-              WhatsApp
+              Horário + sinal
             </p>
             <p className="text-sm font-bold text-slate-800">
-              &quot;Pode ser amanhã às 14h?&quot;
+              Ana · Terça 14:00 · Sinal R$ 50,00 pago
             </p>
           </div>
-          <div className="hidden sm:flex items-center px-3 text-[#64b34d] font-black text-lg" aria-hidden>
+          <div
+            className="hidden sm:flex items-center px-3 text-[#64b34d] font-black text-lg"
+            aria-hidden
+          >
             →
           </div>
           <div className="sm:hidden text-center text-[#64b34d] font-black text-sm py-1" aria-hidden>
             ↓
           </div>
           <div className="flex-1 max-w-xs mx-auto sm:mx-0 rounded-2xl border border-slate-200 bg-white px-5 py-4 text-left">
-            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#4285F4] mb-1">
-              Google Calendar
+            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#64b34d] mb-1">
+              Comissão do mês
             </p>
-            <p className="text-sm font-bold text-slate-800">Maria Silva · Terça 14:00</p>
+            <p className="text-sm font-bold text-slate-800">Ana · agosto · R$ 2.340,00</p>
           </div>
         </div>
       </div>
