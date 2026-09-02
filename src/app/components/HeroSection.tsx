@@ -3,7 +3,7 @@ import { motion, useReducedMotion } from "motion/react";
 import { ArrowRight, Check, MessageCircle, Wallet } from "lucide-react";
 import { Button } from "./ui/button";
 
-const HERO_HIGHLIGHT = "automático";
+const HERO_HIGHLIGHT = "precisa";
 
 type ChatPhase =
   | "typingClient"
@@ -137,9 +137,9 @@ export const HeroSection = () => {
               id="hero-heading"
               className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-black text-slate-900 tracking-tighter leading-[0.95] sm:leading-[0.9]"
             >
-              Agenda, sinal e comissão <br />
+              Muito mais que agendar. <br />
               <span className="text-[#4d8f3b]">
-                no{" "}
+                A gestão que o seu espaço{" "}
                 <span className="relative inline-block">
                   {reduceMotion ? (
                     <>{HERO_HIGHLIGHT}.</>

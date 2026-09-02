@@ -16,10 +16,10 @@ const routes = [
     title: "Wagoo — Agenda no WhatsApp que se paga sozinha",
     description:
       "Wagoo agenda clientes pelo WhatsApp no seu Google Calendar, 24 horas por dia. Automação simples para profissionais e negócios.",
-    ogTitle: "Wagoo — Agenda no automático",
+    ogTitle: "Wagoo — Muito mais que agendar. A gestão que o seu espaço precisa.",
     ogDescription:
       "Transforme conversas de WhatsApp em horários confirmados no Google Calendar.",
-    h1: "Sua agenda no automático",
+    h1: "Muito mais que agendar. A gestão que o seu espaço precisa.",
   },
   {
     path: "/agendamento",

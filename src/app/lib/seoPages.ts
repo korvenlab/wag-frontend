@@ -17,10 +17,10 @@ export const SITE_ORIGIN = "https://wagoobot.com";
 
 export const HOME_SEO: SeoPageMeta = {
   path: "/",
-  title: "Wagoo — Agenda, sinal e comissão no automático",
+  title: "Wagoo — Muito mais que agendar. A gestão que o seu espaço precisa.",
   description:
     "Marque horário pelo WhatsApp ou link, cobre sinal antecipado e feche a comissão da equipe no mês — sem planilha.",
-  ogTitle: "Wagoo — Agenda, sinal e comissão no automático",
+  ogTitle: "Wagoo — Muito mais que agendar. A gestão que o seu espaço precisa.",
   ogDescription:
     "Horário marcado, pagamento no app e comissão de cada profissional — tudo no Wagoo.",
 };
