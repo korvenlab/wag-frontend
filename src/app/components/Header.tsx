@@ -84,7 +84,7 @@ export function Header() {
       initial={{ y: -100 }}
       animate={{ y: 0 }}
       transition={{ duration: 0.6, ease: "easeOut" }}
-      className="fixed top-0 left-0 right-0 z-50 px-4 pt-5"
+      className="fixed top-0 left-0 right-0 z-50 px-4 pt-5 max-md:[padding-top:max(1.25rem,env(safe-area-inset-top))]"
     >
       <div
         className={`max-w-[1200px] mx-auto h-20 rounded-[50px] bg-white/80 backdrop-blur-[12px] border border-slate-200 transition-[box-shadow] duration-300 ${

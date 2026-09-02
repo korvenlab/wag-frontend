@@ -113,7 +113,7 @@ export const HeroSection = () => {
   return (
     <section
       aria-labelledby="hero-heading"
-      className="relative min-h-screen flex items-center justify-center pt-20 pb-10 px-6 overflow-hidden"
+      className="relative min-h-screen flex items-start lg:items-center justify-center pt-[7.75rem] sm:pt-32 md:pt-28 lg:pt-20 pb-10 px-6 overflow-hidden max-md:[padding-top:max(7.75rem,calc(env(safe-area-inset-top)+6.25rem))]"
     >
       <div
         className="absolute inset-0 -z-20"
