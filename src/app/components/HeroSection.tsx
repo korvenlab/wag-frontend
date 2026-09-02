@@ -133,8 +133,8 @@ export const HeroSection = () => {
           transition={{ duration: reduceMotion ? 0.01 : 0.7 }}
           className="w-full max-w-5xl mx-auto text-center text-[1.875rem] leading-[1.12] sm:text-4xl sm:leading-[1.1] md:text-5xl lg:text-6xl xl:text-7xl font-black tracking-tight mb-6 sm:mb-8 lg:mb-10 px-2"
         >
-          <span className="text-slate-900">Muito mais que agendar. </span>
-          <span className="text-[#4d8f3b]">
+          <span className="block text-slate-900">Muito mais que agendar.</span>
+          <span className="block text-[#4d8f3b] mt-2 sm:mt-3">
             A gestão que o seu espaço{" "}
             <span className="relative inline-block">
               {reduceMotion ? (
