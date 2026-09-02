@@ -113,7 +113,7 @@ export const HeroSection = () => {
   return (
     <section
       aria-labelledby="hero-heading"
-      className="relative min-h-screen flex items-start lg:items-center justify-center pt-[7.75rem] sm:pt-32 md:pt-28 lg:pt-20 pb-10 px-6 overflow-hidden max-md:[padding-top:max(7.75rem,calc(env(safe-area-inset-top)+6.25rem))]"
+      className="relative min-h-[100dvh] flex items-start lg:items-center justify-center pt-[max(8.75rem,calc(env(safe-area-inset-top)+6.75rem))] sm:pt-[9.25rem] md:pt-32 lg:pt-24 pb-12 sm:pb-14 px-6 overflow-hidden"
     >
       <div
         className="absolute inset-0 -z-20"
@@ -125,20 +125,20 @@ export const HeroSection = () => {
       <div className="absolute top-[-10%] right-[-5%] w-[600px] h-[600px] bg-[#64b34d]/12 blur-[120px] rounded-full -z-10" />
       <div className="absolute bottom-[-10%] left-[-5%] w-[500px] h-[500px] bg-slate-300/25 blur-[120px] rounded-full -z-10" />
 
-      <div className="w-full max-w-7xl mx-auto grid lg:grid-cols-2 gap-12 items-center">
+      <div className="w-full max-w-7xl mx-auto grid lg:grid-cols-2 gap-10 lg:gap-12 items-center">
         <motion.div
           initial={{ opacity: 0, x: reduceMotion ? 0 : -30 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: reduceMotion ? 0.01 : 0.8 }}
-          className="space-y-8"
+          className="space-y-8 min-w-0"
         >
-          <div className="space-y-4 text-left">
+          <div className="space-y-5 text-left">
             <h1
               id="hero-heading"
-              className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-black text-slate-900 tracking-tighter leading-[0.95] sm:leading-[0.9]"
+              className="text-[1.875rem] leading-[1.12] sm:text-4xl sm:leading-[1.1] md:text-5xl lg:text-6xl xl:text-7xl font-black text-slate-900 tracking-tight text-balance"
             >
-              Muito mais que agendar. <br />
-              <span className="text-[#4d8f3b]">
+              <span className="block">Muito mais que agendar.</span>
+              <span className="block text-[#4d8f3b] mt-2 sm:mt-3">
                 A gestão que o seu espaço{" "}
                 <span className="relative inline-block">
                   {reduceMotion ? (
@@ -149,7 +149,7 @@ export const HeroSection = () => {
                         <motion.span
                           key={`${letter}-${i}`}
                           className="inline-block"
-                          initial={{ opacity: 0, y: 18 }}
+                          initial={{ opacity: 0, y: 12 }}
                           animate={{ opacity: 1, y: 0 }}
                           transition={{
                             delay: letterBaseDelay + i * letterStagger,
@@ -175,7 +175,7 @@ export const HeroSection = () => {
                       </motion.span>
                       <motion.span
                         aria-hidden
-                        className="pointer-events-none absolute left-0 bottom-0.5 h-[3px] w-full max-w-full origin-left rounded-full bg-[#64b34d]/50"
+                        className="pointer-events-none absolute left-0 -bottom-0.5 h-[3px] w-full origin-left rounded-full bg-[#64b34d]/50"
                         initial={{ scaleX: 0 }}
                         animate={{ scaleX: 1 }}
                         transition={{
@@ -189,7 +189,7 @@ export const HeroSection = () => {
                 </span>
               </span>
             </h1>
-            <p className="text-lg sm:text-xl text-slate-600 max-w-lg leading-relaxed font-medium">
+            <p className="text-base sm:text-lg md:text-xl text-slate-600 max-w-lg leading-relaxed font-medium">
               Cliente marca pelo WhatsApp ou pelo link, paga sinal antecipado quando você quiser,
               e cada profissional acompanha o que ganhou no mês — sem planilha bagunçada.
             </p>
