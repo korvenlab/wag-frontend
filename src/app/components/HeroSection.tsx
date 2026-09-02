@@ -137,8 +137,8 @@ export const HeroSection = () => {
               id="hero-heading"
               className="text-[1.875rem] leading-[1.12] sm:text-4xl sm:leading-[1.1] md:text-5xl lg:text-6xl xl:text-7xl font-black text-slate-900 tracking-tight text-balance"
             >
-              <span className="block">Muito mais que agendar.</span>
-              <span className="block text-[#4d8f3b] mt-2 sm:mt-3">
+              <span className="block text-center">Muito mais que agendar.</span>
+              <span className="block text-left text-[#4d8f3b] mt-2 sm:mt-3">
                 A gestão que o seu espaço{" "}
                 <span className="relative inline-block">
                   {reduceMotion ? (
