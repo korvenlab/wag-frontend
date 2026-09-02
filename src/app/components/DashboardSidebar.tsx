@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import { Button } from "./ui/button";
 import { Link, useNavigate } from "react-router";
+import { useBodyScrollLock } from "../hooks/useBodyScrollLock";
 
 export type DashboardNavId =
   | "overview"
@@ -55,7 +56,7 @@ function NavItem({
     <button
       type="button"
       onClick={onClick}
-      className={`w-full flex items-center justify-between px-5 py-4 rounded-2xl transition-all ${
+      className={`w-full flex items-center justify-between px-5 py-4 rounded-2xl transition-all min-h-[52px] lg:min-h-0 ${
         active
           ? "bg-slate-50 text-slate-900 shadow-wg-subtle"
           : "text-slate-400 hover:text-slate-700 hover:bg-slate-50/50"
@@ -92,16 +93,98 @@ export function DashboardSidebar({
     setIsSidebarOpen(false);
   };
 
+  useBodyScrollLock(isSidebarOpen && !isDesktop, 1023);
+
+  const navBlock = (
+    <nav className="flex-1 px-6 space-y-2 overflow-y-auto overscroll-contain wag-mobile-scroll">
+      <NavItem
+        icon={<LayoutDashboard size={20} />}
+        label="Visão Geral"
+        active={active === "overview"}
+        onClick={() => goDashboard("overview")}
+      />
+      <NavItem
+        icon={<BarChart3 size={20} />}
+        label="Analytics"
+        active={active === "analytics"}
+        onClick={() => goDashboard("analytics")}
+      />
+      <NavItem
+        icon={<CalendarDays size={20} />}
+        label="Calendário"
+        active={active === "calendar"}
+        onClick={() => {
+          navigate("/dashboard/calendario");
+          setIsSidebarOpen(false);
+        }}
+      />
+      <NavItem
+        icon={<Clock size={20} />}
+        label="Horários"
+        active={active === "hours"}
+        onClick={() => goDashboard("hours")}
+      />
+      <NavItem
+        icon={<Bell size={20} />}
+        label="Lembretes"
+        active={active === "reminders"}
+        onClick={() => goDashboard("reminders")}
+      />
+      <NavItem
+        icon={<Users size={20} />}
+        label="Gerenciar Equipe"
+        active={active === "team"}
+        onClick={() => {
+          navigate("/dashboard/equipe");
+          setIsSidebarOpen(false);
+        }}
+      />
+      <NavItem
+        icon={<Scissors size={20} />}
+        label="Serviços"
+        active={active === "services"}
+        onClick={() => goDashboard("services")}
+      />
+      <NavItem
+        icon={<Wallet size={20} />}
+        label="Pagamentos"
+        active={active === "payments"}
+        onClick={() => goDashboard("payments")}
+      />
+      <NavItem
+        icon={<Sparkles size={20} />}
+        label="Clube"
+        active={active === "club"}
+        onClick={() => goDashboard("club")}
+      />
+      <NavItem
+        icon={<Link2 size={20} />}
+        label="Agenda Web"
+        active={active === "agenda-web"}
+        onClick={() => {
+          navigate("/dashboard/agenda-web");
+          setIsSidebarOpen(false);
+        }}
+      />
+      <NavItem
+        icon={<Settings size={20} />}
+        label="Configurações"
+        active={active === "settings"}
+        onClick={() => goDashboard("settings")}
+      />
+    </nav>
+  );
+
   return (
     <>
-      <div className="lg:hidden fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-md border-b px-6 py-4 flex items-center justify-between">
+      <div className="lg:hidden fixed top-0 left-0 right-0 z-50 bg-white/90 backdrop-blur-md border-b wag-mobile-top-bar flex items-center justify-between pb-3">
         <Link to="/" title="Wagoo — página inicial" aria-label="Ir para a página inicial do Wagoo">
-          <img src="/logo.png" alt="Wagoo Logo" className="w-12 h-12 object-contain" />
+          <img src="/logo.png" alt="Wagoo Logo" className="w-11 h-11 object-contain" />
         </Link>
         <Button
           variant="ghost"
           size="icon"
-          className="rounded-full"
+          className="rounded-full wag-touch-target"
           aria-label={isSidebarOpen ? "Fechar menu" : "Abrir menu"}
           aria-expanded={isSidebarOpen}
           onClick={() => setIsSidebarOpen(!isSidebarOpen)}
@@ -110,15 +193,29 @@ export function DashboardSidebar({
         </Button>
       </div>
 
+      {/* Backdrop mobile */}
+      {isSidebarOpen && !isDesktop ? (
+        <button
+          type="button"
+          className="lg:hidden fixed inset-0 z-40 bg-black/45 backdrop-blur-[2px] wag-mobile-drawer-backdrop"
+          aria-label="Fechar menu"
+          onClick={() => setIsSidebarOpen(false)}
+        />
+      ) : null}
+
       <AnimatePresence>
         {(isSidebarOpen || isDesktop) && (
           <motion.aside
-            initial={{ x: -300 }}
+            initial={isDesktop ? false : { x: -300 }}
             animate={{ x: 0 }}
-            exit={{ x: -300 }}
-            className="fixed top-0 left-0 h-screen w-72 bg-white border-r border-slate-100 z-40 flex flex-col shadow-wg-popover lg:shadow-none"
+            exit={isDesktop ? undefined : { x: -300 }}
+            transition={{ type: "spring", damping: 28, stiffness: 320 }}
+            className="fixed top-0 left-0 h-screen w-72 max-w-[85vw] bg-white border-r border-slate-100 z-[45] flex flex-col shadow-wg-popover lg:shadow-none lg:max-w-none"
+            style={{
+              paddingTop: isDesktop ? undefined : "max(4.5rem, calc(env(safe-area-inset-top) + 3.5rem))",
+            }}
           >
-            <div className="pt-14 lg:pt-10 pb-6 px-6 flex flex-col items-center justify-center shrink-0">
+            <div className="pt-4 lg:pt-10 pb-6 px-6 flex flex-col items-center justify-center shrink-0">
               <Link
                 to="/"
                 title="Wagoo — página inicial"
@@ -133,85 +230,9 @@ export function DashboardSidebar({
               </Link>
             </div>
 
-            <nav className="flex-1 px-6 space-y-2">
-              <NavItem
-                icon={<LayoutDashboard size={20} />}
-                label="Visão Geral"
-                active={active === "overview"}
-                onClick={() => goDashboard("overview")}
-              />
-              <NavItem
-                icon={<BarChart3 size={20} />}
-                label="Analytics"
-                active={active === "analytics"}
-                onClick={() => goDashboard("analytics")}
-              />
-              <NavItem
-                icon={<CalendarDays size={20} />}
-                label="Calendário"
-                active={active === "calendar"}
-                onClick={() => {
-                  navigate("/dashboard/calendario");
-                  setIsSidebarOpen(false);
-                }}
-              />
-              <NavItem
-                icon={<Clock size={20} />}
-                label="Horários"
-                active={active === "hours"}
-                onClick={() => goDashboard("hours")}
-              />
-              <NavItem
-                icon={<Bell size={20} />}
-                label="Lembretes"
-                active={active === "reminders"}
-                onClick={() => goDashboard("reminders")}
-              />
-              <NavItem
-                icon={<Users size={20} />}
-                label="Gerenciar Equipe"
-                active={active === "team"}
-                onClick={() => {
-                  navigate("/dashboard/equipe");
-                  setIsSidebarOpen(false);
-                }}
-              />
-              <NavItem
-                icon={<Scissors size={20} />}
-                label="Serviços"
-                active={active === "services"}
-                onClick={() => goDashboard("services")}
-              />
-              <NavItem
-                icon={<Wallet size={20} />}
-                label="Pagamentos"
-                active={active === "payments"}
-                onClick={() => goDashboard("payments")}
-              />
-              <NavItem
-                icon={<Sparkles size={20} />}
-                label="Clube"
-                active={active === "club"}
-                onClick={() => goDashboard("club")}
-              />
-              <NavItem
-                icon={<Link2 size={20} />}
-                label="Agenda Web"
-                active={active === "agenda-web"}
-                onClick={() => {
-                  navigate("/dashboard/agenda-web");
-                  setIsSidebarOpen(false);
-                }}
-              />
-              <NavItem
-                icon={<Settings size={20} />}
-                label="Configurações"
-                active={active === "settings"}
-                onClick={() => goDashboard("settings")}
-              />
-            </nav>
+            {navBlock}
 
-            <div className="p-8 mt-auto">
+            <div className="p-6 lg:p-8 mt-auto wag-safe-bottom shrink-0">
               <div className="bg-slate-50 rounded-2xl p-4 mb-4 border border-slate-100">
                 <p className="font-bold text-slate-900 text-sm truncate">{storeName || "Minha Loja"}</p>
                 <p className="text-xs text-slate-400 font-medium truncate">{userEmail}</p>
@@ -219,7 +240,7 @@ export function DashboardSidebar({
               <button
                 type="button"
                 onClick={onLogout}
-                className="w-full flex items-center justify-center gap-2 py-3 rounded-xl text-red-500 font-bold text-sm hover:bg-red-50 transition-colors"
+                className="w-full min-h-[48px] flex items-center justify-center gap-2 py-3 rounded-xl text-red-500 font-bold text-sm hover:bg-red-50 transition-colors"
               >
                 <LogOut size={16} /> Sair
               </button>

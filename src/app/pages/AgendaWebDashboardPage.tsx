@@ -13,7 +13,6 @@ import {
   Sparkles,
   Store,
   Users,
-  X,
 } from "lucide-react";
 import { Link, useNavigate, useSearchParams } from "react-router";
 import { useAuth } from "../context/AuthContext";
@@ -30,6 +29,7 @@ import { AgendaWebGooglePanel } from "../components/AgendaWebGooglePanel";
 import { AgendaWebPaymentsPanel } from "../components/AgendaWebPaymentsPanel";
 import { ClubMembershipPanel } from "../components/ClubMembershipPanel";
 import { tierSupportsAi } from "../lib/wagooPlans";
+import { MobileNavDrawer } from "../components/mobile/MobileNavDrawer";
 
 const SETTINGS_SECTIONS: AgendaWebSection[] = [
   "overview",
@@ -292,7 +292,7 @@ export function AgendaWebDashboardPage() {
         <p className="mt-2 text-slate-500 font-medium max-w-2xl">{copy.subtitle}</p>
       </div>
 
-      <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1 lg:hidden scrollbar-none">
+      <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1 lg:hidden scrollbar-none wag-mobile-chip-row">
         {NAV.map((item) => {
           const active = section === item.id;
           return (
@@ -376,14 +376,14 @@ export function AgendaWebDashboardPage() {
 
   return (
     <div className="min-h-screen bg-[#F8FAFC]">
-      <header className="border-b border-slate-200 bg-white sticky top-0 z-30">
+      <header className="border-b border-slate-200 bg-white sticky top-0 z-30 wag-mobile-top-bar">
         <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between gap-3">
           <div className="flex items-center gap-3 min-w-0">
             <Button
               type="button"
               variant="ghost"
               size="icon"
-              className="lg:hidden shrink-0"
+              className="lg:hidden shrink-0 wag-touch-target"
               onClick={() => setMenuOpen(true)}
               aria-label="Abrir menu"
             >
@@ -409,7 +409,7 @@ export function AgendaWebDashboardPage() {
               type="button"
               onClick={() => void settingsRef.current?.saveAll()}
               disabled={saveState.saving}
-              className="bg-[#64b34d] hover:bg-[#4d8f3b] text-white font-bold"
+              className="bg-[#64b34d] hover:bg-[#4d8f3b] text-white font-bold min-h-[44px] wag-touch-target"
             >
               {saveState.saving ? (
                 <Loader2 className="animate-spin mr-2" size={16} />
@@ -421,12 +421,14 @@ export function AgendaWebDashboardPage() {
             </Button>
             <Button
               variant="ghost"
+              className="wag-touch-target min-h-[44px]"
               onClick={async () => {
                 await logout();
                 navigate("/");
               }}
             >
-              <LogOut size={16} className="mr-2" /> Sair
+              <LogOut size={16} className="mr-2" />
+              <span className="text-sm font-bold">Sair</span>
             </Button>
           </div>
         </div>
@@ -443,32 +445,11 @@ export function AgendaWebDashboardPage() {
         ) : null}
       </header>
 
-      {menuOpen ? (
-        <div className="fixed inset-0 z-40 lg:hidden">
-          <button
-            type="button"
-            className="absolute inset-0 bg-black/40"
-            aria-label="Fechar menu"
-            onClick={() => setMenuOpen(false)}
-          />
-          <aside className="absolute left-0 top-0 bottom-0 w-[min(100%,20rem)] bg-white p-4 shadow-xl flex flex-col gap-4">
-            <div className="flex items-center justify-between">
-              <p className="text-sm font-black text-slate-900">Menu</p>
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                onClick={() => setMenuOpen(false)}
-              >
-                <X size={18} />
-              </Button>
-            </div>
-            {navList}
-          </aside>
-        </div>
-      ) : null}
+      <MobileNavDrawer open={menuOpen} onClose={() => setMenuOpen(false)} title="Agenda Web">
+        {navList}
+      </MobileNavDrawer>
 
-      <div className="max-w-6xl mx-auto px-4 py-6 lg:py-8 pb-20">
+      <div className="max-w-6xl mx-auto px-4 py-6 lg:py-8 pb-20 wag-safe-bottom">
         <div className="flex flex-col lg:flex-row gap-6 lg:gap-8">
           <aside className="hidden lg:block w-64 shrink-0">
             <div className="sticky top-24 rounded-3xl border border-slate-200 bg-white p-3 shadow-wg-subtle">

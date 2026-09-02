@@ -1,0 +1,95 @@
+/**
+ * Camada mobile — só @media (max-width: 1023px).
+ * Desktop (lg+) não é alterado por este arquivo.
+ */
+
+@media (max-width: 1023px) {
+  .wag-touch-target {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  .wag-safe-x {
+    padding-left: max(1rem, env(safe-area-inset-left));
+    padding-right: max(1rem, env(safe-area-inset-right));
+  }
+
+  .wag-safe-bottom {
+    padding-bottom: max(1rem, env(safe-area-inset-bottom));
+  }
+
+  .wag-mobile-scroll {
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+
+  .wag-mobile-scroll::-webkit-scrollbar {
+    display: none;
+  }
+
+  .scrollbar-none {
+    scrollbar-width: none;
+  }
+
+  .scrollbar-none::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Header landing: menu fullscreen no celular */
+  .wag-mobile-menu-fullscreen {
+    position: fixed;
+    inset: 0;
+    z-index: 60;
+    padding-top: max(6.5rem, calc(env(safe-area-inset-top) + 5rem));
+    padding-bottom: max(1.5rem, env(safe-area-inset-bottom));
+    padding-left: max(1rem, env(safe-area-inset-left));
+    padding-right: max(1rem, env(safe-area-inset-right));
+    background: rgba(255, 255, 255, 0.98);
+    backdrop-filter: blur(12px);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+
+  .wag-mobile-drawer-panel {
+    animation: wag-drawer-in 0.28s ease-out;
+  }
+
+  .wag-mobile-drawer-backdrop {
+    animation: wag-fade-in 0.2s ease-out;
+  }
+
+  @keyframes wag-drawer-in {
+    from {
+      transform: translateX(-100%);
+    }
+    to {
+      transform: translateX(0);
+    }
+  }
+
+  @keyframes wag-fade-in {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  /* Dashboard: barra fixa respeita notch */
+  .wag-mobile-top-bar {
+    padding-top: max(0.75rem, env(safe-area-inset-top));
+    padding-left: max(1rem, env(safe-area-inset-left));
+    padding-right: max(1rem, env(safe-area-inset-right));
+  }
+
+  /* Chips horizontais — scroll suave com snap */
+  .wag-mobile-chip-row {
+    scroll-snap-type: x proximity;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .wag-mobile-chip-row > * {
+    scroll-snap-align: start;
+  }
+}

@@ -3,6 +3,7 @@ import { Menu, X, ChevronDown, Lock, LogOut, LayoutDashboard } from "lucide-reac
 import React, { useState, useEffect, useRef } from "react";
 import { Link, useNavigate, useLocation } from "react-router";
 import { useAuth } from "../context/AuthContext";
+import { useBodyScrollLock } from "../hooks/useBodyScrollLock";
 
 export function Header() {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -12,6 +13,8 @@ export function Header() {
   const location = useLocation();
   const { user, logout } = useAuth();
   const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useBodyScrollLock(isMobileMenuOpen, 767);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -202,26 +205,36 @@ export function Header() {
 
           <button
             type="button"
-            className="md:hidden text-gray-900"
+            className="md:hidden text-gray-900 wag-touch-target flex items-center justify-center -mr-2"
             aria-label={isMobileMenuOpen ? "Fechar menu" : "Abrir menu"}
             aria-expanded={isMobileMenuOpen}
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
           >
-            {isMobileMenuOpen ? <X size={28} /> : <Menu size={28} />}
+            {isMobileMenuOpen ? <X size={26} /> : <Menu size={26} />}
           </button>
         </div>
       </div>
 
       <AnimatePresence>
         {isMobileMenuOpen && (
-          <motion.nav
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto" }}
-            exit={{ opacity: 0, height: 0 }}
-            transition={{ duration: 0.3, ease: "easeInOut" }}
-            className="md:hidden mt-3 mx-4 rounded-3xl bg-white/95 backdrop-blur-xl border border-gray-200 shadow-wg-popover overflow-hidden"
-          >
-            <div className="px-6 py-6 flex flex-col gap-4">
+          <>
+            <motion.button
+              type="button"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="md:hidden fixed inset-0 z-[55] bg-black/40 backdrop-blur-[1px]"
+              aria-label="Fechar menu"
+              onClick={() => setIsMobileMenuOpen(false)}
+            />
+            <motion.nav
+              initial={{ opacity: 0, y: -8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              transition={{ duration: 0.25, ease: "easeOut" }}
+              className="md:hidden wag-mobile-menu-fullscreen flex flex-col gap-1"
+            >
               <MobileNavLink onClick={() => goHomeSection("como-funciona")}>
                 Como Funciona
               </MobileNavLink>
@@ -236,55 +249,53 @@ export function Header() {
               </MobileNavLink>
 
               {user ? (
-                <>
-                  <div className="pt-4 border-t border-gray-200">
-                    <p className="text-xs text-gray-500 mb-2">Conectado como</p>
-                    <p className="text-sm font-semibold text-gray-900 truncate mb-4">{user.email}</p>
+                <div className="pt-6 mt-4 border-t border-gray-200">
+                  <p className="text-xs text-gray-500 mb-2">Conectado como</p>
+                  <p className="text-sm font-semibold text-gray-900 truncate mb-4">{user.email}</p>
 
-                    <button
-                      onClick={handleDashboardClick}
-                      disabled={!user.hasPaid}
-                      className={`w-full px-4 py-2.5 rounded-lg mb-2 flex items-center justify-center gap-2 ${
-                        user.hasPaid
-                          ? "bg-gradient-to-r from-[#64b34d] to-[#4d8f3b] text-white"
-                          : "bg-gray-100 text-gray-400 cursor-not-allowed"
-                      }`}
-                    >
-                      <LayoutDashboard size={18} />
-                      Dashboard
-                      {!user.hasPaid && <Lock size={14} />}
-                    </button>
+                  <button
+                    onClick={handleDashboardClick}
+                    disabled={!user.hasPaid}
+                    className={`w-full min-h-[48px] px-4 py-3 rounded-xl mb-2 flex items-center justify-center gap-2 font-semibold ${
+                      user.hasPaid
+                        ? "bg-gradient-to-r from-[#64b34d] to-[#4d8f3b] text-white"
+                        : "bg-gray-100 text-gray-400 cursor-not-allowed"
+                    }`}
+                  >
+                    <LayoutDashboard size={18} />
+                    Dashboard
+                    {!user.hasPaid && <Lock size={14} />}
+                  </button>
 
-                    {!user.hasPaid && (
-                      <div className="px-4 py-2 mb-3 bg-amber-50 border border-amber-200 rounded-lg">
-                        <p className="text-xs text-amber-800 font-medium">
-                          💳 Complete o pagamento para acessar
-                        </p>
-                      </div>
-                    )}
+                  {!user.hasPaid && (
+                    <div className="px-4 py-3 mb-3 bg-amber-50 border border-amber-200 rounded-xl">
+                      <p className="text-xs text-amber-800 font-medium">
+                        Complete o pagamento para acessar o dashboard.
+                      </p>
+                    </div>
+                  )}
 
-                    <button
-                      onClick={handleLogout}
-                      className="w-full px-4 py-2.5 rounded-lg bg-red-50 text-red-600 font-semibold flex items-center justify-center gap-2"
-                    >
-                      <LogOut size={18} />
-                      Sair
-                    </button>
-                  </div>
-                </>
+                  <button
+                    onClick={handleLogout}
+                    className="w-full min-h-[48px] px-4 py-3 rounded-xl bg-red-50 text-red-600 font-semibold flex items-center justify-center gap-2"
+                  >
+                    <LogOut size={18} />
+                    Sair
+                  </button>
+                </div>
               ) : (
                 <button
                   onClick={() => {
                     navigate("/login");
                     setIsMobileMenuOpen(false);
                   }}
-                  className="px-6 py-2.5 rounded-full bg-gradient-to-r from-[#64b34d] to-[#4d8f3b] text-white font-semibold shadow-wg-icon-green"
+                  className="mt-4 min-h-[48px] px-6 py-3 rounded-full bg-gradient-to-r from-[#64b34d] to-[#4d8f3b] text-white font-semibold shadow-wg-icon-green"
                 >
                   Login
                 </button>
               )}
-            </div>
-          </motion.nav>
+            </motion.nav>
+          </>
         )}
       </AnimatePresence>
     </motion.header>
@@ -322,7 +333,7 @@ function MobileNavLink({
   return (
     <button
       onClick={onClick}
-      className="text-gray-600 hover:text-gray-900 transition-colors text-left py-2 font-medium"
+      className="text-gray-700 hover:text-gray-900 transition-colors text-left py-3.5 px-1 font-semibold text-base min-h-[48px] flex items-center"
     >
       {children}
     </button>
