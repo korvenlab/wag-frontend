@@ -125,7 +125,19 @@ export const HeroSection = () => {
       <div className="absolute top-[-10%] right-[-5%] w-[600px] h-[600px] bg-[#64b34d]/12 blur-[120px] rounded-full -z-10" />
       <div className="absolute bottom-[-10%] left-[-5%] w-[500px] h-[500px] bg-slate-300/25 blur-[120px] rounded-full -z-10" />
 
-      <div className="w-full max-w-7xl mx-auto grid lg:grid-cols-2 gap-10 lg:gap-12 items-center">
+      <div className="w-full max-w-7xl mx-auto">
+        <motion.h1
+          id="hero-heading"
+          initial={{ opacity: 0, y: reduceMotion ? 0 : 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: reduceMotion ? 0.01 : 0.7 }}
+          className="w-full text-center text-[1.875rem] leading-[1.12] sm:text-4xl sm:leading-[1.1] md:text-5xl lg:text-6xl xl:text-7xl font-black text-slate-900 tracking-tight text-balance mb-6 sm:mb-8 lg:mb-10 px-2"
+        >
+          Muito mais que agendar.
+          <span className="sr-only"> A gestão que o seu espaço precisa.</span>
+        </motion.h1>
+
+        <div className="grid lg:grid-cols-2 gap-10 lg:gap-12 items-center">
         <motion.div
           initial={{ opacity: 0, x: reduceMotion ? 0 : -30 }}
           animate={{ opacity: 1, x: 0 }}
@@ -133,62 +145,59 @@ export const HeroSection = () => {
           className="space-y-8 min-w-0"
         >
           <div className="space-y-5 text-left">
-            <h1
-              id="hero-heading"
-              className="text-[1.875rem] leading-[1.12] sm:text-4xl sm:leading-[1.1] md:text-5xl lg:text-6xl xl:text-7xl font-black text-slate-900 tracking-tight text-balance"
+            <p
+              aria-hidden="true"
+              className="text-[1.875rem] leading-[1.12] sm:text-4xl sm:leading-[1.1] md:text-5xl lg:text-6xl xl:text-7xl font-black text-[#4d8f3b] tracking-tight text-balance"
             >
-              <span className="block text-center">Muito mais que agendar.</span>
-              <span className="block text-left text-[#4d8f3b] mt-2 sm:mt-3">
-                A gestão que o seu espaço{" "}
-                <span className="relative inline-block">
-                  {reduceMotion ? (
-                    <>{HERO_HIGHLIGHT}.</>
-                  ) : (
-                    <>
-                      {HERO_HIGHLIGHT.split("").map((letter, i) => (
-                        <motion.span
-                          key={`${letter}-${i}`}
-                          className="inline-block"
-                          initial={{ opacity: 0, y: 12 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{
-                            delay: letterBaseDelay + i * letterStagger,
-                            duration: 0.48,
-                            ease: [0.22, 1, 0.36, 1],
-                          }}
-                        >
-                          {letter}
-                        </motion.span>
-                      ))}
+              A gestão que o seu espaço{" "}
+              <span className="relative inline-block">
+                {reduceMotion ? (
+                  <>{HERO_HIGHLIGHT}.</>
+                ) : (
+                  <>
+                    {HERO_HIGHLIGHT.split("").map((letter, i) => (
                       <motion.span
+                        key={`${letter}-${i}`}
                         className="inline-block"
-                        initial={{ opacity: 0, scale: 0.2 }}
-                        animate={{ opacity: 1, scale: 1 }}
+                        initial={{ opacity: 0, y: 12 }}
+                        animate={{ opacity: 1, y: 0 }}
                         transition={{
-                          delay: letterBaseDelay + HERO_HIGHLIGHT.length * letterStagger,
-                          type: "spring",
-                          stiffness: 420,
-                          damping: 20,
-                        }}
-                      >
-                        .
-                      </motion.span>
-                      <motion.span
-                        aria-hidden
-                        className="pointer-events-none absolute left-0 -bottom-0.5 h-[3px] w-full origin-left rounded-full bg-[#64b34d]/50"
-                        initial={{ scaleX: 0 }}
-                        animate={{ scaleX: 1 }}
-                        transition={{
-                          delay: underlineDelay,
-                          duration: 0.65,
+                          delay: letterBaseDelay + i * letterStagger,
+                          duration: 0.48,
                           ease: [0.22, 1, 0.36, 1],
                         }}
-                      />
-                    </>
-                  )}
-                </span>
+                      >
+                        {letter}
+                      </motion.span>
+                    ))}
+                    <motion.span
+                      className="inline-block"
+                      initial={{ opacity: 0, scale: 0.2 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{
+                        delay: letterBaseDelay + HERO_HIGHLIGHT.length * letterStagger,
+                        type: "spring",
+                        stiffness: 420,
+                        damping: 20,
+                      }}
+                    >
+                      .
+                    </motion.span>
+                    <motion.span
+                      aria-hidden
+                      className="pointer-events-none absolute left-0 -bottom-0.5 h-[3px] w-full origin-left rounded-full bg-[#64b34d]/50"
+                      initial={{ scaleX: 0 }}
+                      animate={{ scaleX: 1 }}
+                      transition={{
+                        delay: underlineDelay,
+                        duration: 0.65,
+                        ease: [0.22, 1, 0.36, 1],
+                      }}
+                    />
+                  </>
+                )}
               </span>
-            </h1>
+            </p>
             <p className="text-base sm:text-lg md:text-xl text-slate-600 max-w-lg leading-relaxed font-medium">
               Cliente marca pelo WhatsApp ou pelo link, paga sinal antecipado quando você quiser,
               e cada profissional acompanha o que ganhou no mês — sem planilha bagunçada.
@@ -305,6 +314,7 @@ export const HeroSection = () => {
             </div>
           </div>
         </motion.div>
+        </div>
       </div>
     </section>
   );
