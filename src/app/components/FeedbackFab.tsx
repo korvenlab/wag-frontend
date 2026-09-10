@@ -18,7 +18,11 @@ import {
 const MIN_LEN = 5;
 const MAX_LEN = 8000;
 
-/** Envia feedback para `feedback_messages` (Supabase Wagoo → Korven /feedback/messages). */
+const backendUrl =
+  import.meta.env.VITE_API_URL?.replace(/\/+$/, "") ||
+  "https://wag-backend.onrender.com";
+
+/** Envia feedback direto ao Korven Dashboard (via wag-backend → Supabase central). */
 export function FeedbackFab() {
   const { user } = useAuth();
   const [open, setOpen] = useState(false);
@@ -45,7 +49,8 @@ export function FeedbackFab() {
     setSending(true);
     try {
       const { data: sessionData } = await supabase.auth.getSession();
-      if (!sessionData.session) {
+      const accessToken = sessionData.session?.access_token;
+      if (!accessToken) {
         toast.error("Sessão expirada. Entre novamente.");
         return;
       }
@@ -57,20 +62,32 @@ export function FeedbackFab() {
         .maybeSingle();
 
       const metaName =
-        typeof user.user_metadata?.name === "string" ? user.user_metadata.name : null;
+        typeof user.user_metadata?.name === "string"
+          ? user.user_metadata.name
+          : null;
 
-      const { error } = await supabase.from("feedback_messages").insert({
-        user_id: user.id,
-        organization_id: null,
-        user_email: user.email ?? null,
-        user_full_name: profile?.store_name ?? metaName,
-        body: trimmed,
+      const res = await fetch(`${backendUrl}/feedback/messages`, {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          Accept: "application/json",
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify({
+          body: trimmed,
+          user_full_name: profile?.store_name ?? metaName,
+        }),
       });
 
-      if (error) {
-        toast.error(error.message || "Não foi possível enviar sua mensagem.");
+      const json = (await res.json().catch(() => ({}))) as {
+        ok?: boolean;
+        error?: string;
+      };
+      if (!res.ok || json.ok === false) {
+        toast.error(json.error || "Não foi possível enviar sua mensagem.");
         return;
       }
+
       toast.success("Obrigado! Sua mensagem foi enviada.");
       resetForm();
       setOpen(false);
@@ -98,7 +115,10 @@ export function FeedbackFab() {
           <CircleHelp className="h-7 w-7" strokeWidth={2} />
         </button>
       </SheetTrigger>
-      <SheetContent side="left" className="flex w-[min(100vw,26rem)] flex-col gap-0 border-slate-100 bg-white sm:max-w-md">
+      <SheetContent
+        side="left"
+        className="flex w-[min(100vw,26rem)] flex-col gap-0 border-slate-100 bg-white sm:max-w-md"
+      >
         <SheetHeader className="text-left">
           <SheetTitle className="text-slate-900">Ajuda e feedback</SheetTitle>
           <SheetDescription className="text-slate-500">
@@ -130,7 +150,11 @@ export function FeedbackFab() {
             disabled={sending || body.trim().length < MIN_LEN}
             onClick={() => void submit()}
           >
-            {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+            {sending ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Send className="h-4 w-4" />
+            )}
             Enviar
           </Button>
         </div>
