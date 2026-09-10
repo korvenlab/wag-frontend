@@ -246,7 +246,6 @@ export function Dashboard() {
         "analytics",
         "hours",
         "reminders",
-        "presence",
         "settings",
         "services",
         "payments",
@@ -254,6 +253,9 @@ export function Dashboard() {
       ].includes(section)
     ) {
       setActiveSection(section);
+    }
+    if (section === "presence") {
+      setActiveSection("analytics");
     }
   }, [location.state, navigate]);
 
@@ -551,7 +553,6 @@ export function Dashboard() {
     activeSection === "analytics" ||
     activeSection === "hours" ||
     activeSection === "reminders" ||
-    activeSection === "presence" ||
     activeSection === "settings" ||
     activeSection === "services" ||
     activeSection === "payments" ||
@@ -690,22 +691,6 @@ export function Dashboard() {
                   </Card>
                 </div>
               </>
-            )}
-
-            {activeSection === "presence" && (
-              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="lg:col-span-3">
-                {tierSupportsReminders(user.subscriptionTier) ? (
-                  <PresencePanel
-                    onOpenReminderSettings={() => setActiveSection("reminders")}
-                  />
-                ) : (
-                  <PlanFeatureGate
-                    icon={Bell}
-                    title="Presença disponível com lembretes"
-                    description="No Pro, Pro+ ou Agenda Web o Wagoo pede confirmação no WhatsApp e mostra aqui quem vem, quem não respondeu e quem avisou falta."
-                  />
-                )}
-              </motion.div>
             )}
 
             {activeSection === "reminders" && (
@@ -881,7 +866,7 @@ export function Dashboard() {
                 <AnalyticsCard icon={<CalendarCheck size={22} className="text-emerald-600" />} title="Agendados" value={appointmentsMade} />
                 <AnalyticsCard icon={<Zap size={22} className="text-amber-500" />} title="Tempo Ganho" value={`${(appointmentsMade * 5 / 60).toFixed(1)}h`} />
 
-                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="lg:col-span-3">
+                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="lg:col-span-3 space-y-8">
                   {tierSupportsAnalytics(user.subscriptionTier) ? (
                     <AnalyticsEarningsPanel
                       range={csvRange}
@@ -896,6 +881,11 @@ export function Dashboard() {
                       description="Caixa da loja, ganhos por profissional e relatórios ficam disponíveis no Pro e Pro+."
                     />
                   )}
+                  {tierSupportsReminders(user.subscriptionTier) ? (
+                    <PresencePanel
+                      onOpenReminderSettings={() => setActiveSection("reminders")}
+                    />
+                  ) : null}
                 </motion.div>
               </>
             )}

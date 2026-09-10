@@ -120,7 +120,7 @@ export function PresencePanel({
           </h3>
           <p className="text-slate-500 text-sm font-medium mt-1">
             {data?.period.label
-              ? `Lembretes de ${data.period.label}`
+              ? `Confirmações dos lembretes · ${data.period.label}`
               : "Quem confirmou, quem ainda não respondeu e quem avisou falta."}
           </p>
         </div>
