@@ -16,6 +16,7 @@ import {
   Scissors,
   Wallet,
   Sparkles,
+  UserCheck,
 } from "lucide-react";
 import { Button } from "./ui/button";
 import { Link, useNavigate } from "react-router";
@@ -26,6 +27,7 @@ export type DashboardNavId =
   | "analytics"
   | "hours"
   | "reminders"
+  | "presence"
   | "team"
   | "calendar"
   | "services"
@@ -129,6 +131,12 @@ export function DashboardSidebar({
         label="Lembretes"
         active={active === "reminders"}
         onClick={() => goDashboard("reminders")}
+      />
+      <NavItem
+        icon={<UserCheck size={20} />}
+        label="Presença"
+        active={active === "presence"}
+        onClick={() => goDashboard("presence")}
       />
       <NavItem
         icon={<Users size={20} />}

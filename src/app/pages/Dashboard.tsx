@@ -20,6 +20,7 @@ import { AgendaWebPaymentsPanel } from "../components/AgendaWebPaymentsPanel";
 import { ClubMembershipPanel } from "../components/ClubMembershipPanel";
 import { BookingServicesPanel } from "../components/BookingServicesPanel";
 import { AnalyticsEarningsPanel } from "../components/AnalyticsEarningsPanel";
+import { PresencePanel } from "../components/PresencePanel";
 import { apiFetch } from "../lib/apiFetch";
 import { planLabel, tierSupportsAnalytics, tierSupportsReminders } from "../lib/wagooPlans";
 import {
@@ -245,6 +246,7 @@ export function Dashboard() {
         "analytics",
         "hours",
         "reminders",
+        "presence",
         "settings",
         "services",
         "payments",
@@ -549,6 +551,7 @@ export function Dashboard() {
     activeSection === "analytics" ||
     activeSection === "hours" ||
     activeSection === "reminders" ||
+    activeSection === "presence" ||
     activeSection === "settings" ||
     activeSection === "services" ||
     activeSection === "payments" ||
@@ -687,6 +690,22 @@ export function Dashboard() {
                   </Card>
                 </div>
               </>
+            )}
+
+            {activeSection === "presence" && (
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="lg:col-span-3">
+                {tierSupportsReminders(user.subscriptionTier) ? (
+                  <PresencePanel
+                    onOpenReminderSettings={() => setActiveSection("reminders")}
+                  />
+                ) : (
+                  <PlanFeatureGate
+                    icon={Bell}
+                    title="Presença disponível com lembretes"
+                    description="No Pro, Pro+ ou Agenda Web o Wagoo pede confirmação no WhatsApp e mostra aqui quem vem, quem não respondeu e quem avisou falta."
+                  />
+                )}
+              </motion.div>
             )}
 
             {activeSection === "reminders" && (

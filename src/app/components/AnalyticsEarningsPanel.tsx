@@ -502,8 +502,7 @@ export function AnalyticsEarningsPanel({
                 {moneyLabel(store.caixa_loja_brl)}
               </p>
               <p className="text-[11px] text-slate-500 font-medium">
-                Bruto {moneyLabel(store.bruto_stripe_brl)} − Wagoo{" "}
-                {moneyLabel(store.taxa_wagoo_brl)} − cartão/Pix{" "}
+                Bruto {moneyLabel(store.bruto_stripe_brl)} − cartão/Pix{" "}
                 {moneyLabel(store.taxa_stripe_brl)}
                 {store.clube_bruto_brl > 0
                   ? ` · clube líq. ${moneyLabel(store.clube_liquido_brl)}`

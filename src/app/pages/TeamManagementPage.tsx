@@ -14,6 +14,8 @@ import {
   RefreshCw,
   MessageCircle,
   Banknote,
+  Phone,
+  Send,
 } from "lucide-react";
 import { useNavigate } from "react-router";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/card";
@@ -68,6 +70,8 @@ type Barbeiro = {
   ativo: boolean;
   commission_percent: number;
   commission_share_token: string | null;
+  whatsapp_phone: string | null;
+  commission_digest_enabled: boolean;
 };
 
 export function TeamManagementPage() {
@@ -82,9 +86,11 @@ export function TeamManagementPage() {
   const [loadingTeam, setLoadingTeam] = useState(true);
   const [nome, setNome] = useState("");
   const [email, setEmail] = useState("");
+  const [whatsappPhone, setWhatsappPhone] = useState("");
   const [commissionPercent, setCommissionPercent] = useState("50");
   const [saving, setSaving] = useState(false);
   const [savingCommissionId, setSavingCommissionId] = useState<string | null>(null);
+  const [digestBusyId, setDigestBusyId] = useState<string | null>(null);
   const [shareBusyId, setShareBusyId] = useState<string | null>(null);
   const [copiedShareId, setCopiedShareId] = useState<string | null>(null);
   const [copiedWhatsAppId, setCopiedWhatsAppId] = useState<string | null>(null);
@@ -138,6 +144,8 @@ export function TeamManagementPage() {
         commission_share_token: b.commission_share_token
           ? String(b.commission_share_token)
           : null,
+        whatsapp_phone: b.whatsapp_phone ? String(b.whatsapp_phone) : null,
+        commission_digest_enabled: Boolean(b.commission_digest_enabled),
       }));
       setBarbeiros(list);
       setCachedTeam(user.id, list);
@@ -234,6 +242,7 @@ export function TeamManagementPage() {
           nome: nome.trim(),
           google_calendar_email: email.trim(),
           commission_percent: Math.round(pct * 100) / 100,
+          whatsapp_phone: whatsappPhone.trim() || null,
         }),
       });
       const data = await res.json();
@@ -247,6 +256,7 @@ export function TeamManagementPage() {
       }
       setNome("");
       setEmail("");
+      setWhatsappPhone("");
       setCommissionPercent("50");
       invalidateTeamCache(user?.id);
       await loadTeam({ background: true });
@@ -295,6 +305,109 @@ export function TeamManagementPage() {
       setError("Erro ao salvar comissão.");
     } finally {
       setSavingCommissionId(null);
+    }
+  };
+
+  const handleSavePhone = async (b: Barbeiro, rawValue: string) => {
+    const digits = String(rawValue).replace(/\D/g, "");
+    const next = digits || null;
+    if (next === (b.whatsapp_phone || null)) return;
+    setError(null);
+    try {
+      const token = await getToken();
+      const res = await fetch(`${backendUrl}/api/barbeiros/${b.id}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ whatsapp_phone: next }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        setError(data.error || "Não foi possível salvar o WhatsApp.");
+        return;
+      }
+      const data = await res.json();
+      setBarbeiros((prev) => {
+        const updated = prev.map((x) =>
+          x.id === b.id
+            ? {
+                ...x,
+                whatsapp_phone: data.whatsapp_phone
+                  ? String(data.whatsapp_phone)
+                  : null,
+                commission_digest_enabled: Boolean(data.commission_digest_enabled),
+              }
+            : x,
+        );
+        if (user?.id) setCachedTeam(user.id, updated);
+        return updated;
+      });
+    } catch {
+      setError("Erro ao salvar WhatsApp do profissional.");
+    }
+  };
+
+  const handleToggleDigest = async (b: Barbeiro, enabled: boolean) => {
+    if (enabled && !b.whatsapp_phone) {
+      setError("Cadastre o WhatsApp do profissional antes de ligar o resumo semanal.");
+      return;
+    }
+    setError(null);
+    try {
+      const token = await getToken();
+      const res = await fetch(`${backendUrl}/api/barbeiros/${b.id}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ commission_digest_enabled: enabled }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        setError(data.error || "Não foi possível atualizar o resumo semanal.");
+        return;
+      }
+      setBarbeiros((prev) => {
+        const updated = prev.map((x) =>
+          x.id === b.id ? { ...x, commission_digest_enabled: enabled } : x,
+        );
+        if (user?.id) setCachedTeam(user.id, updated);
+        return updated;
+      });
+    } catch {
+      setError("Erro ao atualizar resumo semanal.");
+    }
+  };
+
+  const handleSendDigestNow = async (b: Barbeiro) => {
+    if (!b.whatsapp_phone) {
+      setError("Cadastre o WhatsApp do profissional para enviar o resumo.");
+      return;
+    }
+    setDigestBusyId(b.id);
+    setError(null);
+    try {
+      const token = await getToken();
+      const res = await fetch(`${backendUrl}/api/barbeiros/${b.id}/commission-digest-send`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ force: true }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setError(data.error || "Não foi possível enviar o resumo no WhatsApp.");
+        return;
+      }
+    } catch {
+      setError("Erro ao enviar resumo no WhatsApp.");
+    } finally {
+      setDigestBusyId(null);
     }
   };
 
@@ -617,7 +730,7 @@ export function TeamManagementPage() {
                 </CardTitle>
                 <CardDescription className="font-medium">
                   {canAddTeamMember
-                    ? "Nome, e-mail do Google Agenda e comissão (%) sobre o valor do serviço pago."
+                    ? "Nome, e-mail do Google Agenda, WhatsApp (modo barbeiro) e comissão (%) sobre o valor do serviço pago."
                     : atLimit
                       ? `Limite do plano ${planLabel(subscriptionTier)} atingido (${maxTeamUsers} usuário(s)).`
                       : "Assine um plano para cadastrar profissionais."}
@@ -656,7 +769,25 @@ export function TeamManagementPage() {
                       />
                     </div>
                   </div>
-                  <div className="space-y-2 sm:col-span-2 sm:max-w-xs">
+                  <div className="space-y-2">
+                    <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                      WhatsApp do profissional
+                    </Label>
+                    <div className="relative">
+                      <Phone className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 w-4 h-4" />
+                      <Input
+                        value={whatsappPhone}
+                        onChange={(e) => setWhatsappPhone(e.target.value)}
+                        placeholder="11999998888"
+                        className="h-12 pl-11 rounded-xl bg-slate-50 border-none font-semibold"
+                        disabled={!canAddTeamMember}
+                      />
+                    </div>
+                    <p className="text-[11px] text-slate-400 font-medium">
+                      Usado no resumo de comissão toda segunda (“você faturou R$ X”).
+                    </p>
+                  </div>
+                  <div className="space-y-2">
                     <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400">
                       Comissão (%)
                     </Label>
@@ -791,6 +922,57 @@ export function TeamManagementPage() {
                             Salva ao sair do campo
                           </p>
                         )}
+                      </div>
+                      <div className="space-y-3 border-t border-slate-100 pt-4">
+                        <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                          Modo barbeiro — resumo no Zap
+                        </Label>
+                        <div className="flex flex-col sm:flex-row gap-3 sm:items-end">
+                          <div className="space-y-1.5 flex-1">
+                            <Label className="text-[10px] font-bold text-slate-400">
+                              WhatsApp
+                            </Label>
+                            <div className="relative">
+                              <Phone className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-300 w-4 h-4" />
+                              <Input
+                                defaultValue={b.whatsapp_phone || ""}
+                                key={`${b.id}-phone-${b.whatsapp_phone || "x"}`}
+                                placeholder="11999998888"
+                                className="h-10 pl-10 rounded-xl bg-slate-50 border-none font-semibold text-sm"
+                                onBlur={(e) => void handleSavePhone(b, e.target.value)}
+                              />
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-3 pb-1">
+                            <span className="text-xs font-bold text-slate-500">
+                              Toda segunda
+                            </span>
+                            <Switch
+                              checked={b.commission_digest_enabled}
+                              onCheckedChange={(v) => void handleToggleDigest(b, v)}
+                              className="data-[state=checked]:bg-[#64b34d]"
+                            />
+                          </div>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            className="rounded-xl font-bold gap-2 h-10"
+                            disabled={digestBusyId === b.id || !b.whatsapp_phone}
+                            onClick={() => void handleSendDigestNow(b)}
+                          >
+                            {digestBusyId === b.id ? (
+                              <Loader2 className="w-4 h-4 animate-spin" />
+                            ) : (
+                              <Send className="w-4 h-4" />
+                            )}
+                            Enviar agora
+                          </Button>
+                        </div>
+                        <p className="text-[11px] text-slate-400 font-medium">
+                          Toda segunda ~9h: “você faturou R$ X” + link da comissão do mês.
+                          Requer WhatsApp do salão conectado.
+                        </p>
                       </div>
                       <div className="space-y-2 border-t border-slate-100 pt-4">
                         <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400">
