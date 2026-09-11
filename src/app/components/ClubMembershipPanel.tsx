@@ -129,7 +129,26 @@ export function ClubMembershipPanel() {
   };
 
   const portalUrl = data?.client_portal_url;
-  const payLink = data?.payment_link_url || data?.plan?.payment_link_url;
+
+  async function cancelMember(memberId: string, clientName: string) {
+    if (!window.confirm(`Cancelar assinatura de ${clientName}?`)) return;
+    setError(null);
+    setMsg(null);
+    try {
+      const res = await apiFetch(`/api/mercadopago/members/${encodeURIComponent(memberId)}/cancel`, {
+        method: "POST",
+      });
+      const body = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setError(body.error || "Não foi possível cancelar.");
+        return;
+      }
+      setMsg(`Assinatura de ${clientName} cancelada.`);
+      await load();
+    } catch {
+      setError("Erro de rede ao cancelar.");
+    }
+  }
 
   if (loading) {
     return (
@@ -250,25 +269,6 @@ export function ClubMembershipPanel() {
                 </a>
               </Button>
             </div>
-            {payLink ? (
-              <div className="pt-2 space-y-2">
-                <p className="text-sm font-black text-slate-900">Link de pagamento</p>
-                <code className="block text-xs font-bold text-slate-600 bg-slate-50 px-3 py-2 rounded-xl break-all">
-                  {payLink}
-                </code>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    void navigator.clipboard.writeText(payLink);
-                    setMsg("Link de pagamento copiado.");
-                  }}
-                >
-                  <Copy size={14} className="mr-1" /> Copiar
-                </Button>
-              </div>
-            ) : null}
           </CardContent>
         </Card>
       )}
@@ -295,16 +295,29 @@ export function ClubMembershipPanel() {
                   <p className="font-bold text-slate-800 text-sm">{m.client_name}</p>
                   <p className="text-xs text-slate-500 font-medium">{m.client_phone}</p>
                 </div>
-                <div className="text-right">
-                  <p className="text-xs font-black uppercase tracking-wider text-slate-500">
-                    {memberStatusLabel(m.status)}
-                  </p>
-                  {m.current_period_end && (
-                    <p className="text-[11px] text-slate-400 font-medium">
-                      até{" "}
-                      {new Date(m.current_period_end).toLocaleDateString("pt-BR")}
+                <div className="flex items-center gap-3">
+                  <div className="text-right">
+                    <p className="text-xs font-black uppercase tracking-wider text-slate-500">
+                      {memberStatusLabel(m.status)}
                     </p>
-                  )}
+                    {m.current_period_end && (
+                      <p className="text-[11px] text-slate-400 font-medium">
+                        até{" "}
+                        {new Date(m.current_period_end).toLocaleDateString("pt-BR")}
+                      </p>
+                    )}
+                  </div>
+                  {m.status === "active" || m.status === "past_due" || m.status === "paused" ? (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="text-red-600 border-red-200"
+                      onClick={() => void cancelMember(m.id, m.client_name)}
+                    >
+                      Cancelar
+                    </Button>
+                  ) : null}
                 </div>
               </div>
             ))

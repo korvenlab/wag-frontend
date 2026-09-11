@@ -90,7 +90,7 @@ export function AgendaWebPaymentsPanel() {
   const loadPreview = useCallback(async (total: number, percent: number) => {
     try {
       const res = await apiFetch(
-        `/api/stripe/connect/fee-preview?total_brl=${encodeURIComponent(String(total))}&deposit_percent=${encodeURIComponent(String(percent))}`,
+        `/api/mercadopago/fee-preview?total_brl=${encodeURIComponent(String(total))}&deposit_percent=${encodeURIComponent(String(percent))}`,
       );
       const data = await res.json().catch(() => null);
       if (res.ok && data) setPreview(data as FeePreview);

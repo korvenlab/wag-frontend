@@ -222,6 +222,11 @@ export function PublicClubPaymentPage() {
               )}
 
               {error ? <p className="text-sm text-red-400">{error}</p> : null}
+              {(status === "pending" || status === "in_process") && !paid ? (
+                <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-4 text-sm text-amber-100">
+                  Aguardando confirmação do PIX. Esta página atualiza sozinha.
+                </div>
+              ) : null}
               {qrImg ? (
                 <img
                   alt="QR PIX"

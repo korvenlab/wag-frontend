@@ -172,6 +172,12 @@ export function PublicBookingPaymentPage() {
                 </p>
               )}
               {error ? <p className="text-sm text-red-400">{error}</p> : null}
+              {(status === "pending" || status === "in_process") && !paid ? (
+                <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-4 text-sm text-amber-100">
+                  Pagamento em processamento. Se usou PIX, confirme no app do banco —
+                  esta página atualiza automaticamente.
+                </div>
+              ) : null}
               {qrImg ? (
                 <img
                   alt="QR Code PIX"

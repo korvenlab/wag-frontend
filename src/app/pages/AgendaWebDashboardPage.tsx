@@ -139,7 +139,7 @@ const SECTION_COPY: Record<
   },
   pagamentos: {
     title: "Pagamentos",
-    subtitle: "Receba pelo Stripe e peça sinal no agendamento.",
+    subtitle: "Receba pelo Mercado Pago e peça sinal no agendamento.",
   },
   clube: {
     title: "Clube",

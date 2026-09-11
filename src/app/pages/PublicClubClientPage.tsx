@@ -44,6 +44,7 @@ type PublicClub = {
 };
 
 type MemberInfo = {
+  id: string;
   client_name: string;
   client_phone: string;
   status: string;
@@ -117,6 +118,7 @@ export function PublicClubClientPage() {
   const [member, setMember] = useState<MemberInfo | null>(null);
   const [lookupBusy, setLookupBusy] = useState(false);
   const [lookupMsg, setLookupMsg] = useState<string | null>(null);
+  const [cancelBusy, setCancelBusy] = useState(false);
 
   const checkoutFlag = searchParams.get("checkout");
   const phoneFromUrl = searchParams.get("phone") || "";
@@ -593,7 +595,8 @@ export function PublicClubClientPage() {
                   <p className="text-red-600 text-xs font-medium">{formError}</p>
                 )}
                 <p className="text-[11px] text-slate-400 font-medium text-center">
-                  Cobrança mensal no cartão. Você pode cancelar depois no Stripe / salão.
+                  Cobrança mensal no cartão via Mercado Pago. Você pode cancelar
+                  aqui ou pedir ao salão.
                 </p>
               </div>
             )}
@@ -686,6 +689,60 @@ export function PublicClubClientPage() {
                   {new Date(member.current_period_end).toLocaleDateString("pt-BR")}
                 </p>
               )}
+              {(member.status === "active" ||
+                member.status === "past_due" ||
+                member.status === "paused") &&
+              member.id ? (
+                <button
+                  type="button"
+                  disabled={cancelBusy}
+                  onClick={() => {
+                    if (
+                      !window.confirm(
+                        "Cancelar a assinatura recorrente? Você perde o benefício na próxima renovação.",
+                      )
+                    ) {
+                      return;
+                    }
+                    void (async () => {
+                      setCancelBusy(true);
+                      setLookupMsg(null);
+                      try {
+                        const res = await fetch(
+                          `${API}/api/mercadopago/public/club/${encodeURIComponent(slug)}/members/${encodeURIComponent(member.id)}/cancel`,
+                          {
+                            method: "POST",
+                            headers: { "content-type": "application/json" },
+                            body: JSON.stringify({ phone: lookupPhone || member.client_phone }),
+                          },
+                        );
+                        const body = await res.json().catch(() => ({}));
+                        if (!res.ok) {
+                          setLookupMsg(body.error || "Não foi possível cancelar.");
+                          return;
+                        }
+                        setMember({
+                          ...member,
+                          status: "canceled",
+                          is_active: false,
+                        });
+                        setLookupMsg("Assinatura cancelada.");
+                      } catch {
+                        setLookupMsg("Erro de rede ao cancelar.");
+                      } finally {
+                        setCancelBusy(false);
+                      }
+                    })();
+                  }}
+                  className="mt-2 w-full h-10 rounded-xl border border-red-200 text-red-600 font-bold text-sm disabled:opacity-50"
+                >
+                  {cancelBusy ? (
+                    <Loader2 className="animate-spin mx-auto" size={16} />
+                  ) : (
+                    "Cancelar assinatura"
+                  )}
+                </button>
+              ) : null}
             </div>
           )}
         </div>
