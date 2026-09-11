@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router";
-import { CheckCircle2, Copy, Loader2, QrCode } from "lucide-react";
+import { CheckCircle2, Copy, Loader2 } from "lucide-react";
 import { Button } from "../components/ui/button";
+import { MercadoPagoBrick } from "../components/MercadoPagoBrick";
 
 const API_URL =
   import.meta.env.VITE_API_URL?.replace(/\/+$/, "") ||
@@ -33,7 +34,6 @@ export function PublicBookingPaymentPage() {
   const navigate = useNavigate();
   const [session, setSession] = useState<PaySession | null>(null);
   const [error, setError] = useState("");
-  const [busy, setBusy] = useState(false);
   const [qrCode, setQrCode] = useState<string | null>(null);
   const [qrImg, setQrImg] = useState<string | null>(null);
   const [status, setStatus] = useState<string | null>(null);
@@ -68,32 +68,7 @@ export function PublicBookingPaymentPage() {
     return new Date(session.appointment.payment_expires_at).toLocaleString("pt-BR");
   }, [session]);
 
-  async function payPix() {
-    setBusy(true);
-    setError("");
-    try {
-      const res = await fetch(
-        `${API_URL}/api/mercadopago/public/booking/${encodeURIComponent(slug)}/appointments/${encodeURIComponent(appointmentId)}/pay`,
-        {
-          method: "POST",
-          headers: { "content-type": "application/json" },
-          body: JSON.stringify({ method: "pix" }),
-        },
-      );
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Falha no PIX.");
-      setStatus(String(data.status || ""));
-      setQrCode(data.qr_code ? String(data.qr_code) : null);
-      setQrImg(data.qr_code_base64 ? String(data.qr_code_base64) : null);
-      if (data.status === "approved" || data.already_paid) {
-        setStatus("approved");
-      }
-    } catch (e) {
-      setError(e instanceof Error ? e.message : String(e));
-    } finally {
-      setBusy(false);
-    }
-  }
+  const paid = status === "approved" || Boolean(session?.appointment.paid);
 
   if (error && !session) {
     return (
@@ -108,8 +83,6 @@ export function PublicBookingPaymentPage() {
       </div>
     );
   }
-
-  const paid = status === "approved" || session.appointment.paid;
 
   return (
     <div className="min-h-screen bg-neutral-950 text-neutral-100">
@@ -153,35 +126,63 @@ export function PublicBookingPaymentPage() {
               </div>
             </div>
           ) : (
-            <div className="mt-6 space-y-3">
-              <Button
-                className="w-full"
-                disabled={busy}
-                onClick={() => void payPix()}
-              >
-                {busy ? (
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                ) : (
-                  <QrCode className="mr-2 h-4 w-4" />
-                )}
-                Pagar com PIX
-              </Button>
-              <p className="text-xs text-neutral-500">
-                Cartão em breve nesta tela (Checkout Transparente). Use PIX para
-                confirmação imediata.
+            <div className="mt-6 space-y-4">
+              <p className="text-xs text-neutral-400">
+                Pague com PIX ou cartão no checkout seguro do Mercado Pago.
               </p>
+              {session.public_key ? (
+                <MercadoPagoBrick
+                  publicKey={session.public_key}
+                  amount={Number(session.appointment.deposit_amount_brl) || 0}
+                  mode="payment"
+                  onError={setError}
+                  onPaid={(result) => {
+                    setStatus(String(result.status || ""));
+                    setQrCode(result.qr_code ? String(result.qr_code) : null);
+                    setQrImg(
+                      result.qr_code_base64 ? String(result.qr_code_base64) : null,
+                    );
+                    if (
+                      result.status === "approved" ||
+                      result.status === "authorized"
+                    ) {
+                      setStatus("approved");
+                      void load();
+                    }
+                  }}
+                  submit={async (formData) => {
+                    const res = await fetch(
+                      `${API_URL}/api/mercadopago/public/booking/${encodeURIComponent(slug)}/appointments/${encodeURIComponent(appointmentId)}/pay`,
+                      {
+                        method: "POST",
+                        headers: { "content-type": "application/json" },
+                        body: JSON.stringify({ method: "brick", formData }),
+                      },
+                    );
+                    const data = await res.json();
+                    if (!res.ok) {
+                      return { error: data.error || "Falha no pagamento." };
+                    }
+                    return data;
+                  }}
+                />
+              ) : (
+                <p className="text-sm text-amber-200">
+                  Checkout indisponível (sem public key).
+                </p>
+              )}
               {error ? <p className="text-sm text-red-400">{error}</p> : null}
               {qrImg ? (
                 <img
                   alt="QR Code PIX"
-                  className="mx-auto mt-4 h-56 w-56 rounded-xl bg-white p-2"
+                  className="mx-auto mt-2 h-56 w-56 rounded-xl bg-white p-2"
                   src={`data:image/png;base64,${qrImg}`}
                 />
               ) : null}
               {qrCode ? (
                 <div className="rounded-xl border border-white/10 bg-black/30 p-3">
                   <p className="text-[10px] uppercase tracking-wider text-neutral-500">
-                    Copia e cola
+                    PIX copia e cola
                   </p>
                   <p className="mt-2 break-all font-mono text-[11px] text-neutral-300">
                     {qrCode}

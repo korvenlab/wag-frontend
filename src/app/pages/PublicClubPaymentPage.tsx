@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router";
-import { CheckCircle2, Copy, Loader2, QrCode } from "lucide-react";
+import { CheckCircle2, Copy, Loader2 } from "lucide-react";
 import { Button } from "../components/ui/button";
+import { MercadoPagoBrick } from "../components/MercadoPagoBrick";
 
 const API_URL =
   import.meta.env.VITE_API_URL?.replace(/\/+$/, "") ||
@@ -10,8 +11,14 @@ const API_URL =
 type ClubPaySession = {
   store_name: string | null;
   slug: string | null;
+  public_key: string | null;
   member: { id: string; client_name: string; status: string; active: boolean };
-  plan: { id: string; name: string; description: string | null; price_brl: number } | null;
+  plan: {
+    id: string;
+    name: string;
+    description: string | null;
+    price_brl: number;
+  } | null;
 };
 
 function money(n: number) {
@@ -23,7 +30,7 @@ export function PublicClubPaymentPage() {
   const navigate = useNavigate();
   const [session, setSession] = useState<ClubPaySession | null>(null);
   const [error, setError] = useState("");
-  const [busy, setBusy] = useState(false);
+  const [tab, setTab] = useState<"recurring" | "pix">("pix");
   const [qrCode, setQrCode] = useState<string | null>(null);
   const [qrImg, setQrImg] = useState<string | null>(null);
   const [status, setStatus] = useState<string | null>(null);
@@ -53,30 +60,8 @@ export function PublicClubPaymentPage() {
     return () => window.clearInterval(t);
   }, [status, session, load]);
 
-  async function payPix() {
-    setBusy(true);
-    setError("");
-    try {
-      const res = await fetch(
-        `${API_URL}/api/mercadopago/public/club/${encodeURIComponent(slug)}/members/${encodeURIComponent(memberId)}/pay`,
-        {
-          method: "POST",
-          headers: { "content-type": "application/json" },
-          body: JSON.stringify({ method: "pix" }),
-        },
-      );
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Falha no PIX.");
-      setStatus(String(data.status || ""));
-      setQrCode(data.qr_code ? String(data.qr_code) : null);
-      setQrImg(data.qr_code_base64 ? String(data.qr_code_base64) : null);
-      if (data.status === "approved" || data.already_paid) setStatus("approved");
-    } catch (e) {
-      setError(e instanceof Error ? e.message : String(e));
-    } finally {
-      setBusy(false);
-    }
-  }
+  const paid = status === "approved" || Boolean(session?.member.active);
+  const price = Number(session?.plan?.price_brl) || 0;
 
   if (error && !session) {
     return (
@@ -90,9 +75,6 @@ export function PublicClubPaymentPage() {
       </div>
     );
   }
-
-  const paid = status === "approved" || session.member.active;
-  const price = Number(session.plan?.price_brl) || 0;
 
   return (
     <div className="min-h-screen bg-neutral-950 text-neutral-100">
@@ -117,6 +99,9 @@ export function PublicClubPaymentPage() {
               <CheckCircle2 className="h-5 w-5 shrink-0" />
               <div>
                 <p className="font-medium">Clube ativo</p>
+                <p className="mt-1 text-sm text-emerald-200/80">
+                  Cobrança mensal automática quando assinatura recorrente.
+                </p>
                 <Button
                   className="mt-4"
                   onClick={() =>
@@ -128,15 +113,114 @@ export function PublicClubPaymentPage() {
               </div>
             </div>
           ) : (
-            <div className="mt-6 space-y-3">
-              <Button className="w-full" disabled={busy} onClick={() => void payPix()}>
-                {busy ? (
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                ) : (
-                  <QrCode className="mr-2 h-4 w-4" />
-                )}
-                Pagar mensalidade com PIX
-              </Button>
+            <div className="mt-6 space-y-4">
+              <div className="flex gap-2 rounded-xl bg-black/30 p-1">
+                <button
+                  type="button"
+                  className={`flex-1 rounded-lg px-3 py-2 text-xs font-semibold ${
+                    tab === "pix" ? "bg-white text-neutral-900" : "text-neutral-400"
+                  }`}
+                  onClick={() => setTab("pix")}
+                >
+                  PIX (1 mês)
+                </button>
+                <button
+                  type="button"
+                  className={`flex-1 rounded-lg px-3 py-2 text-xs font-semibold ${
+                    tab === "recurring"
+                      ? "bg-white text-neutral-900"
+                      : "text-neutral-400"
+                  }`}
+                  onClick={() => setTab("recurring")}
+                >
+                  Cartão recorrente
+                </button>
+              </div>
+
+              {tab === "recurring" ? (
+                <>
+                  <p className="text-xs text-neutral-400">
+                    Assinatura mensal automática no cartão (Mercado Pago
+                    Preapproval).
+                  </p>
+                  {session.public_key ? (
+                    <MercadoPagoBrick
+                      publicKey={session.public_key}
+                      amount={price}
+                      mode="card"
+                      onError={setError}
+                      onPaid={(result) => {
+                        if (
+                          result.status === "authorized" ||
+                          result.status === "approved" ||
+                          result.preapproval_id
+                        ) {
+                          setStatus("approved");
+                          void load();
+                        }
+                      }}
+                      submit={async (formData) => {
+                        const res = await fetch(
+                          `${API_URL}/api/mercadopago/public/club/${encodeURIComponent(slug)}/members/${encodeURIComponent(memberId)}/subscribe`,
+                          {
+                            method: "POST",
+                            headers: { "content-type": "application/json" },
+                            body: JSON.stringify({ formData }),
+                          },
+                        );
+                        const data = await res.json();
+                        if (!res.ok) {
+                          return { error: data.error || "Falha na assinatura." };
+                        }
+                        return data;
+                      }}
+                    />
+                  ) : null}
+                </>
+              ) : (
+                <>
+                  <p className="text-xs text-neutral-400">
+                    Pagamento avulso de 1 mês via PIX ou cartão (sem renovação
+                    automática).
+                  </p>
+                  {session.public_key ? (
+                    <MercadoPagoBrick
+                      publicKey={session.public_key}
+                      amount={price}
+                      mode="payment"
+                      onError={setError}
+                      onPaid={(result) => {
+                        setQrCode(result.qr_code ? String(result.qr_code) : null);
+                        setQrImg(
+                          result.qr_code_base64
+                            ? String(result.qr_code_base64)
+                            : null,
+                        );
+                        if (result.status === "approved") {
+                          setStatus("approved");
+                          void load();
+                        }
+                      }}
+                      submit={async (formData) => {
+                        const res = await fetch(
+                          `${API_URL}/api/mercadopago/public/club/${encodeURIComponent(slug)}/members/${encodeURIComponent(memberId)}/pay`,
+                          {
+                            method: "POST",
+                            headers: { "content-type": "application/json" },
+                            body: JSON.stringify({ method: "brick", formData }),
+                          },
+                        );
+                        const data = await res.json();
+                        if (!res.ok) {
+                          return { error: data.error || "Falha no pagamento." };
+                        }
+                        return data;
+                      }}
+                    />
+                  ) : null}
+                </>
+              )}
+
               {error ? <p className="text-sm text-red-400">{error}</p> : null}
               {qrImg ? (
                 <img
