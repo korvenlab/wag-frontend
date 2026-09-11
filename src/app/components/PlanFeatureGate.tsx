@@ -53,7 +53,7 @@ export function PlanFeatureGate({
         <Button
           type="button"
           onClick={() => {
-            window.location.href = "/precos";
+            window.location.href = "/planos";
           }}
           className="h-12 px-8 rounded-2xl bg-[#64b34d] hover:bg-[#4d8f3b] text-white font-black shadow-wg-green-cta"
         >

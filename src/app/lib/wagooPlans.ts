@@ -13,9 +13,106 @@ export type WagooPlanCard = {
    * Basic = o que inclui; Pro = além do Basic; Pro+ = além do Pro.
    */
   landingDiff: string[];
-  /** Página /precos: lista completa do que o plano oferece. */
+  /** Página /planos: lista completa do que o plano oferece. */
   fullFeatures: string[];
+  /** Frase curta: para quem é este plano. */
+  bestFor: string;
 };
+
+/** Ferramentas do Wagoo — o que cada uma faz (página /planos + marketing). */
+export type WagooTool = {
+  id: string;
+  name: string;
+  does: string;
+  plans: WagooPlanTier[];
+};
+
+export const WAGOO_TOOLS: WagooTool[] = [
+  {
+    id: "whatsapp-ia",
+    name: "Atendimento no WhatsApp com IA",
+    does:
+      "Responde o cliente no Zap da loja, marca horário, informa preços e sincroniza com a agenda — sem você ficar na conversa o dia todo.",
+    plans: ["basic", "pro", "pro_plus"],
+  },
+  {
+    id: "agenda-web",
+    name: "Agenda Web (link público)",
+    does:
+      "Página com a sua marca onde o cliente escolhe serviço, profissional, data e horário. Ideal pro bio do Instagram e status do WhatsApp.",
+    plans: ["agenda_web", "basic", "pro", "pro_plus"],
+  },
+  {
+    id: "google-calendar",
+    name: "Google Agenda",
+    does:
+      "Consulta disponibilidade em tempo real e grava cada marcação na sua agenda Google — zero copiar e colar.",
+    plans: ["agenda_web", "basic", "pro", "pro_plus"],
+  },
+  {
+    id: "sinal",
+    name: "Sinal antecipado",
+    does:
+      "Cobrança opcional no agendamento (Pix/cartão). Horário só fica firme com pagamento — menos falta e menos “esqueceu”.",
+    plans: ["agenda_web", "basic", "pro", "pro_plus"],
+  },
+  {
+    id: "clube",
+    name: "Clube mensal",
+    does:
+      "Assinatura pelo celular: o cliente paga mensalidade e agenda com benefício (ex.: sem sinal). Fideliza e previsibiliza receita.",
+    plans: ["agenda_web", "basic", "pro", "pro_plus"],
+  },
+  {
+    id: "lembretes",
+    name: "Lembretes e confirmação no WhatsApp",
+    does:
+      "Avisa antes do horário e pede confirmação de presença. Transforma lembrete em anti-falta — não só “não esqueça”.",
+    plans: ["agenda_web", "pro", "pro_plus"],
+  },
+  {
+    id: "presenca",
+    name: "Painel de presença",
+    does:
+      "Mostra confirmados, pendentes e faltas da semana. Você enxerga quem vem e quem some — sem caçar mensagem no Zap.",
+    plans: ["pro", "pro_plus"],
+  },
+  {
+    id: "analytics",
+    name: "Analytics e caixa",
+    does:
+      "Receita da loja, ganhos por profissional, lançamentos manuais e exportação. Fecha o mês sem planilha bagunçada.",
+    plans: ["pro", "pro_plus"],
+  },
+  {
+    id: "equipe",
+    name: "Equipe e agendas próprias",
+    does:
+      "Vários profissionais no mesmo WhatsApp da loja, cada um com coluna/agenda. Ideal pra barbearia e salão com time.",
+    plans: ["pro", "pro_plus"],
+  },
+  {
+    id: "comissao",
+    name: "Comissão do profissional",
+    does:
+      "Link público por barbeiro/atendente + resumo no WhatsApp: cada um vê o que faturou. Você vê o todo no Analytics.",
+    plans: ["pro", "pro_plus"],
+  },
+  {
+    id: "precos-nicho",
+    name: "Tabela de preços por nicho",
+    does:
+      "A IA usa a lista de serviços e valores no WhatsApp — responde preço certo sem você digitar de novo.",
+    plans: ["basic", "pro", "pro_plus"],
+  },
+  {
+    id: "reagendamento",
+    name: "Reagendamento no WhatsApp",
+    does:
+      "Cliente diz que não pode: a IA oferece horários livres e remarcar sozinha, sem você entrar na conversa.",
+    plans: ["basic", "pro", "pro_plus"],
+  },
+];
 
 /** Recursos base de todos os planos com IA (Basic e acima). */
 export const WAGOO_AI_BASE_FEATURES = [
@@ -48,6 +145,7 @@ export const AGENDA_WEB_PLAN: WagooPlanCard = {
   maxUsers: 0,
   description: "Link público para o cliente agendar, com confirmação e lembretes no WhatsApp",
   kind: "booking",
+  bestFor: "Quem quer só o link de marcação — sem IA no chat",
   landingDiff: [
     "Página pública com o seu link",
     "Confirmação e lembretes no WhatsApp da loja",
@@ -77,6 +175,7 @@ export const WAGOO_PLAN_CARDS: WagooPlanCard[] = [
     maxUsers: 1,
     description: "1 usuário — ideal para profissional autônomo",
     kind: "ai",
+    bestFor: "Autônomo que quer a IA respondendo no WhatsApp",
     landingDiff: [
       "WhatsApp + IA + Google Agenda",
       "Agenda Web inclusa",
@@ -97,6 +196,7 @@ export const WAGOO_PLAN_CARDS: WagooPlanCard[] = [
     description: "Até 3 usuários na equipe com o mesmo WhatsApp",
     highlight: true,
     kind: "ai",
+    bestFor: "Loja com equipe — anti-falta, caixa e comissão",
     landingDiff: [
       "Tudo do Basic",
       "Até 3 usuários na equipe",
@@ -117,6 +217,7 @@ export const WAGOO_PLAN_CARDS: WagooPlanCard[] = [
     maxUsers: 5,
     description: "Até 5 usuários para negócios em crescimento",
     kind: "ai",
+    bestFor: "Negócio em crescimento com até 5 profissionais",
     landingDiff: ["Tudo do Pro", "Até 5 usuários na equipe"],
     fullFeatures: [
       ...WAGOO_AI_BASE_FEATURES,
@@ -126,6 +227,9 @@ export const WAGOO_PLAN_CARDS: WagooPlanCard[] = [
     ],
   },
 ];
+
+/** Todos os planos na ordem de exibição (Agenda Web → Pro+). */
+export const ALL_WAGOO_PLANS: WagooPlanCard[] = [AGENDA_WEB_PLAN, ...WAGOO_PLAN_CARDS];
 
 /** @deprecated Use WAGOO_AI_BASE_FEATURES — mantido para imports legados. */
 export const WAGOO_SHARED_FEATURES = WAGOO_AI_BASE_FEATURES;

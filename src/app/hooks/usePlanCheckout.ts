@@ -3,7 +3,7 @@ import { useNavigate } from "react-router";
 import { supabase } from "../lib/supabase";
 import type { WagooPlanTier } from "../lib/wagooPlans";
 
-/** Checkout Stripe por plano — landing e página /precos. */
+/** Checkout Stripe por plano — landing e página /planos. */
 export function usePlanCheckout() {
   const navigate = useNavigate();
   const [loadingTier, setLoadingTier] = useState<WagooPlanTier | null>(null);

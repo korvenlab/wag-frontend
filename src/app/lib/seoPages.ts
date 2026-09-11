@@ -19,10 +19,10 @@ export const HOME_SEO: SeoPageMeta = {
   path: "/",
   title: "Wagoo — Muito mais que agendar. A gestão que o seu espaço precisa.",
   description:
-    "Marque horário pelo WhatsApp ou link, cobre sinal antecipado e feche a comissão da equipe no mês — sem planilha.",
+    "O cliente marca no WhatsApp. O horário só fica firme com sinal. A comissão fecha sozinha — menos falta, menos ida-e-volta e caixa da equipe.",
   ogTitle: "Wagoo — Muito mais que agendar. A gestão que o seu espaço precisa.",
   ogDescription:
-    "Horário marcado, pagamento no app e comissão de cada profissional — tudo no Wagoo.",
+    "Zap que opera, sinal que protege o horário e comissão que fecha — sem planilha.",
 };
 
 export const CONTENT_SEO_PAGES: SeoPageMeta[] = [
@@ -73,14 +73,14 @@ export const CONTENT_SEO_PAGES: SeoPageMeta[] = [
     breadcrumbs: [{ name: "Wagoo vs planilha", path: "/wagoo-vs-planilha" }],
   },
   {
-    path: "/precos",
-    title: "Preços e planos Wagoo | Agenda Web, Basic, Pro e Pro+",
+    path: "/planos",
+    title: "Planos Wagoo | Agenda Web, Basic, Pro e Pro+",
     description:
-      "Compare Agenda Web, Basic, Pro e Pro+: preços, usuários e tudo o que cada plano inclui — WhatsApp com IA, Analytics, equipe e Clube.",
-    ogTitle: "Preços Wagoo",
+      "Compare os 4 planos Wagoo: diferenciais, ferramentas e o que cada uma faz — WhatsApp com IA, Agenda Web, sinal, Clube, Analytics e equipe.",
+    ogTitle: "Planos Wagoo",
     ogDescription:
-      "Agenda Web, Basic, Pro e Pro+: escolha o plano certo para o seu negócio.",
-    breadcrumbs: [{ name: "Preços", path: "/precos" }],
+      "Agenda Web, Basic, Pro e Pro+: veja o diferencial de cada plano e o que cada ferramenta faz.",
+    breadcrumbs: [{ name: "Planos", path: "/planos" }],
   },
 ];
 

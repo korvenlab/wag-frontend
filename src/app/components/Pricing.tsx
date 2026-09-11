@@ -8,15 +8,15 @@ import {
 
 const SUPPORT_WHATSAPP_URL = "https://wa.me/5582999450453";
 
-function precosHref(tier?: WagooPlanTier) {
-  return tier ? `/precos#${tier}` : "/precos";
+function planosHref(tier?: WagooPlanTier) {
+  return tier ? `/planos#${tier}` : "/planos";
 }
 
-/** Landing: resumo dos planos. Assinar / menu → /precos (checkout só lá). */
+/** Landing: resumo dos planos. Assinar / menu → /planos (checkout só lá). */
 export function Pricing() {
   return (
     <section
-      id="precos"
+      id="planos"
       data-gsap-section
       className="relative py-24 md:py-32 bg-white overflow-hidden"
     >
@@ -67,7 +67,7 @@ export function Pricing() {
           </div>
           <div className="md:w-64 p-8 md:p-10 flex flex-col justify-center border-t md:border-t-0 md:border-l border-slate-100 bg-[var(--wagoo-paper)]">
             <Link
-              to={precosHref(AGENDA_WEB_PLAN.tier)}
+              to={planosHref(AGENDA_WEB_PLAN.tier)}
               className="w-full py-4 rounded-2xl font-black text-base flex items-center justify-center gap-2 bg-gradient-to-r from-[#64b34d] to-[#4d8f3b] text-white shadow-wg-green-cta"
             >
               Assinar Agenda Web
@@ -129,7 +129,7 @@ export function Pricing() {
                 ))}
               </ul>
               <Link
-                to={precosHref(plan.tier)}
+                to={planosHref(plan.tier)}
                 className={
                   "w-full py-4 rounded-2xl font-black text-base flex items-center justify-center gap-2 " +
                   (plan.highlight
@@ -145,10 +145,10 @@ export function Pricing() {
 
         <div className="mt-10 text-center">
           <Link
-            to="/precos"
+            to="/planos"
             className="inline-flex items-center gap-2 text-sm font-black text-slate-900 hover:text-[#4d8f3b] transition-colors"
           >
-            Ver todos os planos
+            Ver todos os planos e ferramentas
             <ArrowRight size={16} />
           </Link>
         </div>

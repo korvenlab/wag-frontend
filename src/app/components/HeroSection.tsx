@@ -195,8 +195,8 @@ export const HeroSection = () => {
         >
           <div className="space-y-5 text-left">
             <p className="text-base sm:text-lg md:text-xl text-slate-600 max-w-lg leading-relaxed font-medium">
-              Cliente marca pelo WhatsApp ou pelo link, paga sinal antecipado quando você quiser,
-              e cada profissional acompanha o que ganhou no mês — sem planilha bagunçada.
+              O cliente marca no WhatsApp. O horário só fica firme com sinal. A comissão fecha
+              sozinha — sem planilha e sem ficar respondendo mensagem o dia todo.
             </p>
           </div>
 
@@ -211,7 +211,7 @@ export const HeroSection = () => {
               </a>
             </Button>
             <a
-              href="/precos"
+              href="/planos"
               className="text-slate-600 font-bold underline-offset-4 hover:underline hover:text-slate-900"
             >
               Ver planos

@@ -169,7 +169,7 @@ export function TeamManagementPage() {
   useEffect(() => {
     if (loading || !user) return;
     if (!user.hasPaid) {
-      navigate("/precos");
+      navigate("/planos");
       return;
     }
     if (!tierSupportsTeamManagement(user.subscriptionTier)) {
@@ -1156,7 +1156,7 @@ export function TeamManagementPage() {
                   </p>
                 </div>
                 <Button
-                  onClick={() => navigate("/precos")}
+                  onClick={() => navigate("/planos")}
                   className="w-full h-14 rounded-2xl bg-[#64b34d] hover:bg-[#4d8f3b] font-black text-base shadow-wg-green-cta"
                 >
                   Ver planos

@@ -229,7 +229,7 @@ export function Dashboard() {
   useEffect(() => {
     if (!loading) {
       if (!user) navigate("/login");
-      else if (!user.hasPaid) navigate("/precos");
+      else if (!user.hasPaid) navigate("/planos");
     }
   }, [user?.id, user?.hasPaid, loading, navigate]);
 

@@ -26,6 +26,11 @@
     <priority>0.8</priority>
   </url>
   <url>
+    <loc>https://wagoobot.com/planos</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.95</priority>
+  </url>
+  <url>
     <loc>https://wagoobot.com/privacidade</loc>
     <changefreq>yearly</changefreq>
     <priority>0.3</priority>

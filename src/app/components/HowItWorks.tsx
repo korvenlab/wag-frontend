@@ -49,8 +49,8 @@ export function HowItWorks() {
             data-gsap="heading"
             className="text-lg text-slate-500 font-medium leading-relaxed lg:pb-1"
           >
-            Agenda, equipe, clientes, sinal e comissões. Tudo o que sua empresa precisa para
-            funcionar — num sistema só, do link público ao fechamento do mês.
+            Agenda, equipe, clientes, sinal e comissões. Não é só link de marcação — é menos
+            falta, menos ida-e-volta no Zap e o caixa da equipe fechando sozinho.
           </p>
         </div>
 

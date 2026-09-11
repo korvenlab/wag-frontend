@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Header } from "./components/Header";
 import { HeroSection } from "./components/HeroSection";
 import { HowItWorks } from "./components/HowItWorks";
+import { WhyWagoo } from "./components/WhyWagoo";
 import { InvestmentSection } from "./components/InvestmentSection";
 import { Pricing } from "./components/Pricing";
 import { TrustSafety } from "./components/TrustSafety";
@@ -33,12 +34,13 @@ export function HomePage() {
   useLandingSectionTransitions(landingRef, true, lazyRevision);
 
   useEffect(() => {
-    const scrollToPricing = () => {
-      if (window.location.hash !== "#precos") return;
-      document.getElementById("precos")?.scrollIntoView({ behavior: "smooth" });
+    const scrollToPlanos = () => {
+      const hash = window.location.hash;
+      if (hash !== "#planos" && hash !== "#precos") return;
+      document.getElementById("planos")?.scrollIntoView({ behavior: "smooth" });
     };
-    scrollToPricing();
-    window.setTimeout(scrollToPricing, 150);
+    scrollToPlanos();
+    window.setTimeout(scrollToPlanos, 150);
   }, []);
 
   const bumpLazy = () => setLazyRevision((n) => n + 1);
@@ -60,9 +62,9 @@ export function HomePage() {
           offers: {
             "@type": "AggregateOffer",
             priceCurrency: "BRL",
-            lowPrice: "59",
+            lowPrice: "20",
             highPrice: "259",
-            offerCount: "3",
+            offerCount: "4",
           },
         }}
       />
@@ -70,6 +72,7 @@ export function HomePage() {
       <main>
         <HeroSection />
         <HowItWorks />
+        <WhyWagoo />
         <InvestmentSection />
         <LazyMount minHeight={1100} onVisible={bumpLazy}>
           <Pricing />

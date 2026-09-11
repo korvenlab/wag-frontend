@@ -1,8 +1,13 @@
 {
   "redirects": [
     {
+      "source": "/precos",
+      "destination": "/planos",
+      "permanent": true
+    },
+    {
       "source": "/prices",
-      "destination": "/precos",
+      "destination": "/planos",
       "permanent": true
     },
     {

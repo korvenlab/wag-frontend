@@ -27,12 +27,16 @@ export const router = createBrowserRouter([
     Component: HomePage,
   },
   {
-    path: "/precos",
+    path: "/planos",
     Component: PricingPage,
   },
   {
+    path: "/precos",
+    loader: () => redirect("/planos"),
+  },
+  {
     path: "/prices",
-    loader: () => redirect("/precos"),
+    loader: () => redirect("/planos"),
   },
   {
     path: "/agendamento",

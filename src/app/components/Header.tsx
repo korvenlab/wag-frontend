@@ -51,8 +51,8 @@ export function Header() {
     setIsMobileMenuOpen(false);
   };
 
-  const goPrecosPage = () => {
-    navigate("/precos");
+  const goPlanosPage = () => {
+    navigate("/planos");
     setIsMobileMenuOpen(false);
   };
 
@@ -121,8 +121,8 @@ export function Header() {
             <NavLink onClick={() => goHomeSection("investimento")}>
               Valor
             </NavLink>
-            <NavLink onClick={goPrecosPage}>
-              Preços
+            <NavLink onClick={goPlanosPage}>
+              Planos
             </NavLink>
             <NavLink onClick={() => goHomeSection("faq")}>FAQ</NavLink>
           </nav>
@@ -241,8 +241,8 @@ export function Header() {
               <MobileNavLink onClick={() => goHomeSection("investimento")}>
                 Valor
               </MobileNavLink>
-              <MobileNavLink onClick={goPrecosPage}>
-                Preços
+              <MobileNavLink onClick={goPlanosPage}>
+                Planos
               </MobileNavLink>
               <MobileNavLink onClick={() => goHomeSection("faq")}>
                 FAQ
