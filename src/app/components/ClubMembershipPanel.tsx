@@ -151,7 +151,7 @@ export function ClubMembershipPanel() {
         <CardContent className="space-y-5">
           {!data?.connect_ready && (
             <p className="text-amber-700 text-sm font-bold bg-amber-50 rounded-xl px-4 py-3">
-              Conecte a conta em Pagamentos antes de ativar o clube.
+              Vincule o Mercado Pago em Pagamentos antes de ativar o clube.
             </p>
           )}
 

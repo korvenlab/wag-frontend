@@ -1,7 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
 import {
-  ArrowDownToLine,
-  Banknote,
   CheckCircle2,
   CreditCard,
   ExternalLink,
@@ -15,70 +13,31 @@ import { Button } from "./ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { Input } from "./ui/input";
 
-type FeePreview = {
-  total_brl: number;
-  deposit_brl: number;
-  wagoo_fee_brl: number;
-  shop_receives_brl: number;
-  note: string;
-  summary?: string;
-  wagoo?: { percent: number; fee_brl: number; label: string };
-  stripe?: {
-    pix: {
-      percent: number;
-      fee_brl: number;
-      shop_receives_brl: number;
-      label: string;
-    };
-    card: {
-      percent: number;
-      fixed_brl: number;
-      fee_brl: number;
-      shop_receives_brl: number;
-      label: string;
-    };
-  };
-};
-
-type ConnectStatus = {
+type MpStatus = {
   connected: boolean;
-  account_id: string | null;
-  charges_enabled: boolean;
-  payouts_enabled: boolean;
-  details_submitted: boolean;
   ready_to_charge: boolean;
+  mp_user_id: string | null;
   deposit_enabled: boolean;
   deposit_percent: number;
   advance_pay_enabled: boolean;
   wagoo_fee_percent: number;
   hold_minutes: number;
   tip: string;
-  fees?: {
-    wagoo_percent: number;
-    stripe_pix_percent: number;
-    stripe_card_percent: number;
-    stripe_card_fixed_brl: number;
-    summary: string;
-  };
+  fees?: { wagoo_percent: number; summary: string };
 };
 
-type ConnectBalance = {
-  currency: string;
-  available_brl: number;
-  pending_brl: number;
-  total_brl: number;
-  payouts_enabled: boolean;
-  charges_enabled?: boolean;
+type FeePreview = {
+  deposit_brl: number;
+  wagoo?: { percent: number; fee_brl: number; label: string };
+  stripe?: {
+    pix: { percent: number; fee_brl: number; shop_receives_brl: number; label: string };
+    card: { percent: number; fee_brl: number; shop_receives_brl: number; label: string };
+  };
+  summary?: string;
 };
 
 function moneyBrl(n: number) {
   return n.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
-}
-
-function parseBrlInput(raw: string): number | null {
-  const n = Number(String(raw).replace(/\s/g, "").replace(",", "."));
-  if (!Number.isFinite(n) || n <= 0) return null;
-  return Math.round(n * 100) / 100;
 }
 
 function ChecklistItem({ ok, label }: { ok: boolean; label: string }) {
@@ -87,22 +46,17 @@ function ChecklistItem({ ok, label }: { ok: boolean; label: string }) {
       {ok ? (
         <CheckCircle2 size={14} className="text-[#64b34d] shrink-0" />
       ) : (
-        <span className="w-3.5 h-3.5 rounded-full border border-slate-300 shrink-0" />
+        <span className="h-3.5 w-3.5 shrink-0 rounded-full border border-slate-300" />
       )}
       {label}
     </li>
   );
 }
 
-/** Pagamentos Stripe Connect: saldo + saque no Wagoo + sinal. */
+/** Pagamentos Mercado Pago (sinal + clube). Assinatura Wagoo continua no Stripe. */
 export function AgendaWebPaymentsPanel() {
   const [searchParams, setSearchParams] = useSearchParams();
-  const [status, setStatus] = useState<ConnectStatus | null>(null);
-  const [balance, setBalance] = useState<ConnectBalance | null>(null);
-  const [balanceError, setBalanceError] = useState<string | null>(null);
-  const [balanceLoading, setBalanceLoading] = useState(false);
-  const [payoutBusy, setPayoutBusy] = useState(false);
-  const [payoutAmount, setPayoutAmount] = useState("");
+  const [status, setStatus] = useState<MpStatus | null>(null);
   const [preview, setPreview] = useState<FeePreview | null>(null);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
@@ -113,58 +67,25 @@ export function AgendaWebPaymentsPanel() {
   const [advancePayEnabled, setAdvancePayEnabled] = useState(false);
   const [exampleTotal, setExampleTotal] = useState("100");
 
-  const loadBalance = useCallback(async () => {
-    setBalanceLoading(true);
-    try {
-      const res = await apiFetch("/api/stripe/connect/balance");
-      const data = await res.json().catch(() => null);
-      if (!res.ok) {
-        setBalance(null);
-        setBalanceError(data?.error || "Não foi possível carregar o saldo.");
-        return;
-      }
-      const body = data as ConnectBalance;
-      setBalance(body);
-      setBalanceError(null);
-      setPayoutAmount((prev) => {
-        if (prev.trim()) return prev;
-        return body.available_brl > 0
-          ? body.available_brl.toFixed(2).replace(".", ",")
-          : "";
-      });
-    } catch {
-      setBalance(null);
-      setBalanceError("Erro de rede ao carregar o saldo.");
-    } finally {
-      setBalanceLoading(false);
-    }
-  }, []);
-
   const load = useCallback(async () => {
     try {
-      const res = await apiFetch("/api/stripe/connect/status");
+      const res = await apiFetch("/api/mercadopago/status");
       const data = await res.json().catch(() => null);
       if (!res.ok) {
         setError(data?.error || "Não foi possível carregar os pagamentos.");
         return;
       }
-      setStatus(data as ConnectStatus);
+      setStatus(data as MpStatus);
       setDepositEnabled(Boolean(data.deposit_enabled));
       setDepositPercent(Number(data.deposit_percent) || 30);
       setAdvancePayEnabled(Boolean(data.advance_pay_enabled));
       setError(null);
-      if (data.connected) {
-        void loadBalance();
-      } else {
-        setBalance(null);
-        setBalanceError(null);
-      }
     } catch {
       setError("Erro de rede ao carregar pagamentos.");
     } finally {
       setLoading(false);
     }
-  }, [loadBalance]);
+  }, []);
 
   const loadPreview = useCallback(async (total: number, percent: number) => {
     try {
@@ -183,18 +104,21 @@ export function AgendaWebPaymentsPanel() {
   }, [load]);
 
   useEffect(() => {
-    const connectFlag = searchParams.get("connect");
-    if (connectFlag === "return" || connectFlag === "refresh") {
-      setMsg(
-        connectFlag === "return"
-          ? "Cadastro atualizado. Se a Stripe já liberou, o saldo aparece abaixo."
-          : "Abra de novo o cadastro se ainda faltar alguma informação.",
-      );
+    const mp = searchParams.get("mp");
+    if (mp === "connected") {
+      setMsg("Mercado Pago vinculado com sucesso.");
       void load().then(() => {
         const next = new URLSearchParams(searchParams);
-        next.delete("connect");
+        next.delete("mp");
+        next.delete("reason");
         setSearchParams(next, { replace: true });
       });
+    } else if (mp === "error") {
+      setError(searchParams.get("reason") || "Falha ao vincular Mercado Pago.");
+      const next = new URLSearchParams(searchParams);
+      next.delete("mp");
+      next.delete("reason");
+      setSearchParams(next, { replace: true });
     }
   }, [searchParams, setSearchParams, load]);
 
@@ -203,118 +127,66 @@ export function AgendaWebPaymentsPanel() {
     void loadPreview(total || 100, depositPercent);
   }, [exampleTotal, depositPercent, loadPreview]);
 
-  useEffect(() => {
-    const onFocus = () => void load();
-    window.addEventListener("focus", onFocus);
-    return () => window.removeEventListener("focus", onFocus);
-  }, [load]);
-
-  async function startOnboard() {
+  async function startOAuth() {
     setBusy(true);
     setError(null);
     try {
-      const res = await apiFetch("/api/stripe/connect/onboard", { method: "POST" });
+      const res = await apiFetch("/api/mercadopago/oauth/start");
       const data = await res.json().catch(() => ({}));
       if (!res.ok || !data.url) {
-        setError(data.error || "Não foi possível abrir o cadastro.");
+        setError(data.error || "Não foi possível abrir o Mercado Pago.");
         return;
       }
       window.location.href = data.url;
     } catch {
-      setError("Erro de rede ao abrir o cadastro.");
+      setError("Erro de rede ao abrir o Mercado Pago.");
     } finally {
       setBusy(false);
     }
   }
 
-  async function openDashboard() {
+  async function disconnect() {
+    if (!window.confirm("Desvincular Mercado Pago? Sinais e clube deixam de cobrar online.")) {
+      return;
+    }
     setBusy(true);
-    setError(null);
     try {
-      const res = await apiFetch("/api/stripe/connect/dashboard", { method: "POST" });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok || !data.url) {
-        setError(data.error || "Não foi possível abrir a gestão da conta.");
-        return;
-      }
-      window.open(data.url, "_blank", "noopener,noreferrer");
-    } catch {
-      setError("Erro de rede ao abrir a gestão da conta.");
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  async function transferToBank(full = false) {
-    if (!balance || balance.available_brl < 1) return;
-    const amount = full
-      ? balance.available_brl
-      : parseBrlInput(payoutAmount) ?? balance.available_brl;
-
-    if (amount < 1) {
-      setError("Valor mínimo para transferir: R$ 1,00.");
-      return;
-    }
-    if (amount > balance.available_brl + 0.001) {
-      setError("O valor pedido é maior que o saldo disponível.");
-      return;
-    }
-
-    setPayoutBusy(true);
-    setError(null);
-    setMsg(null);
-    try {
-      const res = await apiFetch("/api/stripe/connect/payout", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ amount_brl: amount }),
-      });
-      const data = await res.json().catch(() => ({}));
+      const res = await apiFetch("/api/mercadopago/disconnect", { method: "POST" });
       if (!res.ok) {
-        setError(data.error || "Não foi possível transferir agora.");
+        const data = await res.json().catch(() => ({}));
+        setError(data.error || "Falha ao desvincular.");
         return;
       }
-      if (data.balance) {
-        setBalance(data.balance as ConnectBalance);
-        const nextAvail = Number(data.balance.available_brl) || 0;
-        setPayoutAmount(
-          nextAvail > 0 ? nextAvail.toFixed(2).replace(".", ",") : "",
-        );
-      } else {
-        void loadBalance();
-      }
-      setMsg(
-        data.message ||
-          `Transferência de ${moneyBrl(Number(data.amount_brl) || amount)} solicitada. O valor vai para a conta bancária cadastrada.`,
-      );
-    } catch {
-      setError("Erro de rede ao transferir.");
+      setMsg("Conta desvinculada.");
+      await load();
     } finally {
-      setPayoutBusy(false);
+      setBusy(false);
     }
   }
 
-  async function saveDepositSettings() {
+  async function saveDepositSettings(patch: {
+    deposit_enabled?: boolean;
+    deposit_percent?: number;
+    advance_pay_enabled?: boolean;
+  }) {
     setBusy(true);
     setError(null);
-    setMsg(null);
     try {
-      const res = await apiFetch("/api/stripe/connect/deposit-settings", {
+      const res = await apiFetch("/api/mercadopago/deposit-settings", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          deposit_enabled: depositEnabled,
-          deposit_percent: depositPercent,
-          advance_pay_enabled: advancePayEnabled,
-        }),
+        body: JSON.stringify(patch),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
         setError(data.error || "Não foi possível salvar.");
         return;
       }
-      setMsg("Configurações de sinal salvas.");
-      void load();
+      setDepositEnabled(Boolean(data.deposit_enabled));
+      setDepositPercent(Number(data.deposit_percent) || 30);
+      setAdvancePayEnabled(Boolean(data.advance_pay_enabled));
+      setMsg("Configuração salva.");
+      await load();
     } catch {
       setError("Erro de rede ao salvar.");
     } finally {
@@ -324,352 +196,191 @@ export function AgendaWebPaymentsPanel() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-16 text-slate-400">
-        <Loader2 className="animate-spin mr-2" size={20} /> Carregando…
+      <div className="flex items-center gap-2 p-8 text-sm text-slate-500">
+        <Loader2 className="animate-spin" size={16} /> Carregando pagamentos…
       </div>
     );
   }
 
-  const canPayout =
-    Boolean(status?.payouts_enabled) &&
-    Boolean(balance) &&
-    (balance?.available_brl ?? 0) >= 1;
-
   return (
-    <div className="space-y-6 max-w-3xl">
+    <div className="space-y-6">
       {error ? (
-        <p className="text-sm font-semibold text-red-600 bg-red-50 rounded-2xl px-4 py-3">
+        <p className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700">
           {error}
         </p>
       ) : null}
       {msg ? (
-        <p className="text-sm font-semibold text-[#4d8f3b] bg-[#64b34d]/10 rounded-2xl px-4 py-3">
+        <p className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-800">
           {msg}
         </p>
       ) : null}
 
-      {/* Hero saldo */}
-      <section className="relative overflow-hidden rounded-[28px] border border-slate-200 bg-gradient-to-br from-slate-900 via-slate-900 to-[#1a3d1a] text-white shadow-wg-elevated">
-        <div className="absolute -right-16 -top-16 h-48 w-48 rounded-full bg-[#64b34d]/20 blur-3xl" />
-        <div className="absolute -left-10 bottom-0 h-40 w-40 rounded-full bg-[#64b34d]/10 blur-3xl" />
-        <div className="relative p-6 sm:p-8 space-y-6">
-          <div className="flex items-start justify-between gap-4">
-            <div>
-              <p className="text-[11px] font-black uppercase tracking-[0.2em] text-white/50">
-                Seu saldo
-              </p>
-              <h2 className="mt-2 text-3xl sm:text-4xl font-black tracking-tight">
-                {!status?.connected
-                  ? "—"
-                  : balanceLoading && !balance
-                    ? "…"
-                    : moneyBrl(balance?.available_brl ?? 0)}
-              </h2>
-              <p className="mt-1 text-sm text-white/60 font-medium">
-                Disponível para transferir ao banco
-              </p>
-            </div>
-            <button
-              type="button"
-              aria-label="Atualizar saldo"
-              disabled={!status?.connected || balanceLoading || busy || payoutBusy}
-              onClick={() => void loadBalance()}
-              className="h-10 w-10 rounded-xl bg-white/10 hover:bg-white/15 flex items-center justify-center transition-colors disabled:opacity-40"
-            >
-              <RefreshCw
-                size={16}
-                className={balanceLoading ? "animate-spin text-white/80" : "text-white/80"}
-              />
-            </button>
-          </div>
-
-          {status?.connected && balance ? (
-            <div className="grid grid-cols-2 gap-3">
-              <div className="rounded-2xl bg-white/5 border border-white/10 px-4 py-3">
-                <p className="text-[10px] font-black uppercase tracking-wider text-white/40">
-                  A caminho
-                </p>
-                <p className="text-lg font-black mt-1">{moneyBrl(balance.pending_brl)}</p>
-              </div>
-              <div className="rounded-2xl bg-white/5 border border-white/10 px-4 py-3">
-                <p className="text-[10px] font-black uppercase tracking-wider text-white/40">
-                  Total
-                </p>
-                <p className="text-lg font-black mt-1 text-[#9fd48a]">
-                  {moneyBrl(balance.total_brl)}
-                </p>
-              </div>
-            </div>
-          ) : null}
-
-          {!status?.connected ? (
-            <div className="rounded-2xl bg-amber-400/15 border border-amber-300/20 px-4 py-3">
-              <p className="text-sm font-bold text-amber-100">
-                Cadastre a conta de recebimentos para ver saldo e sacar pelo Wagoo.
-              </p>
-            </div>
-          ) : balanceError ? (
-            <p className="text-sm font-semibold text-amber-200">{balanceError}</p>
-          ) : null}
-
-          {status?.connected ? (
-            <div className="space-y-3 pt-1">
-              {!status.payouts_enabled ? (
-                <p className="text-xs font-semibold text-amber-100/90 bg-amber-400/10 border border-amber-300/20 rounded-xl px-3 py-2">
-                  Saque bloqueado até terminar documentos e conta bancária no cadastro.
-                </p>
-              ) : (
-                <>
-                  <div className="flex flex-col sm:flex-row gap-2">
-                    <div className="relative flex-1">
-                      <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm font-bold text-white/40">
-                        R$
-                      </span>
-                      <Input
-                        value={payoutAmount}
-                        onChange={(e) => setPayoutAmount(e.target.value)}
-                        inputMode="decimal"
-                        placeholder="0,00"
-                        className="h-12 pl-10 rounded-2xl bg-white/10 border-white/15 text-white font-bold placeholder:text-white/30 focus-visible:ring-[#64b34d]"
-                        disabled={payoutBusy || !canPayout}
-                      />
-                    </div>
-                    <Button
-                      type="button"
-                      className="h-12 rounded-2xl bg-[#64b34d] hover:bg-[#58a344] text-white font-black px-5 shrink-0"
-                      disabled={payoutBusy || !canPayout}
-                      onClick={() => void transferToBank(false)}
-                    >
-                      {payoutBusy ? (
-                        <Loader2 className="animate-spin mr-2" size={16} />
-                      ) : (
-                        <ArrowDownToLine className="mr-2" size={16} />
-                      )}
-                      Sacar
-                    </Button>
-                  </div>
-                  <div className="flex flex-wrap gap-2">
-                    <button
-                      type="button"
-                      disabled={!canPayout || payoutBusy}
-                      onClick={() =>
-                        setPayoutAmount(
-                          balance!.available_brl.toFixed(2).replace(".", ","),
-                        )
-                      }
-                      className="text-[11px] font-bold px-3 py-1.5 rounded-full bg-white/10 hover:bg-white/15 text-white/80 disabled:opacity-40"
-                    >
-                      Todo o disponível
-                    </button>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      className="h-8 text-xs font-bold text-white/70 hover:text-white hover:bg-white/10"
-                      disabled={payoutBusy || !canPayout}
-                      onClick={() => void transferToBank(true)}
-                    >
-                      <Banknote className="mr-1.5" size={14} />
-                      Sacar tudo agora
-                    </Button>
-                  </div>
-                  <p className="text-[11px] text-white/45 font-medium leading-relaxed">
-                    O saque vai direto para a conta bancária cadastrada — sem abrir a Stripe.
-                    Pode levar 1–2 dias úteis para cair no banco.
-                  </p>
-                </>
-              )}
-            </div>
-          ) : null}
-        </div>
-      </section>
-
-      {/* Conta / onboarding */}
-      <Card className="rounded-[28px] border-slate-200 shadow-wg-subtle overflow-hidden">
+      <Card className="overflow-hidden rounded-[28px] border-slate-200 shadow-wg-subtle">
         <CardHeader className="pb-2">
-          <CardTitle className="text-lg font-extrabold flex items-center gap-2">
+          <CardTitle className="flex items-center gap-2 text-lg font-extrabold">
             <Wallet className="text-[#64b34d]" size={20} />
-            Conta de recebimentos
+            Conta Mercado Pago
           </CardTitle>
-          <p className="text-sm text-slate-500 font-medium leading-relaxed">
+          <p className="text-sm font-medium leading-relaxed text-slate-500">
             {status?.tip}
           </p>
         </CardHeader>
         <CardContent className="space-y-4">
-          <ul className="grid sm:grid-cols-2 gap-2 rounded-2xl bg-slate-50 border border-slate-100 p-4">
-            <ChecklistItem ok={!!status?.connected} label="Conta criada" />
-            <ChecklistItem ok={!!status?.details_submitted} label="Dados enviados" />
-            <ChecklistItem ok={!!status?.charges_enabled} label="Pronto para receber" />
-            <ChecklistItem
-              ok={!!status?.payouts_enabled}
-              label="Saque para o banco liberado"
-            />
+          <ul className="grid gap-2 rounded-2xl border border-slate-100 bg-slate-50 p-4 sm:grid-cols-2">
+            <ChecklistItem ok={!!status?.connected} label="Conta vinculada" />
+            <ChecklistItem ok={!!status?.ready_to_charge} label="Pronto para receber" />
           </ul>
 
-          <div className="flex flex-col sm:flex-row gap-2">
+          <div className="flex flex-col gap-2 sm:flex-row">
             <Button
               type="button"
-              className="bg-slate-900 hover:bg-[#64b34d] text-white font-bold rounded-2xl"
+              className="rounded-2xl bg-slate-900 font-bold text-white hover:bg-[#64b34d]"
               disabled={busy}
-              onClick={() => void startOnboard()}
+              onClick={() => void startOAuth()}
             >
               {busy ? (
-                <Loader2 className="animate-spin mr-2" size={16} />
+                <Loader2 className="mr-2 animate-spin" size={16} />
               ) : (
                 <CreditCard className="mr-2" size={16} />
               )}
-              {status?.connected
-                ? status.payouts_enabled && status.charges_enabled
-                  ? "Atualizar cadastro"
-                  : "Continuar cadastro"
-                : "Criar conta de recebimentos"}
+              {status?.connected ? "Reconectar Mercado Pago" : "Vincular Mercado Pago"}
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              className="rounded-2xl font-bold"
+              disabled={busy}
+              onClick={() => void load()}
+            >
+              <RefreshCw className="mr-2" size={16} /> Atualizar
             </Button>
             {status?.connected ? (
               <Button
                 type="button"
-                variant="outline"
-                className="rounded-2xl font-bold"
+                variant="ghost"
+                className="rounded-2xl font-bold text-red-600"
                 disabled={busy}
-                onClick={() => {
-                  if (status.details_submitted) void openDashboard();
-                  else void startOnboard();
-                }}
+                onClick={() => void disconnect()}
               >
-                <ExternalLink className="mr-2" size={16} />
-                {status.details_submitted
-                  ? "Conta bancária e documentos"
-                  : "Continuar documentos"}
+                Desvincular
               </Button>
             ) : null}
           </div>
-          <p className="text-[11px] text-slate-400 font-medium leading-relaxed">
-            O cadastro (KYC e conta bancária) é feito em página segura da Stripe. Depois disso,
-            saldo e saque ficam neste painel do Wagoo.
+
+          <a
+            href="https://www.mercadopago.com.br/"
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex items-center gap-1 text-xs font-semibold text-slate-500 hover:text-[#64b34d]"
+          >
+            Abrir Mercado Pago <ExternalLink size={12} />
+          </a>
+          <p className="text-[11px] leading-relaxed text-slate-400">
+            A assinatura dos planos Wagoo continua no Stripe. Sinais e clube usam
+            Mercado Pago (taxa Wagoo {status?.wagoo_fee_percent ?? 2}%).
           </p>
         </CardContent>
       </Card>
 
-      {/* Sinal */}
-      <Card className="rounded-[28px] border-slate-200 shadow-wg-subtle">
+      <Card className="overflow-hidden rounded-[28px] border-slate-200 shadow-wg-subtle">
         <CardHeader className="pb-2">
-          <CardTitle className="text-lg font-extrabold">Sinal antecipado (opcional)</CardTitle>
-          <p className="text-sm text-slate-500 font-medium leading-relaxed">
-            Pedir uma parte do serviço na hora de marcar. O horário só confirma depois do
-            pagamento — no WhatsApp e no link da Agenda Web.
+          <CardTitle className="text-lg font-extrabold">Sinal / pagamento adiantado</CardTitle>
+          <p className="text-sm text-slate-500">
+            Cliente paga na tela Wagoo (PIX). Reserva por{" "}
+            {status?.hold_minutes ?? 30} minutos.
           </p>
         </CardHeader>
         <CardContent className="space-y-4">
-          <label className="flex items-center gap-3 cursor-pointer">
+          <label className="flex items-center justify-between gap-3 rounded-2xl border border-slate-100 bg-slate-50 px-4 py-3">
+            <span className="text-sm font-bold text-slate-700">Exigir sinal</span>
             <input
               type="checkbox"
-              className="w-5 h-5 rounded accent-[#64b34d]"
               checked={depositEnabled}
-              disabled={!status?.ready_to_charge}
+              disabled={busy || (!status?.ready_to_charge && !depositEnabled)}
               onChange={(e) => {
                 const on = e.target.checked;
                 setDepositEnabled(on);
-                if (on) setAdvancePayEnabled(false);
+                void saveDepositSettings({ deposit_enabled: on });
               }}
             />
-            <span className="text-sm font-bold text-slate-800">
-              Pedir sinal para confirmar o horário
-            </span>
           </label>
 
-          <label
-            className={`flex items-start gap-3 ${
-              !status?.ready_to_charge || depositEnabled
-                ? "opacity-50 cursor-not-allowed"
-                : "cursor-pointer"
-            }`}
-          >
-            <input
-              type="checkbox"
-              className="mt-0.5 w-5 h-5 rounded accent-[#64b34d] shrink-0"
-              checked={advancePayEnabled && !depositEnabled}
-              disabled={!status?.ready_to_charge || depositEnabled}
-              onChange={(e) => setAdvancePayEnabled(e.target.checked)}
-            />
-            <span className="text-sm font-bold text-slate-800 space-y-1">
-              <span className="block">Permitir pagamento adiantado (100% do serviço)</span>
-              <span className="block text-xs text-slate-500 font-medium leading-relaxed">
-                Com o sinal desligado: o cliente pode marcar e pagar o valor inteiro se quiser, ou
-                agendar sem pagar.
-              </span>
-            </span>
-          </label>
-
-          <div>
-            <label className="text-xs font-black uppercase tracking-wider text-slate-400">
-              Quanto do serviço cobrar agora ({depositPercent}%)
+          <div className="space-y-2">
+            <label className="text-xs font-bold uppercase tracking-wide text-slate-500">
+              Percentual do sinal
             </label>
-            <input
-              type="range"
-              min={10}
-              max={100}
-              step={5}
-              value={depositPercent}
-              onChange={(e) => setDepositPercent(Number(e.target.value))}
-              className="w-full mt-2 accent-[#64b34d]"
-            />
+            <div className="flex gap-2">
+              <Input
+                type="number"
+                min={1}
+                max={100}
+                value={depositPercent}
+                disabled={busy || !status?.ready_to_charge}
+                onChange={(e) => setDepositPercent(Number(e.target.value) || 30)}
+                className="h-11 rounded-2xl"
+              />
+              <Button
+                type="button"
+                variant="outline"
+                className="rounded-2xl font-bold"
+                disabled={busy || !status?.ready_to_charge}
+                onClick={() =>
+                  void saveDepositSettings({ deposit_percent: depositPercent })
+                }
+              >
+                Salvar %
+              </Button>
+            </div>
           </div>
 
-          <div className="rounded-2xl border border-slate-100 bg-slate-50 p-4 space-y-2">
-            <p className="text-xs font-black uppercase tracking-wider text-slate-400">
-              Exemplo — serviço de R$
-            </p>
+          <label className="flex items-center justify-between gap-3 rounded-2xl border border-slate-100 bg-slate-50 px-4 py-3">
+            <span className="text-sm font-bold text-slate-700">
+              Permitir pagar 100% adiantado (sem sinal obrigatório)
+            </span>
             <input
-              type="text"
-              inputMode="decimal"
+              type="checkbox"
+              checked={advancePayEnabled}
+              disabled={busy || (!status?.ready_to_charge && !advancePayEnabled) || depositEnabled}
+              onChange={(e) => {
+                const on = e.target.checked;
+                setAdvancePayEnabled(on);
+                void saveDepositSettings({ advance_pay_enabled: on });
+              }}
+            />
+          </label>
+
+          <div className="rounded-2xl border border-slate-100 bg-white p-4">
+            <p className="text-xs font-bold uppercase tracking-wide text-slate-500">
+              Simulação (serviço R$)
+            </p>
+            <Input
               value={exampleTotal}
               onChange={(e) => setExampleTotal(e.target.value)}
-              className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm font-bold bg-white"
+              className="mt-2 h-11 rounded-2xl"
             />
             {preview ? (
-              <div className="text-sm text-slate-600 font-medium space-y-3 pt-1">
+              <div className="mt-3 space-y-1 text-sm text-slate-600">
                 <p>
-                  Cliente paga agora:{" "}
-                  <strong className="text-slate-900">
-                    R$ {preview.deposit_brl.toFixed(2)}
-                  </strong>
+                  Sinal: <strong>{moneyBrl(preview.deposit_brl)}</strong>
                 </p>
-                <div className="rounded-xl bg-white border border-slate-100 p-3 space-y-1.5">
-                  <p className="text-[11px] font-black uppercase tracking-wider text-slate-400">
-                    Você recebe (estimado)
-                  </p>
+                {preview.wagoo ? (
                   <p>
-                    Pix: ~R${" "}
-                    <strong className="text-slate-900">
-                      {(
-                        preview.stripe?.pix.shop_receives_brl ?? preview.shop_receives_brl
-                      ).toFixed(2)}
-                    </strong>
+                    Wagoo ({preview.wagoo.percent}%):{" "}
+                    {moneyBrl(preview.wagoo.fee_brl)}
                   </p>
+                ) : null}
+                {preview.stripe?.pix ? (
                   <p>
-                    Cartão: ~R${" "}
-                    <strong className="text-slate-900">
-                      {(preview.stripe?.card.shop_receives_brl ?? 0).toFixed(2)}
-                    </strong>
+                    PIX estimado — você recebe ~{" "}
+                    {moneyBrl(preview.stripe.pix.shop_receives_brl)}
                   </p>
-                </div>
-                <p className="text-xs text-slate-400">
-                  {preview.summary ||
-                    preview.note ||
-                    status?.fees?.summary ||
-                    "Wagoo 2%. No Pix 1,19%; no cartão 3,99% + R$ 0,39."}
-                </p>
+                ) : null}
+                {preview.summary ? (
+                  <p className="pt-1 text-xs text-slate-400">{preview.summary}</p>
+                ) : null}
               </div>
             ) : null}
           </div>
-
-          <Button
-            type="button"
-            className="bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-2xl"
-            disabled={busy || (!status?.ready_to_charge && depositEnabled)}
-            onClick={() => void saveDepositSettings()}
-          >
-            {busy ? <Loader2 className="animate-spin mr-2" size={16} /> : null}
-            Salvar sinal
-          </Button>
         </CardContent>
       </Card>
     </div>

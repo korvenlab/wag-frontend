@@ -10,6 +10,8 @@ import { PublicCalendarPage } from "./pages/PublicCalendarPage";
 import { PublicBookingPage } from "./pages/PublicBookingPage";
 import { PublicBookingAgendaPage } from "./pages/PublicBookingAgendaPage";
 import { PublicClubClientPage } from "./pages/PublicClubClientPage";
+import { PublicBookingPaymentPage } from "./pages/PublicBookingPaymentPage";
+import { PublicClubPaymentPage } from "./pages/PublicClubPaymentPage";
 import { ProtectedAgendaWebPage } from "./pages/ProtectedAgendaWebPage";
 import { AgendamentoHubPage } from "./pages/AgendamentoHubPage";
 import { AgendamentoWhatsappPage } from "./pages/AgendamentoWhatsappPage";
@@ -89,12 +91,20 @@ export const router = createBrowserRouter([
     Component: PublicBookingPage,
   },
   {
+    path: "/a/:slug/pagar/:appointmentId",
+    Component: PublicBookingPaymentPage,
+  },
+  {
     path: "/a/:slug/agenda",
     Component: PublicBookingAgendaPage,
   },
   {
     path: "/a/:slug/cliente",
     Component: PublicClubClientPage,
+  },
+  {
+    path: "/a/:slug/cliente/pagar/:memberId",
+    Component: PublicClubPaymentPage,
   },
   {
     path: "/comissao/:token",
