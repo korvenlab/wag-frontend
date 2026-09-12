@@ -50,8 +50,9 @@ export const TermsPage = () => {
           <li><strong>Basic:</strong> R$ 59,00/mês — 1 usuário (WhatsApp, Google Agenda, IA) + Agenda Web inclusa no painel.</li>
           <li><strong>Pro:</strong> R$ 149,00/mês — até 3 usuários na equipe IA, lembretes, export CSV, gestão de equipe + Agenda Web inclusa.</li>
           <li><strong>Pro+:</strong> R$ 259,00/mês — até 5 usuários na equipe IA, mesmos recursos avançados do Pro + Agenda Web inclusa.</li>
-          <li><strong>Processamento:</strong> Todos os pagamentos são processados de forma segura via <strong>Stripe</strong>.</li>
-          <li><strong>Renovação:</strong> A assinatura é renovada automaticamente a cada 30 dias.</li>
+          <li><strong>Processamento das assinaturas:</strong> Os planos mensais do Wagoo são cobrados de forma segura via <strong>Stripe</strong>.</li>
+          <li><strong>Pagamentos internos (sinal e clube):</strong> Cobranças feitas aos clientes do salão dentro do Wagoo — <strong>sinal de agendamento</strong> e <strong>clube/assinatura do cliente</strong> — são processadas via <strong>Mercado Pago</strong> (Split). Sobre cada uma dessas cobranças, o <strong>Wagoo retém 2% (dois por cento)</strong> como taxa de plataforma; o restante, após taxas do próprio Mercado Pago, é destinado à conta do estabelecimento. Essa taxa de 2% é independente do plano mensal Stripe e aplica-se a Pix e cartão nesses fluxos.</li>
+          <li><strong>Renovação:</strong> A assinatura do plano Wagoo é renovada automaticamente a cada 30 dias.</li>
           <li><strong>Cancelamento:</strong> Pode ser solicitado a qualquer momento através do painel do usuário ou suporte, sem taxas de fidelidade.</li>
         </ul>
 
