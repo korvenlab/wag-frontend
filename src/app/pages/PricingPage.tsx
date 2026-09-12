@@ -150,7 +150,7 @@ export function PricingPage() {
                 Diferencial de cada plano
               </h2>
               <p className="text-slate-500 font-medium max-w-2xl">
-                Agenda Web é só o link. Basic traz a IA no Zap. Pro e Pro+ adicionam anti-falta,
+                Agenda Web é só o link. Basic traz a IA no WhatsApp. Pro e Pro+ adicionam anti-falta,
                 caixa e equipe.
               </p>
             </div>

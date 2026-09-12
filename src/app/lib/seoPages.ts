@@ -22,7 +22,7 @@ export const HOME_SEO: SeoPageMeta = {
     "O cliente marca no WhatsApp. O horário só fica firme com sinal. A comissão fecha sozinha — menos falta, menos ida-e-volta e caixa da equipe.",
   ogTitle: "Wagoo — Muito mais que agendar. A gestão que o seu espaço precisa.",
   ogDescription:
-    "Zap que opera, sinal que protege o horário e comissão que fecha — sem planilha.",
+    "WhatsApp que opera, sinal que protege o horário e comissão que fecha — sem planilha.",
 };
 
 export const CONTENT_SEO_PAGES: SeoPageMeta[] = [

@@ -50,7 +50,7 @@ export function HowItWorks() {
             className="text-lg text-slate-500 font-medium leading-relaxed lg:pb-1"
           >
             Agenda, equipe, clientes, sinal e comissões. Não é só link de marcação — é menos
-            falta, menos ida-e-volta no Zap e o caixa da equipe fechando sozinho.
+            falta, menos ida-e-volta no WhatsApp e o caixa da equipe fechando sozinho.
           </p>
         </div>
 

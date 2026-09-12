@@ -32,7 +32,7 @@ export const WAGOO_TOOLS: WagooTool[] = [
     id: "whatsapp-ia",
     name: "Atendimento no WhatsApp com IA",
     does:
-      "Responde o cliente no Zap da loja, marca horário, informa preços e sincroniza com a agenda — sem você ficar na conversa o dia todo.",
+      "Responde o cliente no WhatsApp da loja, marca horário, informa preços e sincroniza com a agenda — sem você ficar na conversa o dia todo.",
     plans: ["basic", "pro", "pro_plus"],
   },
   {
@@ -74,7 +74,7 @@ export const WAGOO_TOOLS: WagooTool[] = [
     id: "presenca",
     name: "Painel de presença",
     does:
-      "Mostra confirmados, pendentes e faltas da semana. Você enxerga quem vem e quem some — sem caçar mensagem no Zap.",
+      "Mostra confirmados, pendentes e faltas da semana. Você enxerga quem vem e quem some — sem caçar mensagem no WhatsApp.",
     plans: ["pro", "pro_plus"],
   },
   {

@@ -4,7 +4,7 @@ const PILLARS = [
   {
     icon: MessageCircle,
     title: "Cliente marca no WhatsApp",
-    body: "Seu cliente já fala no Zap. A IA responde, informa preço e marca o horário — sem mandar ele baixar app ou abrir outro site só pra isso.",
+    body: "Seu cliente já fala no WhatsApp. A IA responde, informa preço e marca o horário — sem mandar ele baixar app ou abrir outro site só pra isso.",
   },
   {
     icon: Wallet,
@@ -42,7 +42,7 @@ export function WhyWagoo() {
           >
             Não é “mais uma agenda online”.
             <span className="block text-[#64b34d] mt-2">
-              É Zap que opera, sinal que protege e comissão que fecha.
+              É WhatsApp que opera, sinal que protege e comissão que fecha.
             </span>
           </h2>
           <p
@@ -79,7 +79,7 @@ export function WhyWagoo() {
             "IA no WhatsApp da loja — não só chatbot no site",
             "Link de Agenda Web incluso quando você precisa do bio",
             "Anti-falta com sinal e confirmação de presença",
-            "Sem trocar o sistema do salão: Zap + Calendar + caixa",
+            "Sem trocar o sistema do salão: WhatsApp + Calendar + caixa",
           ].map((line) => (
             <li
               key={line}
