@@ -4,6 +4,7 @@ import { useEffect, useState, useRef } from "react";
 import { supabase } from "../lib/supabase";
 import { ArrowLeft, Loader2 } from "lucide-react";
 import type { Session } from "@supabase/supabase-js";
+import { useAuth } from "../context/AuthContext";
 import {
   buildLoginRedirectWithPromo,
   persistWagooPromoCode,
@@ -58,8 +59,8 @@ async function userHasWagooAccess(accessToken: string, apiBase: string): Promise
 export function LoginPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const { refreshProfile } = useAuth();
   const [status, setStatus] = useState("Verificando sessão...");
-  /** Só mostra "Entrar com Google" quando não há sessão em curso de sync. */
   const [showLoginButton, setShowLoginButton] = useState(false);
   const [promoActive, setPromoActive] = useState(false);
   const syncProcessed = useRef(false);
@@ -86,9 +87,9 @@ export function LoginPage() {
       syncProcessed.current = true;
 
       try {
-        // Garante que o código da URL ainda esteja persistido após o redirect OAuth.
         const promo = readWagooPromoCode(searchParams);
         if (promo) persistWagooPromoCode(promo);
+        const hadPromo = Boolean(readWagooPromoCode(searchParams));
 
         if (session.provider_token) {
           setStatus("Sincronizando sua conta...");
@@ -97,16 +98,19 @@ export function LoginPage() {
 
         setStatus("Aplicando link de cortesia...");
         const redeem = await redeemPendingWagooPromo(session.access_token, apiBase);
-        if (!redeem.ok && !("skipped" in redeem && redeem.skipped)) {
-          setStatus(redeem.error || "Não foi possível aplicar a cortesia.");
-          // Segue para checar acesso — pode já ter plano; senão mostra preços com aviso.
-        }
+
+        // Atualiza AuthContext ANTES de ir ao dashboard — senão ProtectedRoute manda para /planos.
+        setStatus("Atualizando seu acesso...");
+        await refreshProfile({ force: true });
 
         setStatus("Verificando seu plano...");
-        let hasAccess = await userHasWagooAccess(session.access_token, apiBase);
+        let hasAccess =
+          (redeem.ok && redeem.hasAccess === true) ||
+          (await userHasWagooAccess(session.access_token, apiBase));
+
         if (!hasAccess && redeem.ok) {
-          // Perfil pode atrasar um instante após o update.
-          await new Promise((r) => setTimeout(r, 600));
+          await new Promise((r) => setTimeout(r, 800));
+          await refreshProfile({ force: true });
           hasAccess = await userHasWagooAccess(session.access_token, apiBase);
         }
 
@@ -116,11 +120,20 @@ export function LoginPage() {
           return;
         }
 
-        if (!redeem.ok && !("skipped" in redeem && redeem.skipped)) {
+        if (hadPromo && !redeem.ok && !("skipped" in redeem && redeem.skipped)) {
           setShowLoginButton(true);
           syncProcessed.current = false;
           setStatus(
-            `${redeem.error} Você pode tentar de novo com o mesmo link ou escolher um plano.`,
+            `${redeem.error} Toque em Entrar com Google de novo com o mesmo link.`,
+          );
+          return;
+        }
+
+        if (hadPromo && redeem.ok && !hasAccess) {
+          setShowLoginButton(true);
+          syncProcessed.current = false;
+          setStatus(
+            "O link foi aplicado, mas o acesso ainda não liberou. Aguarde alguns segundos e entre de novo.",
           );
           return;
         }
@@ -153,7 +166,7 @@ export function LoginPage() {
     });
 
     return () => subscription.unsubscribe();
-  }, [navigate, apiBase, searchParams]);
+  }, [navigate, apiBase, searchParams, refreshProfile]);
 
   const handleGoogleLogin = async () => {
     syncProcessed.current = false;
@@ -166,7 +179,6 @@ export function LoginPage() {
     await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        // Mantém ?wagoo_promo= no retorno do Google (sessionStorage sozinho falha em www/apex).
         redirectTo: buildLoginRedirectWithPromo(window.location.origin, promo),
         scopes:
           "https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/calendar.events",

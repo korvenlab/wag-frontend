@@ -49,8 +49,17 @@ export function ProtectedRoute({ children, requirePayment = false }: ProtectedRo
 
   useEffect(() => {
     if (!requirePayment || !user || user.hasPaid || checkoutSuccess || loading) return;
+    // Cortesia pendente: tenta refresh antes de mandar para /planos.
+    const pendingPromo =
+      typeof window !== "undefined" &&
+      (window.sessionStorage?.getItem("wagoo_promo_code") ||
+        window.localStorage?.getItem("wagoo_promo_code"));
+    if (pendingPromo) {
+      void refreshProfile({ force: true });
+      return;
+    }
     navigate("/planos", { replace: true });
-  }, [requirePayment, user?.id, user?.hasPaid, checkoutSuccess, loading, navigate]);
+  }, [requirePayment, user?.id, user?.hasPaid, checkoutSuccess, loading, navigate, refreshProfile]);
 
   useEffect(() => {
     if (!requirePayment || !user || user.hasPaid || !checkoutSuccess) return;

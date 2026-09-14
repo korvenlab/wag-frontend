@@ -1,6 +1,50 @@
 const WAGOO_PROMO_STORAGE_KEY = "wagoo_promo_code";
+const WAGOO_PROMO_COOKIE = "wagoo_promo";
 
-/** Lê código de cortesia (query, sessionStorage ou localStorage). */
+function readCookie(name: string): string | null {
+  try {
+    const parts = document.cookie.split(";").map((p) => p.trim());
+    for (const part of parts) {
+      if (part.startsWith(`${name}=`)) {
+        return decodeURIComponent(part.slice(name.length + 1));
+      }
+    }
+  } catch {
+    /* ignore */
+  }
+  return null;
+}
+
+function writePromoCookie(code: string): void {
+  try {
+    const maxAge = 60 * 60 * 6;
+    const secure = typeof location !== "undefined" && location.protocol === "https:" ? "; Secure" : "";
+    // Domain=.wagoobot.com cobre apex e www
+    const host = typeof location !== "undefined" ? location.hostname : "";
+    const domain =
+      host === "wagoobot.com" || host.endsWith(".wagoobot.com")
+        ? "; Domain=.wagoobot.com"
+        : "";
+    document.cookie = `${WAGOO_PROMO_COOKIE}=${encodeURIComponent(code)}; Path=/; Max-Age=${maxAge}; SameSite=Lax${secure}${domain}`;
+  } catch {
+    /* ignore */
+  }
+}
+
+function clearPromoCookie(): void {
+  try {
+    const host = typeof location !== "undefined" ? location.hostname : "";
+    const domain =
+      host === "wagoobot.com" || host.endsWith(".wagoobot.com")
+        ? "; Domain=.wagoobot.com"
+        : "";
+    document.cookie = `${WAGOO_PROMO_COOKIE}=; Path=/; Max-Age=0; SameSite=Lax${domain}`;
+  } catch {
+    /* ignore */
+  }
+}
+
+/** Lê código de cortesia (query, cookie, sessionStorage ou localStorage). */
 export function readWagooPromoCode(
   searchParams?: URLSearchParams | null,
 ): string | null {
@@ -9,6 +53,8 @@ export function readWagooPromoCode(
     searchParams?.get("promo")?.trim().toLowerCase() ||
     null;
   if (fromQuery) return fromQuery;
+  const fromCookie = readCookie(WAGOO_PROMO_COOKIE)?.trim().toLowerCase();
+  if (fromCookie) return fromCookie;
   try {
     const fromSession = sessionStorage.getItem(WAGOO_PROMO_STORAGE_KEY)?.trim().toLowerCase();
     if (fromSession) return fromSession;
@@ -20,10 +66,11 @@ export function readWagooPromoCode(
   return null;
 }
 
-/** Persiste em session + local para sobreviver ao redirect do Google (e www vs apex). */
+/** Persiste em cookie + session + local para sobreviver ao redirect do Google. */
 export function persistWagooPromoCode(code: string): void {
   const normalized = code.trim().toLowerCase();
   if (!normalized || normalized.length > 64) return;
+  writePromoCookie(normalized);
   try {
     sessionStorage.setItem(WAGOO_PROMO_STORAGE_KEY, normalized);
   } catch {
@@ -37,6 +84,7 @@ export function persistWagooPromoCode(code: string): void {
 }
 
 export function clearWagooPromoCode(): void {
+  clearPromoCookie();
   try {
     sessionStorage.removeItem(WAGOO_PROMO_STORAGE_KEY);
   } catch {
@@ -50,13 +98,12 @@ export function clearWagooPromoCode(): void {
 }
 
 export type PromoRedeemResult =
-  | { ok: true; status: number; already?: boolean }
+  | { ok: true; status: number; already?: boolean; hasAccess?: boolean }
   | { ok: false; status: number; error: string }
   | { ok: false; status: 0; error: string; skipped: true };
 
 /**
- * Resgata cortesia pendente. Só limpa o storage em sucesso / já resgatado.
- * Não limpa em 404/5xx para permitir nova tentativa.
+ * Resgata cortesia pendente. Só limpa o storage em sucesso / já resgatado com acesso.
  */
 export async function redeemPendingWagooPromo(
   accessToken: string,
@@ -78,23 +125,38 @@ export async function redeemPendingWagooPromo(
       body: JSON.stringify({ code }),
     });
 
-    if (res.ok) {
-      clearWagooPromoCode();
-      return { ok: true, status: res.status };
-    }
-
-    if (res.status === 409) {
-      clearWagooPromoCode();
-      return { ok: true, status: 409, already: true };
-    }
-
-    let error = `Falha ao resgatar cortesia (${res.status}).`;
+    let body: {
+      error?: string;
+      has_access?: boolean;
+      ok?: boolean;
+      already?: boolean;
+    } = {};
     try {
-      const body = (await res.json()) as { error?: string };
-      if (typeof body.error === "string" && body.error.trim()) error = body.error;
+      body = (await res.json()) as typeof body;
     } catch {
       /* ignore */
     }
+
+    if (res.ok) {
+      clearWagooPromoCode();
+      return {
+        ok: true,
+        status: res.status,
+        already: body.already === true,
+        hasAccess: body.has_access === true,
+      };
+    }
+
+    if (res.status === 409) {
+      // Legado: alguns deploys ainda devolvem 409
+      clearWagooPromoCode();
+      return { ok: true, status: 409, already: true, hasAccess: body.has_access === true };
+    }
+
+    const error =
+      typeof body.error === "string" && body.error.trim()
+        ? body.error
+        : `Falha ao resgatar cortesia (${res.status}).`;
     console.warn("[wagoo promo] resgate não concluído:", res.status, error);
     return { ok: false, status: res.status, error };
   } catch (e) {
