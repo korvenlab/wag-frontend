@@ -4,28 +4,12 @@ import { useEffect, useState, useRef } from "react";
 import { supabase } from "../lib/supabase";
 import { ArrowLeft, Loader2 } from "lucide-react";
 import type { Session } from "@supabase/supabase-js";
-
-const WAGOO_PROMO_STORAGE_KEY = "wagoo_promo_code";
-
-async function redeemPendingPromo(accessToken: string, apiBase: string): Promise<void> {
-  const code = sessionStorage.getItem(WAGOO_PROMO_STORAGE_KEY)?.trim().toLowerCase();
-  if (!code) return;
-  try {
-    const res = await fetch(`${apiBase}/api/promo/redeem`, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ code }),
-    });
-    if (res.ok || res.status === 404 || res.status === 409) {
-      sessionStorage.removeItem(WAGOO_PROMO_STORAGE_KEY);
-    }
-  } catch {
-    /* ignore — AuthContext tenta de novo depois */
-  }
-}
+import {
+  buildLoginRedirectWithPromo,
+  persistWagooPromoCode,
+  readWagooPromoCode,
+  redeemPendingWagooPromo,
+} from "../lib/wagooPromo";
 
 async function syncProviderTokens(session: Session, apiBase: string): Promise<boolean> {
   if (!session.provider_token) return true;
@@ -60,6 +44,7 @@ async function userHasWagooAccess(accessToken: string, apiBase: string): Promise
         Authorization: `Bearer ${accessToken}`,
         Accept: "application/json",
       },
+      cache: "no-store",
     });
     if (!res.ok) return false;
     const data = await res.json();
@@ -83,13 +68,9 @@ export function LoginPage() {
     import.meta.env.VITE_API_URL?.replace(/\/+$/, "") || "https://wag-backend.onrender.com";
 
   useEffect(() => {
-    const promo =
-      searchParams.get("wagoo_promo")?.trim().toLowerCase() ||
-      searchParams.get("promo")?.trim().toLowerCase();
-    if (promo) {
-      sessionStorage.setItem(WAGOO_PROMO_STORAGE_KEY, promo);
-    }
-    setPromoActive(!!sessionStorage.getItem(WAGOO_PROMO_STORAGE_KEY));
+    const promo = readWagooPromoCode(searchParams);
+    if (promo) persistWagooPromoCode(promo);
+    setPromoActive(!!readWagooPromoCode(searchParams));
   }, [searchParams]);
 
   useEffect(() => {
@@ -105,18 +86,42 @@ export function LoginPage() {
       syncProcessed.current = true;
 
       try {
+        // Garante que o código da URL ainda esteja persistido após o redirect OAuth.
+        const promo = readWagooPromoCode(searchParams);
+        if (promo) persistWagooPromoCode(promo);
+
         if (session.provider_token) {
           setStatus("Sincronizando sua conta...");
           await syncProviderTokens(session, apiBase);
         }
 
+        setStatus("Aplicando link de cortesia...");
+        const redeem = await redeemPendingWagooPromo(session.access_token, apiBase);
+        if (!redeem.ok && !("skipped" in redeem && redeem.skipped)) {
+          setStatus(redeem.error || "Não foi possível aplicar a cortesia.");
+          // Segue para checar acesso — pode já ter plano; senão mostra preços com aviso.
+        }
+
         setStatus("Verificando seu plano...");
-        await redeemPendingPromo(session.access_token, apiBase);
-        const hasAccess = await userHasWagooAccess(session.access_token, apiBase);
+        let hasAccess = await userHasWagooAccess(session.access_token, apiBase);
+        if (!hasAccess && redeem.ok) {
+          // Perfil pode atrasar um instante após o update.
+          await new Promise((r) => setTimeout(r, 600));
+          hasAccess = await userHasWagooAccess(session.access_token, apiBase);
+        }
 
         if (hasAccess) {
           setStatus("Tudo certo! Entrando...");
           navigate("/dashboard", { replace: true });
+          return;
+        }
+
+        if (!redeem.ok && !("skipped" in redeem && redeem.skipped)) {
+          setShowLoginButton(true);
+          syncProcessed.current = false;
+          setStatus(
+            `${redeem.error} Você pode tentar de novo com o mesmo link ou escolher um plano.`,
+          );
           return;
         }
 
@@ -148,16 +153,21 @@ export function LoginPage() {
     });
 
     return () => subscription.unsubscribe();
-  }, [navigate, apiBase]);
+  }, [navigate, apiBase, searchParams]);
 
   const handleGoogleLogin = async () => {
     syncProcessed.current = false;
     setShowLoginButton(false);
     setStatus("Redirecionando para o Google...");
+
+    const promo = readWagooPromoCode(searchParams);
+    if (promo) persistWagooPromoCode(promo);
+
     await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: window.location.origin + "/login",
+        // Mantém ?wagoo_promo= no retorno do Google (sessionStorage sozinho falha em www/apex).
+        redirectTo: buildLoginRedirectWithPromo(window.location.origin, promo),
         scopes:
           "https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/calendar.events",
         queryParams: { access_type: "offline", prompt: "consent" },

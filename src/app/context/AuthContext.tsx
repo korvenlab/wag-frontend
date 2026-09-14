@@ -17,6 +17,7 @@ import {
   warmBackend,
   type DashboardProfileCache,
 } from "../lib/dashboardCache";
+import { redeemPendingWagooPromo } from "../lib/wagooPromo";
 
 export type AppUser = User & {
   hasPaid: boolean;
@@ -41,8 +42,6 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 let globalSyncedToken: string | null = null;
-
-const WAGOO_PROMO_STORAGE_KEY = "wagoo_promo_code";
 
 /** Evita refetch ao trocar de aba/janela a cada foco. */
 const VISIBILITY_REFRESH_MIN_MS = 2 * 60 * 1000;
@@ -73,29 +72,6 @@ function sameProfileFields(a: ProfileSnapshot | null, b: ProfileSnapshot): boole
     a.storeName === b.storeName &&
     a.whatsappConnected === b.whatsappConnected
   );
-}
-
-async function tryRedeemPendingPromo(accessToken: string, backendUrl: string): Promise<void> {
-  const code = sessionStorage.getItem(WAGOO_PROMO_STORAGE_KEY)?.trim().toLowerCase();
-  if (!code) return;
-  try {
-    const res = await fetch(`${backendUrl}/api/promo/redeem`, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ code }),
-    });
-    if (res.ok || res.status === 404 || res.status === 409) {
-      sessionStorage.removeItem(WAGOO_PROMO_STORAGE_KEY);
-      return;
-    }
-    const body = await res.text();
-    console.warn("[wagoo promo] resgate não concluído:", res.status, body);
-  } catch (e) {
-    console.warn("[wagoo promo] resgate:", e);
-  }
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -240,7 +216,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
       lastVisibilityRefreshRef.current = Date.now();
 
-      await tryRedeemPendingPromo(session.access_token, backendUrl);
+      await redeemPendingWagooPromo(session.access_token, backendUrl);
       await fetchProfileAndSetUser(session.user, session);
     },
     [fetchProfileAndSetUser, backendUrl],
@@ -276,7 +252,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
 
         if (session.access_token) {
-          await tryRedeemPendingPromo(session.access_token, backendUrl);
+          await redeemPendingWagooPromo(session.access_token, backendUrl);
         }
         await fetchProfileAndSetUser(authUser, session);
       } catch (error) {
